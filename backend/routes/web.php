@@ -20,147 +20,303 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SitemapController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
+Route::get('/sitemap.xml', [SitemapController::class, 'index'])
+    ->name('sitemap');
 
-// Admin-editable (Settings key 'robots_txt', see SettingSeeder) — falls back to a
-// sane default if never configured. There's deliberately no public/robots.txt
-// static file (it would be served directly by the app server, bypassing this
-// route entirely) — see the note in public/.gitignore-style removal below.
 Route::get('/robots.txt', function () {
     $settings = \Illuminate\Support\Facades\Cache::remember(
         'site.settings',
         3600,
         fn () => \App\Models\Setting::pluck('value', 'key')->toArray()
     );
+
     $content = $settings['robots_txt'] ?? null;
 
     if (! $content) {
         $content = "User-agent: *\nAllow: /\nDisallow: /cart\nDisallow: /checkout\nDisallow: /account\nDisallow: /login\nDisallow: /register\nDisallow: /forgot-password\nDisallow: /reset-password\nDisallow: /payment\nDisallow: /search\n\nSitemap: ".url('/sitemap.xml');
     }
 
-    return response($content, 200)->header('Content-Type', 'text/plain');
+    return response($content, 200)
+        ->header('Content-Type', 'text/plain');
 })->name('robots');
 
-Route::get('/', [HomeController::class, 'index'])->name('home');
-Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
-Route::get('/categories/{category:slug}', [CategoryController::class, 'show'])->name('categories.show');
-Route::get('/collections', [CollectionController::class, 'index'])->name('collections.index');
-Route::get('/collections/{collection:slug}', [CollectionController::class, 'show'])->name('collections.show');
-Route::get('/products/{product:slug}', [ProductController::class, 'show'])->name('products.show');
+Route::get('/', [HomeController::class, 'index'])
+    ->name('home');
+
+Route::get('/categories', [CategoryController::class, 'index'])
+    ->name('categories.index');
+
+Route::get('/categories/{category:slug}', [CategoryController::class, 'show'])
+    ->name('categories.show');
+
+Route::get('/collections', [CollectionController::class, 'index'])
+    ->name('collections.index');
+
+Route::get('/collections/{collection:slug}', [CollectionController::class, 'show'])
+    ->name('collections.show');
+
+Route::get('/products/{product:slug}', [ProductController::class, 'show'])
+    ->name('products.show');
+
 Route::post('/products/{product:slug}/reviews', [ReviewController::class, 'store'])
     ->name('products.reviews.store')
     ->middleware('throttle:5,60');
-// Phase 6 security audit: spec §9 explicitly names search alongside login/
-// OTP/checkout for rate limiting — generous enough for real typing/browsing,
-// still caps scraping/abuse.
-Route::get('/search', [SearchController::class, 'index'])->name('search')->middleware('throttle:60,1');
-Route::get('/search/suggest', [SearchController::class, 'suggest'])->name('search.suggest')->middleware('throttle:60,1');
+
+Route::get('/search', [SearchController::class, 'index'])
+    ->name('search')
+    ->middleware('throttle:60,1');
+
+Route::get('/search/suggest', [SearchController::class, 'suggest'])
+    ->name('search.suggest')
+    ->middleware('throttle:60,1');
+
+
+/*
+|--------------------------------------------------------------------------
+| Guest Routes
+|--------------------------------------------------------------------------
+*/
 
 Route::middleware('guest')->group(function () {
-    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login'])->name('login.attempt')->middleware('throttle:10,1');
-    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-    Route::post('/register', [AuthController::class, 'register'])->name('register.attempt')->middleware('throttle:10,1');
 
-    // Forgot/reset password — plain Laravel Password broker (password_reset_tokens
-    // table, already in the base migration). Throttled the same as login/register
-    // above; sendResetLink() itself doesn't leak whether the email exists, so this
-    // can't be used to enumerate accounts either.
-    Route::get('/forgot-password', [PasswordResetController::class, 'showRequest'])->name('password.request');
-    Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])->name('password.email')->middleware('throttle:5,1');
-    Route::get('/reset-password/{token}', [PasswordResetController::class, 'showReset'])->name('password.reset');
-    Route::post('/reset-password', [PasswordResetController::class, 'update'])->name('password.update')->middleware('throttle:5,1');
+    /*
+    |--------------------------------------------------------------------------
+    | Normal Email + Password Login
+    |--------------------------------------------------------------------------
+    */
 
-    // Phone + OTP login (self-built, see OtpManager/LogOtpGateway). Rate limits
-    // match the security-audit posture already applied to /login above —
-    // code-send and code-verify are throttled separately since they're
-    // different abuse shapes (spamming SMS sends vs brute-forcing a code).
-    Route::get('/login/mobile', [OtpAuthController::class, 'showPhone'])->name('login.mobile');
-    Route::post('/login/mobile', [OtpAuthController::class, 'sendCode'])->name('login.mobile.send')->middleware('throttle:5,1');
-    Route::get('/login/mobile/verify', [OtpAuthController::class, 'showVerify'])->name('login.mobile.verify');
-    Route::post('/login/mobile/verify', [OtpAuthController::class, 'verifyCode'])->name('login.mobile.verify.attempt')->middleware('throttle:10,1');
-    Route::post('/login/mobile/resend', [OtpAuthController::class, 'resend'])->name('login.mobile.resend')->middleware('throttle:3,1');
+    Route::get('/login', [AuthController::class, 'showLogin'])
+        ->name('login');
+
+    Route::post('/login', [AuthController::class, 'login'])
+        ->name('login.attempt')
+        ->middleware('throttle:10,1');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Registration
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/register', [AuthController::class, 'showRegister'])
+        ->name('register');
+
+    Route::post('/register', [AuthController::class, 'register'])
+        ->name('register.attempt')
+        ->middleware('throttle:10,1');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Registration OTP
+    |--------------------------------------------------------------------------
+    */
+
+    Route::post('/register/send-otp', [AuthController::class, 'sendRegistrationOtp'])
+        ->name('register.otp.send')
+        ->middleware('throttle:5,1');
+
+    Route::post('/register/verify-otp', [AuthController::class, 'verifyRegistrationOtp'])
+        ->name('register.otp.verify')
+        ->middleware('throttle:10,1');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Forgot / Reset Password
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/forgot-password', [PasswordResetController::class, 'showRequest'])
+        ->name('password.request');
+
+    Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])
+        ->name('password.email')
+        ->middleware('throttle:5,1');
+
+    Route::get('/reset-password/{token}', [PasswordResetController::class, 'showReset'])
+        ->name('password.reset');
+
+    Route::post('/reset-password', [PasswordResetController::class, 'update'])
+        ->name('password.update')
+        ->middleware('throttle:5,1');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Mobile OTP Login
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/login/mobile', [OtpAuthController::class, 'showPhone'])
+        ->name('login.mobile');
+
+    Route::post('/login/mobile', [OtpAuthController::class, 'sendCode'])
+        ->name('login.mobile.send')
+        ->middleware('throttle:5,1');
+
+    Route::get('/login/mobile/verify', [OtpAuthController::class, 'showVerify'])
+        ->name('login.mobile.verify');
+
+    Route::post('/login/mobile/verify', [OtpAuthController::class, 'verifyCode'])
+        ->name('login.mobile.verify.attempt')
+        ->middleware('throttle:10,1');
+
+    Route::post('/login/mobile/resend', [OtpAuthController::class, 'resend'])
+        ->name('login.mobile.resend')
+        ->middleware('throttle:3,1');
 });
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
+
+
+/*
+|--------------------------------------------------------------------------
+| Logout
+|--------------------------------------------------------------------------
+*/
+
+Route::post('/logout', [AuthController::class, 'logout'])
+    ->name('logout')
+    ->middleware('auth');
+
+
+/*
+|--------------------------------------------------------------------------
+| Authenticated Account Routes
+|--------------------------------------------------------------------------
+*/
 
 Route::middleware('auth')->group(function () {
-    Route::get('/account', [AccountController::class, 'index'])->name('account.index');
-    Route::patch('/account/profile', [AccountController::class, 'updateProfile'])->name('account.profile');
-    Route::patch('/account/password', [AccountController::class, 'updatePassword'])->name('account.password');
 
-    Route::get('/account/orders/{order:order_number}', [AccountController::class, 'orderShow'])->name('account.orders.show');
-    Route::get('/account/orders/{order:order_number}/invoice', [AccountController::class, 'orderInvoice'])->name('account.orders.invoice');
+    Route::get('/account', [AccountController::class, 'index'])
+        ->name('account.index');
+
+    Route::patch('/account/profile', [AccountController::class, 'updateProfile'])
+        ->name('account.profile');
+
+    Route::patch('/account/password', [AccountController::class, 'updatePassword'])
+        ->name('account.password');
+
+    Route::get('/account/orders/{order:order_number}', [AccountController::class, 'orderShow'])
+        ->name('account.orders.show');
+
+    Route::get('/account/orders/{order:order_number}/invoice', [AccountController::class, 'orderInvoice'])
+        ->name('account.orders.invoice');
+
     Route::post('/account/orders/{order:order_number}/cancellation-request', [AccountController::class, 'requestCancellation'])
         ->name('account.orders.cancellation-request')
         ->middleware('throttle:10,1');
 
-    Route::get('/account/addresses', [AccountController::class, 'addresses'])->name('account.addresses');
-    Route::post('/account/addresses', [AccountController::class, 'addressStore'])->name('account.addresses.store');
-    Route::patch('/account/addresses/{address}', [AccountController::class, 'addressUpdate'])->name('account.addresses.update');
-    Route::delete('/account/addresses/{address}', [AccountController::class, 'addressDestroy'])->name('account.addresses.destroy');
+    Route::get('/account/addresses', [AccountController::class, 'addresses'])
+        ->name('account.addresses');
+
+    Route::post('/account/addresses', [AccountController::class, 'addressStore'])
+        ->name('account.addresses.store');
+
+    Route::patch('/account/addresses/{address}', [AccountController::class, 'addressUpdate'])
+        ->name('account.addresses.update');
+
+    Route::delete('/account/addresses/{address}', [AccountController::class, 'addressDestroy'])
+        ->name('account.addresses.destroy');
 });
+
+
+/*
+|--------------------------------------------------------------------------
+| Newsletter
+|--------------------------------------------------------------------------
+*/
 
 Route::post('/newsletter/subscribe', [NewsletterController::class, 'store'])
     ->name('newsletter.subscribe')
     ->middleware('throttle:10,60');
 
-Route::get('/blogs', [BlogController::class, 'index'])->name('blogs.index');
-Route::get('/blogs/{blog:slug}', [BlogController::class, 'show'])->name('blogs.show');
-Route::get('/faq', [FaqController::class, 'index'])->name('faq.index');
-Route::get('/pages/{cmsPage:slug}', [CmsPageController::class, 'show'])->name('pages.show');
 
-Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
-// Registered before the {product:slug} wildcard below — otherwise a POST to
-// /cart/coupon would match /cart/{product:slug} first, with "coupon" bound
-// as the slug (and 404 on lookup) instead of ever reaching applyCoupon().
-Route::post('/cart/coupon', [CartController::class, 'applyCoupon'])->name('cart.coupon.apply')->middleware('throttle:20,1');
-Route::delete('/cart/coupon', [CartController::class, 'removeCoupon'])->name('cart.coupon.remove')->middleware('throttle:20,1');
-Route::post('/cart/{product:slug}', [CartController::class, 'store'])->name('cart.store');
-Route::patch('/cart/items/{cartItem}', [CartController::class, 'update'])->name('cart.update');
-Route::delete('/cart/items/{cartItem}', [CartController::class, 'destroy'])->name('cart.destroy');
+/*
+|--------------------------------------------------------------------------
+| Content
+|--------------------------------------------------------------------------
+*/
 
-// Buy It Now / checkout now requires login (ZappDeal parity — mobile OTP
-// login first, then checkout; no more anonymous guest checkout). The 'auth'
-// middleware here + $middleware->redirectGuestsTo(route('login.mobile')) in
-// bootstrap/app.php is what actually gates it — an unauthenticated visit
-// (whether via the cart page's checkout button or product page's Buy It Now,
-// both of which just send the browser to GET /checkout) gets bounced to the
-// mobile OTP login with the current URL saved as the post-login "intended"
-// destination, so login/registration lands the user right back here rather
-// than on /account. See OtpAuthController::verifyCode and
-// AuthController::login/register for the redirect()->intended() side of this.
+Route::get('/blogs', [BlogController::class, 'index'])
+    ->name('blogs.index');
+
+Route::get('/blogs/{blog:slug}', [BlogController::class, 'show'])
+    ->name('blogs.show');
+
+Route::get('/faq', [FaqController::class, 'index'])
+    ->name('faq.index');
+
+Route::get('/pages/{cmsPage:slug}', [CmsPageController::class, 'show'])
+    ->name('pages.show');
+
+
+/*
+|--------------------------------------------------------------------------
+| Cart
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/cart', [CartController::class, 'index'])
+    ->name('cart.index');
+
+Route::post('/cart/coupon', [CartController::class, 'applyCoupon'])
+    ->name('cart.coupon.apply')
+    ->middleware('throttle:20,1');
+
+Route::delete('/cart/coupon', [CartController::class, 'removeCoupon'])
+    ->name('cart.coupon.remove')
+    ->middleware('throttle:20,1');
+
+Route::post('/cart/{product:slug}', [CartController::class, 'store'])
+    ->name('cart.store');
+
+Route::patch('/cart/items/{cartItem}', [CartController::class, 'update'])
+    ->name('cart.update');
+
+Route::delete('/cart/items/{cartItem}', [CartController::class, 'destroy'])
+    ->name('cart.destroy');
+
+
+/*
+|--------------------------------------------------------------------------
+| Checkout
+|--------------------------------------------------------------------------
+*/
+
 Route::middleware('auth')->group(function () {
-    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
-    // Phase 6 security audit: this was the one order-placing endpoint with no
-    // rate limit at all — every other checkout-adjacent route already has one.
-    Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store')->middleware('throttle:10,1');
+
+    Route::get('/checkout', [CheckoutController::class, 'index'])
+        ->name('checkout.index');
+
+    Route::post('/checkout', [CheckoutController::class, 'store'])
+        ->name('checkout.store')
+        ->middleware('throttle:10,1');
 });
-// Looked up server-side (not straight from the browser) because
-// api.postalpincode.in doesn't send CORS headers, so a direct client fetch
-// is blocked; this also keeps the lookup rate-limited from one place.
+
 Route::get('/checkout/pincode/{postalCode}', [CheckoutController::class, 'pincodeLookup'])
     ->name('checkout.pincode-lookup')
     ->middleware('throttle:30,1')
     ->where('postalCode', '[0-9]{6}');
-// Rate-limited: order_number is a guessable-ish slug and the only "credential"
-// for viewing a guest order — this isn't full auth, just enumeration friction.
+
 Route::get('/checkout/confirmation/{order:order_number}', [CheckoutController::class, 'confirmation'])
     ->name('checkout.confirmation')
     ->middleware('throttle:20,1');
 
+
+/*
+|--------------------------------------------------------------------------
+| Payment
+|--------------------------------------------------------------------------
+*/
+
 Route::get('/payment/{order:order_number}', [PaymentController::class, 'show'])
     ->name('payment.show')
     ->middleware('throttle:20,1');
+
 Route::post('/payment/{order:order_number}/callback', [PaymentController::class, 'callback'])
     ->name('payment.callback')
     ->middleware('throttle:20,1');
-// No CSRF/throttle here on purpose — Razorpay's servers post this directly
-// (see bootstrap/app.php's validateCsrfTokens except-list) and the signature
-// check inside the handler is what authenticates it, not a session-bound token.
-Route::post('/webhooks/razorpay', [PaymentController::class, 'webhook'])->name('webhooks.razorpay');
 
-// Redirect Manager (spec §5/§6): see bootstrap/app.php's withExceptions for
-// where a 404 actually gets checked against the redirects table — a plain
-// Route::fallback() here would only catch structurally-unmatched paths, not
-// a stale slug on a route like /products/{product:slug} (that matches the
-// URI shape fine and throws ModelNotFoundException instead).
+Route::post('/webhooks/razorpay', [PaymentController::class, 'webhook'])
+    ->name('webhooks.razorpay'); 

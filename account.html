@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -347,84 +347,229 @@
 
       <!-- ================= LOGIN FORM ================= -->
       <div id="auth-view-login">
-        <h1 class="font-serif text-[24px] font-semibold text-heading text-center mb-1">Welcome Back</h1>
-        <p class="text-[13px] text-muted text-center mb-6">Log in to view your orders, wishlist &amp; rewards.</p>
 
-        <!-- Segmented Login Method (Email vs Mobile OTP) -->
-        <div class="mb-5 flex rounded-lg border border-line p-1 text-[12px] font-medium uppercase tracking-[0.3px]" data-login-mode-switcher>
-          <button class="flex-1 rounded-md bg-accent py-2 text-center text-white transition-all" type="button" data-login-mode="email">Email &amp; Password</button>
-          <button class="flex-1 rounded-md py-2 text-center text-muted transition-colors hover:text-heading" type="button" data-login-mode="otp">Mobile OTP</button>
-        </div>
+  <h1 class="font-serif text-[24px] font-semibold text-heading text-center mb-1">
+    Welcome Back
+  </h1>
 
-        <!-- Email Login Panel -->
-        <form id="form-login-email" class="space-y-4">
-          <div>
-            <label class="mb-1.5 block text-[13px] font-medium text-heading" for="li-email">Email Address</label>
-            <input class="h-12 w-full rounded-lg border border-line-strong bg-white px-4 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent" id="li-email" type="email" placeholder="name@example.com" required>
-          </div>
-          <div>
-            <div class="flex items-center justify-between mb-1.5">
-              <label class="text-[13px] font-medium text-heading" for="li-pass">Password</label>
-              <a class="text-[12px] font-medium text-accent hover:underline" href="#">Forgot Password?</a>
-            </div>
-            <div class="relative">
-              <input class="h-12 w-full rounded-lg border border-line-strong bg-white px-4 pr-10 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent" id="li-pass" type="password" placeholder="••••••••" required>
-              <button class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-heading text-[12px]" type="button" data-toggle-pass="#li-pass">Show</button>
-            </div>
-          </div>
-          <button class="mt-2 h-12 w-full rounded-lg bg-accent text-[13px] font-semibold uppercase tracking-[0.6px] text-white shadow-sm transition-colors hover:bg-accent-dark" type="submit">
-            Log In
-          </button>
-        </form>
+  <p class="text-[13px] text-muted text-center mb-6">
+    Log in to view your orders, wishlist &amp; rewards.
+  </p>
 
-        <!-- OTP Login Panel (Hidden by default) -->
-        <form id="form-login-otp" class="space-y-4 hidden">
-          <div>
-            <label class="mb-1.5 block text-[13px] font-medium text-heading" for="li-mobile">Mobile Number</label>
-            <div class="flex">
-              <span class="inline-flex h-12 items-center rounded-l-lg border border-r-0 border-line-strong bg-warmbeige/30 px-3 text-[13px] font-medium text-heading">+91</span>
-              <input class="h-12 w-full rounded-r-lg border border-line-strong bg-white px-4 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent" id="li-mobile" type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="10" placeholder="10-digit number" required>
-            </div>
-          </div>
-          <button class="mt-2 h-12 w-full rounded-lg bg-accent text-[13px] font-semibold uppercase tracking-[0.6px] text-white shadow-sm transition-colors hover:bg-accent-dark" type="submit">
-            Send OTP
-          </button>
-        </form>
+  <form id="form-login-otp" class="space-y-4">
+
+    <!-- MOBILE NUMBER -->
+    <div>
+      <label
+        class="mb-1.5 block text-[13px] font-medium text-heading"
+        for="li-mobile">
+        Mobile Number
+      </label>
+
+      <div class="flex">
+        <span
+          class="inline-flex h-12 items-center rounded-l-lg border border-r-0 border-line-strong bg-warmbeige/30 px-3.5 text-[13px] font-semibold text-heading">
+          +91
+        </span>
+
+        <input
+          class="h-12 w-full rounded-r-lg border border-line-strong bg-white px-4 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent"
+          id="li-mobile"
+          type="tel"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          maxlength="10"
+          placeholder="10-digit mobile number"
+          autocomplete="tel"
+          required>
       </div>
 
-      <!-- ================= SIGNUP FORM (Hidden initially) ================= -->
-      <div id="auth-view-signup" class="hidden">
-        <h1 class="font-serif text-[24px] font-semibold text-heading text-center mb-1">Create Your Account</h1>
-        <p class="text-[13px] text-muted text-center mb-6">Join Estele for exclusive member offers &amp; faster checkout.</p>
+      <p id="login-phone-error"
+         class="mt-1 hidden text-[12px] text-salebadge"></p>
+    </div>
 
-        <form class="space-y-4">
-          <div>
-            <label class="mb-1.5 block text-[13px] font-medium text-heading" for="su-name">Full Name</label>
-            <input class="h-12 w-full rounded-lg border border-line-strong bg-white px-4 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent" id="su-name" type="text" placeholder="First and last name" required>
-          </div>
-          <div>
-            <label class="mb-1.5 block text-[13px] font-medium text-heading" for="su-email">Email Address</label>
-            <input class="h-12 w-full rounded-lg border border-line-strong bg-white px-4 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent" id="su-email" type="email" placeholder="name@example.com" required>
-          </div>
-          <div>
-            <label class="mb-1.5 block text-[13px] font-medium text-heading" for="su-phone">Mobile Number <span class="text-muted font-normal">(Optional)</span></label>
-            <div class="flex">
-              <span class="inline-flex h-12 items-center rounded-l-lg border border-r-0 border-line-strong bg-warmbeige/30 px-3 text-[13px] font-medium text-heading">+91</span>
-              <input class="h-12 w-full rounded-r-lg border border-line-strong bg-white px-4 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent" id="su-phone" type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="10" placeholder="10-digit number">
-            </div>
-          </div>
-          <div>
-            <label class="mb-1.5 block text-[13px] font-medium text-heading" for="su-pass">Password</label>
-            <div class="relative">
-              <input class="h-12 w-full rounded-lg border border-line-strong bg-white px-4 pr-10 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent" id="su-pass" type="password" placeholder="At least 8 characters" required minlength="8">
-              <button class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-heading text-[12px]" type="button" data-toggle-pass="#su-pass">Show</button>
-            </div>
-          </div>
-          <button class="mt-2 h-12 w-full rounded-lg bg-accent text-[13px] font-semibold uppercase tracking-[0.6px] text-white shadow-sm transition-colors hover:bg-accent-dark" type="submit">
-            Create Account
-          </button>
-        </form>
+    <!-- SEND OTP -->
+    <button
+      id="send-login-otp"
+      class="h-12 w-full rounded-lg bg-accent text-[13px] font-semibold uppercase tracking-[0.6px] text-white shadow-sm transition-colors hover:bg-accent-dark"
+      type="button">
+      Send OTP
+    </button>
+
+    <!-- OTP -->
+    <div id="login-otp-section" class="hidden">
+
+      <label
+        class="mb-1.5 block text-[13px] font-medium text-heading"
+        for="li-otp">
+        Enter OTP
+      </label>
+
+      <input
+        class="h-12 w-full rounded-lg border border-line-strong bg-white px-4 text-center text-[18px] font-semibold tracking-[8px] outline-none transition-colors placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent"
+        id="li-otp"
+        type="text"
+        inputmode="numeric"
+        pattern="[0-9]*"
+        maxlength="6"
+        placeholder="000000"
+        autocomplete="one-time-code">
+
+      <p class="mt-2 text-[12px] text-muted">
+        Enter the 6-digit OTP sent to your mobile number.
+      </p>
+
+      <p id="login-otp-error"
+         class="mt-1 hidden text-[12px] text-salebadge"></p>
+
+      <button
+        id="verify-login-otp"
+        class="mt-3 h-12 w-full rounded-lg border border-accent bg-white text-[13px] font-semibold uppercase tracking-[0.6px] text-accent transition-colors hover:bg-accent hover:text-white"
+        type="button">
+        Verify OTP
+      </button>
+
+    </div>
+
+  </form>
+</div>
+
+<div id="auth-view-signup" class="hidden">
+
+  <h1 class="font-serif text-[24px] font-semibold text-heading text-center mb-1">
+    Create Your Account
+  </h1>
+
+  <p class="text-[13px] text-muted text-center mb-6">
+    Join Estele for exclusive member offers &amp; faster checkout.
+  </p>
+
+  <form id="form-register" class="space-y-4">
+
+    <!-- NAME -->
+    <div>
+      <label
+        class="mb-1.5 block text-[13px] font-medium text-heading"
+        for="su-name">
+        Full Name
+      </label>
+
+      <input
+        class="h-12 w-full rounded-lg border border-line-strong bg-white px-4 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent"
+        id="su-name"
+        type="text"
+        placeholder="First and last name"
+        autocomplete="name"
+        required>
+    </div>
+
+    <!-- EMAIL -->
+    <div>
+      <label
+        class="mb-1.5 block text-[13px] font-medium text-heading"
+        for="su-email">
+        Email Address
+      </label>
+
+      <input
+        class="h-12 w-full rounded-lg border border-line-strong bg-white px-4 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent"
+        id="su-email"
+        type="email"
+        placeholder="name@example.com"
+        autocomplete="email"
+        required>
+    </div>
+
+    <!-- MOBILE -->
+    <div>
+      <label
+        class="mb-1.5 block text-[13px] font-medium text-heading"
+        for="su-phone">
+        Mobile Number
+      </label>
+
+      <div class="flex">
+        <span
+          class="inline-flex h-12 items-center rounded-l-lg border border-r-0 border-line-strong bg-warmbeige/30 px-3 text-[13px] font-medium text-heading">
+          +91
+        </span>
+
+        <input
+          class="h-12 w-full rounded-r-lg border border-line-strong bg-white px-4 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent"
+          id="su-phone"
+          type="tel"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          maxlength="10"
+          placeholder="10-digit mobile number"
+          autocomplete="tel"
+          required>
       </div>
+
+      <p id="register-phone-error"
+         class="mt-1 hidden text-[12px] text-salebadge"></p>
+    </div>
+
+    <!-- SEND OTP -->
+    <button
+      id="send-register-otp"
+      class="mt-1 h-12 w-full rounded-lg bg-accent text-[13px] font-semibold uppercase tracking-[0.6px] text-white shadow-sm transition-colors hover:bg-accent-dark"
+      type="button">
+      Send OTP
+    </button>
+
+    <!-- OTP SECTION -->
+    <div id="register-otp-section" class="hidden">
+
+      <label
+        class="mb-1.5 block text-[13px] font-medium text-heading"
+        for="su-otp">
+        Enter OTP
+      </label>
+
+      <input
+        class="h-12 w-full rounded-lg border border-line-strong bg-white px-4 text-center text-[18px] font-semibold tracking-[8px] outline-none transition-colors placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent"
+        id="su-otp"
+        type="text"
+        inputmode="numeric"
+        pattern="[0-9]*"
+        maxlength="6"
+        placeholder="000000"
+        autocomplete="one-time-code">
+
+      <p class="mt-2 text-[12px] text-muted">
+        Enter the 6-digit OTP sent to your mobile number.
+      </p>
+
+      <p id="register-otp-error"
+         class="mt-1 hidden text-[12px] text-salebadge"></p>
+
+      <button
+        id="verify-register-otp"
+        class="mt-3 h-12 w-full rounded-lg border border-accent bg-white text-[13px] font-semibold uppercase tracking-[0.6px] text-accent transition-colors hover:bg-accent hover:text-white"
+        type="button">
+        Verify OTP
+      </button>
+
+      <p id="register-otp-success"
+         class="mt-2 hidden text-center text-[12px] text-green-600">
+        Mobile number verified successfully.
+      </p>
+
+    </div>
+
+    <!-- CREATE ACCOUNT -->
+    <button
+      id="create-register-account"
+      class="mt-2 h-12 w-full rounded-lg bg-accent text-[13px] font-semibold uppercase tracking-[0.6px] text-white shadow-sm transition-colors hover:bg-accent-dark disabled:cursor-not-allowed disabled:opacity-50"
+      type="submit"
+      disabled>
+      Create Account
+    </button>
+
+  </form>
+</div>
+
 
     </div>
   </div>
@@ -657,5 +802,347 @@
     });
   });
 </script>
+
+<script>
+/*
+ * Signup OTP wiring for account.html
+ *
+ * The HTML form uses:
+ *   su-name, su-email, su-phone, send-register-otp,
+ *   su-otp, verify-register-otp
+ *
+ * The existing frontend API uses:
+ *   POST /api/register/send-otp
+ *   POST /api/register/verify-otp
+ */
+document.addEventListener("DOMContentLoaded", function () {
+  const form = document.getElementById("form-register");
+  const sendBtn = document.getElementById("send-register-otp");
+  const verifyBtn = document.getElementById("verify-register-otp");
+  const createBtn = document.getElementById("create-register-account");
+
+  const nameEl = document.getElementById("su-name");
+  const emailEl = document.getElementById("su-email");
+  const phoneEl = document.getElementById("su-phone");
+  const otpEl = document.getElementById("su-otp");
+
+  const otpSection = document.getElementById("register-otp-section");
+  const phoneError = document.getElementById("register-phone-error");
+  const otpError = document.getElementById("register-otp-error");
+  const otpSuccess = document.getElementById("register-otp-success");
+
+  let otpSentPhone = null;
+
+  function showError(el, message) {
+    if (!el) return;
+    el.textContent = message || "";
+    el.classList.toggle("hidden", !message);
+  }
+
+  function setLoading(button, loading, loadingText, normalText) {
+    if (!button) return;
+    button.disabled = loading;
+    button.textContent = loading ? loadingText : normalText;
+  }
+
+  async function readResponse(res) {
+    const text = await res.text();
+    let data = {};
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch (_) {
+      data = { message: text || "Server returned an invalid response." };
+    }
+    return data;
+  }
+
+  if (form) {
+    // Prevent the browser from submitting the signup form normally.
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+    });
+  }
+
+  if (sendBtn) {
+    sendBtn.addEventListener("click", async function () {
+      showError(phoneError, "");
+      showError(otpError, "");
+
+      const name = nameEl ? nameEl.value.trim() : "";
+      const email = emailEl ? emailEl.value.trim() : "";
+      const rawPhone = phoneEl ? phoneEl.value.replace(/\D/g, "") : "";
+
+      if (!name) {
+        showError(phoneError, "Please enter your full name.");
+        return;
+      }
+
+      if (!email || !emailEl.checkValidity()) {
+        showError(phoneError, "Please enter a valid email address.");
+        return;
+      }
+
+      if (!/^\d{10}$/.test(rawPhone)) {
+        showError(phoneError, "Please enter a valid 10-digit mobile number.");
+        return;
+      }
+
+      const phone = "+91" + rawPhone;
+      otpSentPhone = phone;
+
+      setLoading(sendBtn, true, "Sending OTP...", "Send OTP");
+
+      try {
+        const res = await fetch("/api/register/send-otp", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify({
+            name: name,
+            email: email,
+            phone: phone,
+            referral_code: null
+          })
+        });
+
+        const data = await readResponse(res);
+
+        if (!res.ok) {
+          throw new Error(data.message || "Unable to send OTP.");
+        }
+
+        // Show the OTP area only after the backend confirms the OTP was sent.
+        if (otpSection) otpSection.classList.remove("hidden");
+        if (otpEl) {
+          otpEl.value = "";
+          otpEl.focus();
+        }
+
+        sendBtn.textContent = "OTP Sent";
+        showError(phoneError, "");
+      } catch (error) {
+        console.error("Signup OTP error:", error);
+        showError(
+          phoneError,
+          error.message || "Could not send OTP. Please check your connection."
+        );
+        sendBtn.textContent = "Send OTP";
+      } finally {
+        if (sendBtn.textContent !== "OTP Sent") {
+          sendBtn.disabled = false;
+        }
+      }
+    });
+  }
+
+  if (verifyBtn) {
+    verifyBtn.addEventListener("click", async function () {
+      showError(otpError, "");
+
+      const otp = otpEl ? otpEl.value.trim() : "";
+
+      if (!otpSentPhone) {
+        showError(otpError, "Please click Send OTP first.");
+        return;
+      }
+
+      if (!/^\d{6}$/.test(otp)) {
+        showError(otpError, "Please enter the 6-digit OTP.");
+        return;
+      }
+
+      setLoading(verifyBtn, true, "Verifying...", "Verify OTP");
+
+      try {
+        const res = await fetch("/api/register/verify-otp", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify({
+            phone: otpSentPhone,
+            otp: otp
+          })
+        });
+
+        const data = await readResponse(res);
+
+        if (!res.ok) {
+          throw new Error(data.message || "OTP verification failed.");
+        }
+
+        // The existing backend verification flow creates/authenticates
+        // the account, so do not submit the form a second time.
+        if (data.user) {
+          localStorage.setItem("user-authenticated", "true");
+          localStorage.setItem("user-name", data.user.name || nameEl.value.trim());
+          localStorage.setItem("user-email", data.user.email || emailEl.value.trim());
+          localStorage.setItem("user-phone", data.user.phone || otpSentPhone);
+
+          if (data.access_token) {
+            localStorage.setItem("customer-user-token", data.access_token);
+          }
+        }
+
+        if (otpSuccess) {
+          otpSuccess.textContent = "Mobile number verified successfully.";
+          otpSuccess.classList.remove("hidden");
+        }
+
+        verifyBtn.textContent = "Verified";
+        verifyBtn.disabled = true;
+
+        // Backend already creates the account after OTP verification.
+        if (createBtn) {
+          createBtn.textContent = "Account Created";
+          createBtn.disabled = true;
+        }
+      } catch (error) {
+        console.error("OTP verification error:", error);
+        showError(
+          otpError,
+          error.message || "Could not verify OTP. Please try again."
+        );
+        verifyBtn.disabled = false;
+        verifyBtn.textContent = "Verify OTP";
+      }
+    });
+  }
+});
+</script>
+
+
+
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const phone = document.getElementById("li-mobile");
+  const otp = document.getElementById("li-otp");
+  const send = document.getElementById("send-login-otp");
+  const verify = document.getElementById("verify-login-otp");
+  const otpSection = document.getElementById("login-otp-section");
+  const phoneError = document.getElementById("login-phone-error");
+  const otpError = document.getElementById("login-otp-error");
+
+  let loginPhone = "";
+
+  function showError(el, message) {
+    if (!el) return;
+    el.textContent = message || "";
+    el.classList.toggle("hidden", !message);
+  }
+
+  async function getJson(response) {
+    const text = await response.text();
+    try {
+      return text ? JSON.parse(text) : {};
+    } catch {
+      return { message: text || "Invalid server response." };
+    }
+  }
+
+  if (send) {
+    send.addEventListener("click", async function () {
+      showError(phoneError, "");
+
+      const number = phone.value.replace(/\D/g, "");
+
+      if (!/^\d{10}$/.test(number)) {
+        showError(phoneError, "Please enter a valid 10-digit mobile number.");
+        return;
+      }
+
+      loginPhone = "+91" + number;
+      send.disabled = true;
+      send.textContent = "SENDING OTP...";
+
+      try {
+        const response = await fetch("/api/login", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify({ phone: loginPhone })
+        });
+
+        const data = await getJson(response);
+
+        if (!response.ok) {
+          throw new Error(data.message || "Unable to send OTP.");
+        }
+
+        otpSection.classList.remove("hidden");
+        otp.focus();
+
+        send.textContent = "OTP SENT";
+      } catch (error) {
+        console.error("Login OTP error:", error);
+        showError(phoneError, error.message || "Unable to send OTP.");
+        send.disabled = false;
+        send.textContent = "SEND OTP";
+      }
+    });
+  }
+
+  if (verify) {
+    verify.addEventListener("click", async function () {
+      showError(otpError, "");
+
+      const code = otp.value.replace(/\D/g, "");
+
+      if (!loginPhone) {
+        showError(otpError, "Please send the OTP first.");
+        return;
+      }
+
+      if (!/^\d{6}$/.test(code)) {
+        showError(otpError, "Please enter the 6-digit OTP.");
+        return;
+      }
+
+      verify.disabled = true;
+      verify.textContent = "VERIFYING...";
+
+      try {
+        const response = await fetch("/api/login/verify-otp", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify({
+            phone: loginPhone,
+            otp: code
+          })
+        });
+
+        const data = await getJson(response);
+
+        if (!response.ok) {
+          throw new Error(data.message || "OTP verification failed.");
+        }
+
+        window.location.href = data.redirect || "/account";
+      } catch (error) {
+        console.error("Login OTP verification error:", error);
+        showError(otpError, error.message || "OTP verification failed.");
+        verify.disabled = false;
+        verify.textContent = "VERIFY OTP";
+      }
+    });
+  }
+});
+</script>
+
 </body>
 </html>l>
+ 
