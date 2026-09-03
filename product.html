@@ -65,304 +65,702 @@
 </div>
 
 <!-- ================================ HEADER =========================== -->
-<header class="header-gradient sticky top-0 z-[100] px-3.5 pt-2.5 pb-2.5 md:px-[30px] md:pt-[15px] md:pb-3" data-header>
-  <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-2 md:gap-5">
+  <header class="header-gradient sticky top-0 z-[100] px-3.5 pt-2.5 pb-2.5 md:px-[30px] md:pt-[15px] md:pb-3"
+    data-header>
+    <div class="relative flex items-center gap-4 lg:gap-6">
 
-    <div class="flex items-center gap-1.5">
-      <button class="grid h-[38px] w-[38px] place-items-center lg:hidden" type="button"
-              data-menu-open aria-label="Open menu" aria-expanded="false">
-        <span class="sr-only-custom">Menu</span>
-        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
-      </button>
+      <!-- ================================= -->
+      <!-- LEFT SIDE: LOGO + MOBILE MENU -->
+      <!-- ================================= -->
 
-    </div>
+      <div class="flex shrink-0 items-center gap-2">
 
-    <a class="justify-self-center shrink-0" href="index.html">
-      <img class="w-20 lg:w-[90px]" src="https://estele.co/cdn/shop/files/estele-logo-200--80_160x_160x_5902a255-6c63-4705-af1e-836e5585dedb.png?width=180" alt="Estele" width="90" height="50">
-    </a>
+        <!-- Mobile menu -->
+        <button class="grid h-[38px] w-[38px] place-items-center lg:hidden" type="button" data-menu-open
+          aria-label="Open menu" aria-expanded="false">
+          <span class="sr-only-custom">Menu</span>
 
-    <div class="flex items-center justify-end gap-1 md:gap-2">
-      <form class="hidden items-center overflow-hidden rounded-full border border-line-strong bg-white/70 text-muted lg:flex lg:w-[230px] xl:w-[300px]"
-            action="search.html" role="search">
-        <select class="shrink-0 border-0 border-r border-line-strong bg-transparent py-2 pl-3 pr-1 text-[12px] text-muted outline-none" name="type" aria-label="Category">
-          <option value="*">All Categories</option>
-          <option value="Necklaces">Necklaces</option>
-          <option value="Pendant Set">Pendant Set</option>
-          <option value="Earrings">Earrings</option>
-          <option value="Rings">Rings</option>
-          <option value="Bracelets">Bracelets</option>
-          <option value="Bangles">Bangles</option>
-          <option value="Brooch">Brooch</option>
-          <option value="Choker Set">Choker Set</option>
-          <option value="Maang Tikka">Maang Tikka</option>
-        </select>
-        <input class="w-full min-w-0 border-0 bg-transparent px-3 py-2 text-[13px] text-ink outline-none placeholder:text-muted" type="search" name="q" placeholder="Search for products" aria-label="Search for products">
-        <button class="grid h-[38px] w-[38px] shrink-0 place-items-center text-heading" type="submit" aria-label="Submit search">
-          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M3 6h18M3 12h18M3 18h18" />
+          </svg>
         </button>
-      </form>
-      <button class="relative grid h-[38px] w-[38px] place-items-center text-heading transition-colors hover:[color:var(--nav-hover-color)] lg:hidden" type="button" data-search-open aria-label="Search">
-        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-      </button>
-      <a class="relative grid h-[38px] w-[38px] place-items-center text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="wishlist.html" aria-label="Wishlist">
-        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21.2l7.7-7.7 1.1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
-        <span class="absolute right-0.5 top-0.5 hidden h-4 min-w-4 place-items-center rounded-lg bg-accent px-1 text-[10px] leading-none text-white" data-wishlist-count>0</span>
-      </a>
-      <a class="relative grid h-[38px] w-[38px] place-items-center text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="cart.html" aria-label="Cart">
-        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-        <span class="absolute right-0.5 top-0.5 hidden h-4 min-w-4 place-items-center rounded-lg bg-accent px-1 text-[10px] leading-none text-white" data-cart-count>0</span>
-      </a>
-      <a class="relative grid h-[38px] w-[38px] place-items-center text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="account.html" aria-label="Account">
-        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 7-7h2a7 7 0 0 1 7 7v1"/></svg>
-      </a>
-    </div>
-  </div>
 
-  <nav class="mt-2 hidden lg:block" aria-label="Main navigation">
-    <ul class="flex items-center justify-between">
-        <li><a class="relative inline-flex items-center whitespace-nowrap py-1.5 text-[12px] leading-[14px] uppercase tracking-[0.2px] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="collection.html?collection=hasli">HASLI COLLECTION<span class="ml-1 rounded-full bg-accent px-1.5 py-0.5 text-[8px] font-semibold leading-none text-white">NEW</span></a></li>
+
+        <!-- LOGO -->
+        <a class="shrink-0" href="index.html">
+          <img class="w-20 lg:w-[105px]"
+            src="https://estele.co/cdn/shop/files/estele-logo-200--80_160x_160x_5902a255-6c63-4705-af1e-836e5585dedb.png?width=180"
+            alt="Estele" width="105" height="50">
+        </a>
+
+      </div>
+
+
+      <!-- ================================= -->
+      <!-- CENTER: SEARCH BAR -->
+      <!-- ================================= -->
+
+     <div class="hidden flex-1 justify-center lg:flex">
+
+        <form id="product-search-form"
+          class="relative flex h-[48px] w-[800px] items-center rounded-full border border-line-strong bg-white/70 text-muted"
+          action="search.html" role="search">
+          <!-- Category -->
+          <select id="search-category"
+  class="h-full w-[170px] shrink-0 border-0 border-r border-line-strong bg-transparent pl-4 pr-8 text-[14px] text-muted outline-none"
+            name="type" aria-label="Category">
+
+            <option value="*">All Categories</option>
+            <option value="Necklaces">Necklaces</option>
+            <option value="Pendant Set">Pendant Set</option>
+            <option value="Earrings">Earrings</option>
+            <option value="Rings">Rings</option>
+            <option value="Bracelets">Bracelets</option>
+            <option value="Bangles">Bangles</option>
+            <option value="Brooch">Brooch</option>
+            <option value="Choker Set">Choker Set</option>
+            <option value="Maang Tikka">Maang Tikka</option>
+
+          </select>
+
+         <!-- Search input -->
+          <input id="product-search-input"
+            class="h-full min-w-0 flex-[1.2] border-0 bg-transparent px-4 text-[14px] text-ink outline-none placeholder:text-muted"
+            type="text" name="q" placeholder="Search products" aria-label="Search for products" autocomplete="off">
+
+
+          <!-- Clear button -->
+          <button id="clear-search" type="button"
+            class="hidden h-full w-[35px] shrink-0 items-center justify-center text-lg text-muted hover:text-heading"
+            aria-label="Clear search">
+            ×
+          </button>
+
+
+          <!-- Search button -->
+          <button class="grid h-[48px] w-[48px] shrink-0 place-items-center text-heading" type="submit"
+            aria-label="Submit search">
+
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <circle cx="11" cy="11" r="7" />
+              <path d="M21 21l-4.3-4.3" />
+            </svg>
+
+          </button>
+
+
+          <!-- SEARCH DROPDOWN -->
+          <div id="search-dropdown"
+            class="absolute left-0 top-[calc(100%+60px)] z-[999] hidden w-full max-h-[400px] overflow-y-auto rounded-lg border border-line-strong bg-white shadow-xl">
+          </div>
+        </form>
+
+      </div>
+
+
+      <!-- ================================= -->
+      <!-- RIGHT SIDE: HEART + CART + ACCOUNT -->
+      <!-- ================================= -->
+
+      <div class="ml-auto flex shrink-0 items-center gap-2">
+
+        <!-- HEART -->
+        <a class="relative grid h-[42px] w-[42px] place-items-center text-heading transition-colors hover:[color:var(--nav-hover-color)]"
+          href="wishlist.html" aria-label="Wishlist">
+
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path
+              d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21.2l7.7-7.7 1.1-1.1a5.5 5.5 0 0 0 0-7.8z" />
+          </svg>
+
+          <span
+            class="absolute right-0.5 top-0.5 hidden h-4 min-w-4 place-items-center rounded-lg bg-accent px-1 text-[10px] leading-none text-white"
+            data-wishlist-count>
+            0
+          </span>
+
+        </a>
+        <!-- CART -->
+        <a class="relative grid h-[42px] w-[42px] place-items-center text-heading transition-colors hover:[color:var(--nav-hover-color)]"
+          href="cart.html" aria-label="Cart">
+
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+            <path d="M3 6h18" />
+            <path d="M16 10a4 4 0 0 1-8 0" />
+          </svg>
+
+          <span
+            class="class="absolute right-1 top-1 hidden h-4 min-w-4 place-items-center rounded-full bg-accent px-1 text-[10px] leading-none text-white"
+            data-cart-count>
+            0
+          </span>
+
+        </a>
+        
+             <!-- ACCOUNT -->
+        <a class="relative grid h-[42px] w-[42px] place-items-center text-heading transition-colors hover:[color:var(--nav-hover-color)]"
+          href="account.html" aria-label="Account">
+
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 21v-1a7 7 0 0 1 7-7h2a7 7 0 0 1 7 7v1" />
+          </svg>
+
+        </a>
+
+      </div>
+
+    </div>
+
+    <nav class="mt-2 hidden lg:block" aria-label="Main navigation">
+      <ul class="flex items-center justify-between">
+        <li><a
+            class="relative inline-flex items-center whitespace-nowrap py-1.5 text-[12px] leading-[14px] uppercase tracking-[0.2px] text-heading transition-colors hover:[color:var(--nav-hover-color)]"
+            href="collection.html?collection=hasli">HASLI COLLECTION<span
+              class="ml-1 rounded-full bg-accent px-1.5 py-0.5 text-[8px] font-semibold leading-none text-white">NEW</span></a>
+        </li>
         <li class="group relative">
-          <a class="relative flex items-center gap-1 whitespace-nowrap py-1.5 text-[12px] leading-[14px] uppercase tracking-[0.2px] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="collection.html?collection=crystal-blooms">CRYSTAL BLOOMS
-            <svg class="h-2.5 w-2.5 shrink-0 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+          <a class="relative flex items-center gap-1 whitespace-nowrap py-1.5 text-[12px] leading-[14px] uppercase tracking-[0.2px] text-heading transition-colors hover:[color:var(--nav-hover-color)]"
+            href="collection.html?collection=crystal-blooms">CRYSTAL BLOOMS
+            <svg class="h-2.5 w-2.5 shrink-0 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2.5">
+              <path d="M6 9l6 6 6-6" />
+            </svg>
           </a>
-          <div class="invisible absolute left-1/2 top-full z-20 w-[560px] -translate-x-1/2 translate-y-1 grid grid-cols-3 gap-6 rounded-lg border border-line header-gradient p-5 opacity-0 shadow-lg transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+          <div
+            class="invisible absolute left-1/2 top-full z-20 w-[560px] -translate-x-1/2 translate-y-1 grid grid-cols-3 gap-6 rounded-lg border border-line header-gradient p-5 opacity-0 shadow-lg transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
             <div>
               <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.4px] text-heading">Shop by Occasion</p>
-              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent" href="collection.html?collection=crystal-blooms">Party</a>
-              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent" href="collection.html?collection=crystal-blooms">Celebration Jewelry</a>
+              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent"
+                href="collection.html?collection=crystal-blooms">Party</a>
+              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent"
+                href="collection.html?collection=crystal-blooms">Celebration Jewelry</a>
             </div>
             <div>
               <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.4px] text-heading">Shop by Color</p>
-              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent" href="collection.html?collection=crystal-blooms">Gold</a>
-              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent" href="collection.html?collection=crystal-blooms">Silver</a>
-              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent" href="collection.html?collection=crystal-blooms">Rose Gold</a>
+              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent"
+                href="collection.html?collection=crystal-blooms">Gold</a>
+              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent"
+                href="collection.html?collection=crystal-blooms">Silver</a>
+              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent"
+                href="collection.html?collection=crystal-blooms">Rose Gold</a>
             </div>
             <div>
               <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.4px] text-heading">Shop by Category</p>
-              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent" href="collection.html?cat=necklace-sets">Necklace Sets</a>
-              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent" href="collection.html?cat=bracelets">Bracelets</a>
+              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent"
+                href="collection.html?cat=necklace-sets">Necklace Sets</a>
+              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent"
+                href="collection.html?cat=bracelets">Bracelets</a>
             </div>
           </div>
         </li>
-        <li><a class="relative whitespace-nowrap py-1.5 text-[12px] leading-[14px] uppercase tracking-[0.2px] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="collection.html?collection=new-arrivals">NEW ARRIVALS</a></li>
-        <li><a class="relative whitespace-nowrap py-1.5 text-[12px] leading-[14px] uppercase tracking-[0.2px] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="collection.html?collection=sitara">SITARA COLLECTION</a></li>
+        <li><a
+            class="relative whitespace-nowrap py-1.5 text-[12px] leading-[14px] uppercase tracking-[0.2px] text-heading transition-colors hover:[color:var(--nav-hover-color)]"
+            href="collection.html?collection=new-arrivals">NEW ARRIVALS</a></li>
+        <li><a
+            class="relative whitespace-nowrap py-1.5 text-[12px] leading-[14px] uppercase tracking-[0.2px] text-heading transition-colors hover:[color:var(--nav-hover-color)]"
+            href="collection.html?collection=sitara">SITARA COLLECTION</a></li>
         <li class="group relative">
-          <a class="relative flex items-center gap-1 whitespace-nowrap py-1.5 text-[12px] leading-[14px] uppercase tracking-[0.2px] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="collection.html?collection=wedding-season">WEDDING SEASON
-            <svg class="h-2.5 w-2.5 shrink-0 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+          <a class="relative flex items-center gap-1 whitespace-nowrap py-1.5 text-[12px] leading-[14px] uppercase tracking-[0.2px] text-heading transition-colors hover:[color:var(--nav-hover-color)]"
+            href="collection.html?collection=wedding-season">WEDDING SEASON
+            <svg class="h-2.5 w-2.5 shrink-0 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2.5">
+              <path d="M6 9l6 6 6-6" />
+            </svg>
           </a>
-          <div class="invisible absolute left-1/2 top-full z-20 w-[720px] -translate-x-1/2 translate-y-1 grid grid-cols-4 gap-6 rounded-lg border border-line header-gradient p-5 opacity-0 shadow-lg transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+          <div
+            class="invisible absolute left-1/2 top-full z-20 w-[720px] -translate-x-1/2 translate-y-1 grid grid-cols-4 gap-6 rounded-lg border border-line header-gradient p-5 opacity-0 shadow-lg transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
             <div>
               <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.4px] text-heading">Shop by Collection</p>
-              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent" href="collection.html?collection=wedding-season">Maharani Collection</a>
-              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent" href="collection.html?collection=wedding-season">Morbagh Collection</a>
-              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent" href="collection.html?collection=wedding-season">Temple Collection</a>
-              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent" href="collection.html?collection=wedding-season">Kundan Polki Collection</a>
-              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent" href="collection.html?collection=wedding-season">Matte Collection</a>
+              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent"
+                href="collection.html?collection=wedding-season">Maharani Collection</a>
+              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent"
+                href="collection.html?collection=wedding-season">Morbagh Collection</a>
+              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent"
+                href="collection.html?collection=wedding-season">Temple Collection</a>
+              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent"
+                href="collection.html?collection=wedding-season">Kundan Polki Collection</a>
+              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent"
+                href="collection.html?collection=wedding-season">Matte Collection</a>
             </div>
             <div>
               <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.4px] text-heading">Shop by Occasion</p>
-              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent" href="collection.html?collection=wedding-season">Bridal</a>
-              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent" href="collection.html?collection=wedding-season">Celebration Jewelry</a>
-              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent" href="collection.html?collection=wedding-season">Festive</a>
-              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent" href="collection.html?collection=wedding-season">Ceremonies</a>
-              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent" href="collection.html?collection=wedding-season">Party</a>
+              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent"
+                href="collection.html?collection=wedding-season">Bridal</a>
+              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent"
+                href="collection.html?collection=wedding-season">Celebration Jewelry</a>
+              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent"
+                href="collection.html?collection=wedding-season">Festive</a>
+              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent"
+                href="collection.html?collection=wedding-season">Ceremonies</a>
+              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent"
+                href="collection.html?collection=wedding-season">Party</a>
             </div>
             <div>
               <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.4px] text-heading">Shop by Color</p>
-              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent" href="collection.html?collection=wedding-season">Gold</a>
-              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent" href="collection.html?collection=wedding-season">Silver</a>
-              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent" href="collection.html?collection=wedding-season">Rose Gold</a>
+              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent"
+                href="collection.html?collection=wedding-season">Gold</a>
+              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent"
+                href="collection.html?collection=wedding-season">Silver</a>
+              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent"
+                href="collection.html?collection=wedding-season">Rose Gold</a>
             </div>
             <div>
               <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.4px] text-heading">Shop by Category</p>
-              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent" href="collection.html?cat=necklace-sets">Necklace Sets</a>
-              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent" href="collection.html?cat=bangles">Bangles</a>
-              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent" href="collection.html?cat=bracelets">Bracelets</a>
-              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent" href="collection.html?cat=earrings">Earrings</a>
-              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent" href="collection.html?cat=rings">Rings</a>
-              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent" href="collection.html?cat=chokers">Choker</a>
-              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent" href="collection.html?cat=maang-tikka">Maang Tikka</a>
+              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent"
+                href="collection.html?cat=necklace-sets">Necklace Sets</a>
+              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent"
+                href="collection.html?cat=bangles">Bangles</a>
+              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent"
+                href="collection.html?cat=bracelets">Bracelets</a>
+              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent"
+                href="collection.html?cat=earrings">Earrings</a>
+              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent"
+                href="collection.html?cat=rings">Rings</a>
+              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent"
+                href="collection.html?cat=chokers">Choker</a>
+              <a class="block py-1.5 text-[12px] text-muted transition-colors hover:text-accent"
+                href="collection.html?cat=maang-tikka">Maang Tikka</a>
             </div>
           </div>
         </li>
         <li class="group relative">
-          <a class="relative flex items-center gap-1 whitespace-nowrap py-1.5 text-[12px] leading-[14px] uppercase tracking-[0.2px] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="collection.html?collection=rose">ROSE COLLECTION
-            <svg class="h-2.5 w-2.5 shrink-0 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+          <a class="relative flex items-center gap-1 whitespace-nowrap py-1.5 text-[12px] leading-[14px] uppercase tracking-[0.2px] text-heading transition-colors hover:[color:var(--nav-hover-color)]"
+            href="collection.html?collection=rose">ROSE COLLECTION
+            <svg class="h-2.5 w-2.5 shrink-0 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2.5">
+              <path d="M6 9l6 6 6-6" />
+            </svg>
           </a>
-          <div class="invisible absolute left-1/2 top-full z-20 w-56 -translate-x-1/2 translate-y-1 rounded-lg border border-line header-gradient p-2 opacity-0 shadow-lg transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?cat=necklace-sets">Rose Gold Necklaces</a>
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?cat=earrings">Rose Gold Earrings</a>
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?cat=bangles">Rose Gold Bangles</a>
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?collection=rose">View All</a>
+          <div
+            class="invisible absolute left-1/2 top-full z-20 w-56 -translate-x-1/2 translate-y-1 rounded-lg border border-line header-gradient p-2 opacity-0 shadow-lg transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?cat=necklace-sets">Rose Gold Necklaces</a>
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?cat=earrings">Rose Gold Earrings</a>
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?cat=bangles">Rose Gold Bangles</a>
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?collection=rose">View All</a>
           </div>
         </li>
         <li class="group relative">
-          <a class="relative flex items-center gap-1 whitespace-nowrap py-1.5 text-[12px] leading-[14px] uppercase tracking-[0.2px] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="collection.html">NECKLACES
-            <svg class="h-2.5 w-2.5 shrink-0 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+          <a class="relative flex items-center gap-1 whitespace-nowrap py-1.5 text-[12px] leading-[14px] uppercase tracking-[0.2px] text-heading transition-colors hover:[color:var(--nav-hover-color)]"
+            href="collection.html">NECKLACES
+            <svg class="h-2.5 w-2.5 shrink-0 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2.5">
+              <path d="M6 9l6 6 6-6" />
+            </svg>
           </a>
-          <div class="invisible absolute left-1/2 top-full z-20 w-56 -translate-x-1/2 translate-y-1 rounded-lg border border-line header-gradient p-2 opacity-0 shadow-lg transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?cat=necklace-sets">Necklace Sets</a>
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?cat=pendant-sets">Pendant Sets</a>
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?cat=chokers">Choker Sets</a>
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?cat=mangalsutra">Mangalsutra</a>
+          <div
+            class="invisible absolute left-1/2 top-full z-20 w-56 -translate-x-1/2 translate-y-1 rounded-lg border border-line header-gradient p-2 opacity-0 shadow-lg transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?cat=necklace-sets">Necklace Sets</a>
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?cat=pendant-sets">Pendant Sets</a>
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?cat=chokers">Choker Sets</a>
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?cat=mangalsutra">Mangalsutra</a>
           </div>
         </li>
         <li class="group relative">
-          <a class="relative flex items-center gap-1 whitespace-nowrap py-1.5 text-[12px] leading-[14px] uppercase tracking-[0.2px] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="collection.html">CATEGORIES
-            <svg class="h-2.5 w-2.5 shrink-0 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+          <a class="relative flex items-center gap-1 whitespace-nowrap py-1.5 text-[12px] leading-[14px] uppercase tracking-[0.2px] text-heading transition-colors hover:[color:var(--nav-hover-color)]"
+            href="collection.html">CATEGORIES
+            <svg class="h-2.5 w-2.5 shrink-0 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2.5">
+              <path d="M6 9l6 6 6-6" />
+            </svg>
           </a>
-          <div class="invisible absolute left-1/2 top-full z-20 w-56 -translate-x-1/2 translate-y-1 rounded-lg border border-line header-gradient p-2 opacity-0 shadow-lg transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?cat=necklace-sets">Necklace Sets</a>
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?cat=pendant-sets">Pendant Sets</a>
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?cat=earrings">Earrings</a>
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?cat=rings">Finger Rings</a>
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?cat=bracelets">Bracelets</a>
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?cat=bangles">Bangles</a>
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?cat=brooch">Brooch Pin</a>
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?cat=chokers">Choker Sets</a>
+          <div
+            class="invisible absolute left-1/2 top-full z-20 w-56 -translate-x-1/2 translate-y-1 rounded-lg border border-line header-gradient p-2 opacity-0 shadow-lg transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?cat=necklace-sets">Necklace Sets</a>
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?cat=pendant-sets">Pendant Sets</a>
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?cat=earrings">Earrings</a>
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?cat=rings">Finger Rings</a>
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?cat=bracelets">Bracelets</a>
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?cat=bangles">Bangles</a>
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?cat=brooch">Brooch Pin</a>
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?cat=chokers">Choker Sets</a>
           </div>
         </li>
         <li class="group relative">
-          <a class="relative flex items-center gap-1 whitespace-nowrap py-1.5 text-[12px] leading-[14px] uppercase tracking-[0.2px] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="collection.html">BEST SELLER
-            <svg class="h-2.5 w-2.5 shrink-0 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+          <a class="relative flex items-center gap-1 whitespace-nowrap py-1.5 text-[12px] leading-[14px] uppercase tracking-[0.2px] text-heading transition-colors hover:[color:var(--nav-hover-color)]"
+            href="collection.html">BEST SELLER
+            <svg class="h-2.5 w-2.5 shrink-0 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2.5">
+              <path d="M6 9l6 6 6-6" />
+            </svg>
           </a>
-          <div class="invisible absolute left-1/2 top-full z-20 w-56 -translate-x-1/2 translate-y-1 rounded-lg border border-line header-gradient p-2 opacity-0 shadow-lg transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?cat=necklace-sets">Top Necklaces</a>
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?cat=earrings">Top Earrings</a>
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?cat=bracelets">Top Bracelets</a>
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html">View All Bestsellers</a>
+          <div
+            class="invisible absolute left-1/2 top-full z-20 w-56 -translate-x-1/2 translate-y-1 rounded-lg border border-line header-gradient p-2 opacity-0 shadow-lg transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?cat=necklace-sets">Top Necklaces</a>
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?cat=earrings">Top Earrings</a>
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?cat=bracelets">Top Bracelets</a>
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html">View All Bestsellers</a>
           </div>
         </li>
         <li class="group relative">
-          <a class="relative flex items-center gap-1 whitespace-nowrap py-1.5 text-[12px] leading-[14px] uppercase tracking-[0.2px] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="collection.html">COLLECTIONS
-            <svg class="h-2.5 w-2.5 shrink-0 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+          <a class="relative flex items-center gap-1 whitespace-nowrap py-1.5 text-[12px] leading-[14px] uppercase tracking-[0.2px] text-heading transition-colors hover:[color:var(--nav-hover-color)]"
+            href="collection.html">COLLECTIONS
+            <svg class="h-2.5 w-2.5 shrink-0 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2.5">
+              <path d="M6 9l6 6 6-6" />
+            </svg>
           </a>
-                    <div class="invisible absolute left-1/2 top-full z-20 max-h-[380px] w-56 -translate-x-1/2 translate-y-1 overflow-y-auto rounded-lg border border-line header-gradient p-2 opacity-0 shadow-lg transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?collection=hasli">Hasli Collection</a>
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?collection=sitara">Sitara Collection</a>
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?collection=maharani">Maharani Collection</a>
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?collection=diamante">Diamante Collection</a>
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?collection=9-to-5">9 To 5 Collection</a>
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?collection=kundan-polki">Kundan Polki Collection</a>
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?collection=pearl">Pearl Collection</a>
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?collection=varya">Varya Collection</a>
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?collection=lotus">Lotus Collection</a>
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?collection=temple">Temple Collection</a>
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?collection=colour-pop">Colour Pop Collection</a>
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?collection=ever-fine">Ever Fine Collection</a>
-            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="collection.html?collection=clover">Clover Collection</a>
+          <div
+            class="invisible absolute left-1/2 top-full z-20 max-h-[380px] w-56 -translate-x-1/2 translate-y-1 overflow-y-auto rounded-lg border border-line header-gradient p-2 opacity-0 shadow-lg transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?collection=hasli">Hasli Collection</a>
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?collection=sitara">Sitara Collection</a>
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?collection=maharani">Maharani Collection</a>
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?collection=diamante">Diamante Collection</a>
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?collection=9-to-5">9 To 5 Collection</a>
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?collection=kundan-polki">Kundan Polki Collection</a>
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?collection=pearl">Pearl Collection</a>
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?collection=varya">Varya Collection</a>
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?collection=lotus">Lotus Collection</a>
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?collection=temple">Temple Collection</a>
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?collection=colour-pop">Colour Pop Collection</a>
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?collection=ever-fine">Ever Fine Collection</a>
+            <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent"
+              href="collection.html?collection=clover">Clover Collection</a>
           </div>
         </li>
-    </ul>
-  </nav>
+      </ul>
+    </nav>
 
   <!-- Sticky mobile search -->
-  <form class="mt-2.5 flex items-center gap-2.5 rounded-lg border border-line-strong bg-white px-3.5 py-2.5 text-muted md:hidden"
-        action="search.html" role="search">
-    <svg class="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-    <input class="w-full border-0 bg-transparent text-[14px] text-ink outline-none placeholder:text-muted"
-           type="search" name="q" placeholder="Search for products" aria-label="Search for products">
+    <form class="hidden" action="search.html" role="search">
+      <svg class="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+        <circle cx="11" cy="11" r="7" />
+        <path d="M21 21l-4.3-4.3" />
+      </svg>
+      <input class="w-full border-0 bg-transparent text-[14px] text-ink outline-none placeholder:text-muted"
+        type="search" name="q" placeholder="Search for products" aria-label="Search for products">
+    </form>
+  </header>
+  <!-- MOBILE SEARCH BAR -->
+<div class="flex w-full items-center px-3 pb-3 lg:hidden">
+
+  <form
+    id="mobile-product-search-form"
+    class="flex h-[38px] w-full items-center overflow-hidden rounded-full border border-line-strong bg-white/70"
+    action="search.html"
+    role="search">
+
+    <!-- Category -->
+    <select
+  class="h-full w-[130px] shrink-0 border-0 border-r border-line-strong bg-transparent pl-2 pr-7 text-[12px] text-muted outline-none"
+      name="type"
+      aria-label="Category">
+
+      <option value="*">All Categories</option>
+      <option value="Necklaces">Necklaces</option>
+      <option value="Pendant Set">Pendant Set</option>
+      <option value="Earrings">Earrings</option>
+      <option value="Rings">Rings</option>
+      <option value="Bracelets">Bracelets</option>
+      <option value="Bangles">Bangles</option>
+
+    </select>
+
+    <!-- Search -->
+    <input
+      class="h-full min-w-0 flex-1 border-0 bg-transparent px-3 text-[13px] text-ink outline-none placeholder:text-muted"
+      type="search"
+      name="q"
+      placeholder="Search products"
+      aria-label="Search for products">
+       <!-- Search Icon -->
+    <button
+      class="grid h-[38px] w-[38px] shrink-0 place-items-center text-heading"
+      type="submit"
+      aria-label="Search">
+
+      <svg class="h-5 w-5"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.6">
+
+        <circle cx="11" cy="11" r="7"/>
+        <path d="M21 21l-4.3-4.3"/>
+
+      </svg>
+
+    </button>
+
   </form>
-</header>
+
+</div>
 
 <!-- ============================ MOBILE DRAWER ========================= -->
-<div class="fixed inset-0 z-[200]" data-drawer hidden>
-  <div class="absolute inset-0 bg-black/45 opacity-0 transition-opacity duration-300" data-drawer-backdrop data-menu-close></div>
-  <nav class="header-gradient absolute left-0 top-0 flex h-full w-[min(320px,85vw)] -translate-x-full flex-col transition-transform duration-300"
-       data-drawer-panel aria-label="Mobile navigation">
-    <div class="flex items-center justify-between border-b border-line px-5 py-[18px]">
-      <span class="text-[13px] font-medium uppercase tracking-[0.5px]">Menu</span>
-      <button class="text-[28px] leading-none text-heading" type="button" data-menu-close aria-label="Close menu">&times;</button>
-    </div>
-    <ul class="flex-1 overflow-y-auto py-2">
-      <li class="border-b border-line"><a class="flex items-center gap-2 px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent bg-[#f3ece4] font-medium" href="pages/about-us.html">About Us</a></li>
-      <li class="border-b border-line">
-        <details class="marker-pm">
-          <summary class="flex items-center justify-between px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading">Shop All</summary>
-          <ul class="bg-white/60">
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html">Necklace Sets</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html">Pendant Sets</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html">Earrings</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html">Rings</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html">Bracelets</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html">Bangles</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html">Brooch</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html">Chokers</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html">Maang Tikka</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html">Mangalsutra</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html">Colour Pop</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html">Morbagh Collection</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html?collection=rose">Rose Collection</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html">Crystal Blooms</a></li>
-          </ul>
-        </details>
-      </li>
-      <li class="border-b border-line"><a class="flex items-center gap-2 px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent" href="collection.html"><span>Our Bestseller</span></a></li>
-      <li class="border-b border-line"><a class="flex items-center gap-2 px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent" href="collection.html?collection=new-arrivals"><span>New In</span></a></li>
-      <li class="border-b border-line"><a class="flex items-center gap-2 px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent" href="collection.html"><span>The Grand Estele Sale &ndash; Flat 50%</span> <span class="rounded-[3px] bg-pinksoft px-[7px] py-0.5 text-[9px] font-medium tracking-[0.4px] text-accent-dark whitespace-nowrap">Trending</span></a></li>
-      <li class="border-b border-line"><a class="flex items-center gap-2 px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent" href="collection.html?collection=rose"><span>Rose Gold Collection</span> <span class="rounded-[3px] bg-pinksoft px-[7px] py-0.5 text-[9px] font-medium tracking-[0.4px] text-accent-dark whitespace-nowrap">Estele Specialty</span></a></li>
-      <li class="border-b border-line"><a class="flex items-center gap-2 px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent" href="collection.html?collection=wedding-season"><span>Wedding Edit</span> <span class="rounded-[3px] bg-pinksoft px-[7px] py-0.5 text-[9px] font-medium tracking-[0.4px] text-accent-dark whitespace-nowrap">Trending</span></a></li>
-      <li class="border-b border-line">
-        <details class="marker-pm">
-          <summary class="flex items-center justify-between px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading">Shop by Category</summary>
-          <ul class="bg-white/60">
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html">Necklace Sets</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html">Pendant Sets</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html">Earrings</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html">Rings</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html">Bracelets</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html">Bangles</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html">Brooch</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html">Chokers</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html">Maang Tikka</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html">Mangalsutra</a></li>
-          </ul>
-        </details>
-      </li>
-      <li class="border-b border-line">
-        <details class="marker-pm">
-          <summary class="flex items-center justify-between px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading">Shop by Collection</summary>
-                    <ul class="bg-white/60">
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html?collection=hasli">Hasli Collection</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html?collection=sitara">Sitara Collection</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html?collection=maharani">Maharani Collection</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html?collection=diamante">Diamante Collection</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html?collection=9-to-5">9 To 5 Collection</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html?collection=kundan-polki">Kundan Polki Collection</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html?collection=pearl">Pearl Collection</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html?collection=varya">Varya Collection</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html?collection=lotus">Lotus Collection</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html?collection=temple">Temple Collection</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html?collection=colour-pop">Colour Pop Collection</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html?collection=ever-fine">Ever Fine Collection</a></li>
-            <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="collection.html?collection=clover">Clover Collection</a></li>
-          </ul>
-        </details>
-      </li>
-      <li class="border-b border-line"><a class="flex items-center gap-2 px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent" href="collection.html?collection=hasli"><span>Hasli Collection</span></a></li>
-      <li class="border-b border-line"><a class="flex items-center gap-2 px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent" href="collection.html?collection=sitara"><span>Sitara Collection</span> <span class="rounded-[3px] bg-pinksoft px-[7px] py-0.5 text-[9px] font-medium tracking-[0.4px] text-accent-dark whitespace-nowrap">New Launch</span></a></li>
-      <li class="border-b border-line"><a class="flex items-center gap-2 px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent" href="collection.html"><span>Crystal Blooms</span> <span class="rounded-[3px] bg-pinksoft px-[7px] py-0.5 text-[9px] font-medium tracking-[0.4px] text-accent-dark whitespace-nowrap">Hand Picked</span></a></li>
-      <li class="border-b border-line"><a class="flex items-center gap-2 px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent" href="collection.html"><span>Morbagh Collection</span></a></li>
-    </ul>
-    <div class="p-5">
-      <a class="inline-flex items-center justify-center gap-2 border border-accent bg-accent px-8 py-[13px] text-[13px] font-medium uppercase tracking-[0.5px] text-white transition-colors hover:border-accent-dark hover:bg-accent-dark w-full" href="account.html">Login / Register</a>
-    </div>
-  </nav>
-</div>
-
-<!-- =========================== SEARCH OVERLAY ========================= -->
-<div class="fixed inset-0 z-[200]" data-search hidden>
-  <div class="absolute inset-0 bg-black/45" data-search-close></div>
-  <div class="relative bg-white py-10">
-    <form class="mx-auto flex max-w-[720px] items-center gap-2.5 px-4" action="search.html" role="search">
-      <input class="w-full border border-line-strong bg-white px-4 py-3 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-heading" type="search" name="q" placeholder="Search for jewellery..." aria-label="Search">
-      <button class="inline-flex items-center justify-center gap-2 border border-accent bg-accent px-8 py-[13px] text-[13px] font-medium uppercase tracking-[0.5px] text-white transition-colors hover:border-accent-dark hover:bg-accent-dark" type="submit">Search</button>
-      <button class="text-[30px] leading-none text-heading" type="button" data-search-close aria-label="Close search">&times;</button>
-    </form>
+  <div class="fixed inset-0 z-[200]" data-drawer hidden>
+    <div class="absolute inset-0 bg-black/45 opacity-0 transition-opacity duration-300" data-drawer-backdrop
+      data-menu-close></div>
+    <nav
+      class="header-gradient absolute left-0 top-0 flex h-full w-[min(320px,85vw)] -translate-x-full flex-col transition-transform duration-300"
+      data-drawer-panel aria-label="Mobile navigation">
+      <div class="flex items-center justify-between border-b border-line px-5 py-[18px]">
+        <span class="text-[13px] font-medium uppercase tracking-[0.5px]">Menu</span>
+        <button class="text-[28px] leading-none text-heading" type="button" data-menu-close
+          aria-label="Close menu">&times;</button>
+      </div>
+      <ul class="flex-1 overflow-y-auto py-2">
+        <li class="border-b border-line"><a
+            class="flex items-center gap-2 px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent bg-[#f3ece4] font-medium"
+            href="pages/about-us.html">About Us</a></li>
+        <li class="border-b border-line">
+          <details class="marker-pm">
+            <summary
+              class="flex items-center justify-between px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading">
+              Shop All</summary>
+            <ul class="bg-white/60">
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?cat=necklace-sets">Necklace Sets</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?cat=pendant-sets">Pendant Sets</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?cat=earrings">Earrings</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?cat=rings">Rings</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?cat=bracelets">Bracelets</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?cat=bangles">Bangles</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?cat=brooch">Brooch</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?cat=chokers">Chokers</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?cat=maang-tikka">Maang Tikka</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?cat=mangalsutra">Mangalsutra</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html">Colour Pop</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html">Morbagh Collection</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?collection=rose">Rose Collection</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html">Crystal Blooms</a></li>
+            </ul>
+          </details>
+        </li>
+      <li class="border-b border-line"><a
+            class="flex items-center gap-2 px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent"
+            href="collection.html"><span>Our Bestseller</span></a></li>
+        <li class="border-b border-line"><a
+            class="flex items-center gap-2 px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent"
+            href="collection.html?collection=new-arrivals"><span>New In</span></a></li>
+        <li class="border-b border-line"><a
+            class="flex items-center gap-2 px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent"
+            href="collection.html"><span>The Grand Estele Sale &ndash; Flat 50%</span> <span
+              class="rounded-[3px] bg-pinksoft px-[7px] py-0.5 text-[9px] font-medium tracking-[0.4px] text-accent-dark whitespace-nowrap">Trending</span></a>
+        </li>
+        <li class="border-b border-line"><a
+            class="flex items-center gap-2 px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent"
+            href="collection.html?collection=rose"><span>Rose Gold Collection</span> <span
+              class="rounded-[3px] bg-pinksoft px-[7px] py-0.5 text-[9px] font-medium tracking-[0.4px] text-accent-dark whitespace-nowrap">Estele
+              Specialty</span></a></li>
+        <li class="border-b border-line"><a
+            class="flex items-center gap-2 px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent"
+            href="collection.html?collection=wedding-season"><span>Wedding Edit</span> <span
+              class="rounded-[3px] bg-pinksoft px-[7px] py-0.5 text-[9px] font-medium tracking-[0.4px] text-accent-dark whitespace-nowrap">Trending</span></a>
+        </li>
+        <li class="border-b border-line">
+          <details class="marker-pm">
+            <summary
+              class="flex items-center justify-between px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading">
+              Shop by Category</summary>
+            <ul class="bg-white/60">
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?cat=necklace-sets">Necklace Sets</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?cat=pendant-sets">Pendant Sets</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?cat=earrings">Earrings</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?cat=rings">Rings</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?cat=bracelets">Bracelets</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?cat=bangles">Bangles</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?cat=brooch">Brooch</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?cat=chokers">Chokers</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?cat=maang-tikka">Maang Tikka</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?cat=mangalsutra">Mangalsutra</a></li>
+            </ul>
+          </details>
+          </li>
+        <li class="border-b border-line">
+          <details class="marker-pm">
+            <summary
+              class="flex items-center justify-between px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading">
+              Shop by Collection</summary>
+            <ul class="bg-white/60">
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?collection=hasli">Hasli Collection</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?collection=sitara">Sitara Collection</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?collection=maharani">Maharani Collection</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?collection=diamante">Diamante Collection</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?collection=9-to-5">9 To 5 Collection</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?collection=kundan-polki">Kundan Polki Collection</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?collection=pearl">Pearl Collection</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?collection=varya">Varya Collection</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?collection=lotus">Lotus Collection</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?collection=temple">Temple Collection</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?collection=colour-pop">Colour Pop Collection</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?collection=ever-fine">Ever Fine Collection</a></li>
+              <li class="border-t border-line"><a
+                  class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent"
+                  href="collection.html?collection=clover">Clover Collection</a></li>
+            </ul>
+          </details>
+        </li>
+        <li class="border-b border-line"><a
+            class="flex items-center gap-2 px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent"
+            href="collection.html?collection=hasli"><span>Hasli Collection</span></a></li>
+        <li class="border-b border-line"><a
+            class="flex items-center gap-2 px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent"
+            href="collection.html?collection=sitara"><span>Sitara Collection</span> <span
+              class="rounded-[3px] bg-pinksoft px-[7px] py-0.5 text-[9px] font-medium tracking-[0.4px] text-accent-dark whitespace-nowrap">New
+              Launch</span></a></li>
+        <li class="border-b border-line"><a
+            class="flex items-center gap-2 px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent"
+            href="collection.html"><span>Crystal Blooms</span> <span
+              class="rounded-[3px] bg-pinksoft px-[7px] py-0.5 text-[9px] font-medium tracking-[0.4px] text-accent-dark whitespace-nowrap">Hand
+              Picked</span></a></li>
+        <li class="border-b border-line"><a
+            class="flex items-center gap-2 px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent"
+            href="collection.html"><span>Morbagh Collection</span></a></li>
+      </ul>
+      <div class="p-5">
+        <a class="inline-flex items-center justify-center gap-2 border border-accent bg-accent px-8 py-[13px] text-[13px] font-medium uppercase tracking-[0.5px] text-white transition-colors hover:border-accent-dark hover:bg-accent-dark w-full"
+          href="account.html">Login / Register</a>
+      </div>
+    </nav>
   </div>
-</div>
+
+ <!-- =========================== SEARCH OVERLAY ========================= -->
+  <div class="fixed inset-0 z-[200]" data-search hidden>
+    <div class="absolute inset-0 bg-black/45" data-search-close></div>
+    <div class="relative bg-white py-10">
+      <form class="mx-auto flex max-w-[720px] items-center gap-2.5 px-4" action="search.html" role="search">
+        <input
+          class="w-full border border-line-strong bg-white px-4 py-3 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-heading"
+          type="search" name="q" placeholder="Search for jewellery..." aria-label="Search">
+        <button
+          class="inline-flex items-center justify-center gap-2 border border-accent bg-accent px-8 py-[13px] text-[13px] font-medium uppercase tracking-[0.5px] text-white transition-colors hover:border-accent-dark hover:bg-accent-dark"
+          type="submit">Search</button>
+        <button class="text-[30px] leading-none text-heading" type="button" data-search-close
+          aria-label="Close search">&times;</button>
+      </form>
+    </div>
+  </div>
+
 
 <main id="main">
+  <!-- Marketing-collection banner (Hasli, Rose Collection, etc.) — hidden
+       unless the page was reached via ?collection= and that collection has
+       banner data; product-category pages (?cat=) never show this. The
+       collection name + tagline are baked into the banner image itself. -->
+  <section class="hidden aspect-[16/5] w-full overflow-hidden" data-collection-banner>
+    <img class="h-full w-full object-cover" data-collection-banner-img src="" alt="">
+  </section>
+
+  <nav class="mx-auto w-full max-w-wrapper px-3 md:px-4 flex flex-wrap items-center gap-1.5 py-4 text-[13px] text-muted" aria-label="Breadcrumb">
+      <a class="transition-colors hover:text-accent" href="index.html">Home</a>
+      <span class="opacity-50">/</span>
+      <a class="transition-colors hover:text-accent" href="collection.html">Collections</a>
+      <span class="opacity-50">/</span>
+      <span class="text-heading" aria-current="page" data-collection-crumb>Necklace Sets</span>
+  </nav>
+
+  <div class="mx-auto w-full max-w-wrapper px-3 md:px-4">
+    <header class="pb-6 pt-2 text-center md:pb-[30px]">
+      <h1 class="text-[20px] uppercase tracking-[0.5px] md:text-[26px] mb-2.5" data-collection-title>Necklace Sets</h1>
+      <p class="mx-auto max-w-[70ch] text-[13.5px] text-muted" data-collection-desc>Handcrafted necklace sets in 24Kt gold plating, finished with anti-tarnish protection. 45 products.</p>
+    </header>
+  </div>
+
+  <div class="mx-auto w-full max-w-wrapper px-3 md:px-4 pb-10 md:pb-[60px]">
   <!-- ============================ BREADCRUMB ============================ -->
   <nav class="mx-auto w-full max-w-wrapper px-4 md:px-8 flex flex-wrap items-center gap-1.5 py-4 text-[13px] text-muted" aria-label="Breadcrumb">
     <a class="transition-colors hover:text-accent" href="index.html">Home</a>
@@ -690,101 +1088,534 @@
   </section>
 </main>
 
-<!-- ==================== STICKY MOBILE PURCHASE BAR ===================== -->
-<!-- Right padding reserves clearance so the fixed support-chat widget never sits over the Add to Cart button -->
-<div class="fixed inset-x-0 bottom-[56px] z-[105] flex items-center justify-between border-t border-line bg-white/95 backdrop-blur-md pl-4 pr-[76px] py-2.5 shadow-lg md:hidden" data-sticky-buy>
-  <div class="flex items-center gap-3 min-w-0">
-    <img class="h-10 w-10 rounded object-cover border border-line" src="https://estele.co/cdn/shop/files/12_652a7dbc-3f6c-4f4d-bc49-d31a3f71c6dc.jpg?width=160" alt="" width="40" height="40">
-        <div class="min-w-0">
-      <p class="text-[12px] font-semibold text-heading truncate">Bloom Radiance Set</p>
-      <p class="text-[12px] font-semibold text-accent">₹2,400 <span class="text-[10px] text-muted line-through font-normal">₹4,799</span></p>
-    </div>
+<!-- STICKY MOBILE ADD TO CART -->
+<div
+  class="fixed bottom-[55px] left-0 right-0 z-[9999] flex items-center justify-between border-t border-line bg-white px-4 py-3 shadow-lg md:hidden"
+  data-sticky-buy
+>
+
+  <div class="min-w-0">
+    <p class="truncate text-[12px] font-semibold text-heading">
+      Bloom Radiance Set
+    </p>
+
+    <p class="text-[13px] font-semibold text-accent">
+      ₹2,400
+    </p>
   </div>
-  <button class="rounded bg-accent px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.5px] text-white shadow" type="button" data-add-to-cart>
+
+  <button
+    class="ml-3 shrink-0 rounded-md bg-accent px-6 py-3 text-[11px] font-semibold uppercase tracking-[0.5px] text-white"
+    type="button"
+    data-add-to-cart
+  >
     Add to Cart
   </button>
+
 </div>
 
 <!-- ================================ FOOTER =========================== -->
-<footer class="bg-accent text-white border-t border-accent-dark">
-  <div class="mx-auto w-full max-w-wrapper px-4 md:px-8 pt-12 md:pt-16 pb-10">
-    <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 pb-10 border-b border-white/10">
-      
-      <!-- Col 1: About & Socials -->
-      <div>
-        <h3 class="font-serif text-[14px] md:text-[15px] font-semibold uppercase tracking-[0.5px] text-gold mb-4">About Estele</h3>
-        <p class="text-[13px] leading-relaxed text-[#F8F4EC]/80 mb-5">India's leading fashion jewellery destination since 1989. Over 100,000 anti-tarnish 24K gold plated designs crafted with care.</p>
-        <div class="flex items-center gap-3">
-          <a class="grid h-9 w-9 place-items-center rounded-full border border-white/20 text-[#F8F4EC] transition-all hover:border-gold hover:bg-gold hover:text-accent" href="https://www.facebook.com/estelejewelery/" target="_blank" rel="noopener" aria-label="Facebook">
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 22v-8.2h2.75l.41-3.2h-3.16V8.4c0-.93.26-1.56 1.6-1.56h1.7V3.98A22.7 22.7 0 0 0 14.2 3.8c-2.44 0-4.11 1.49-4.11 4.22v2.36H7.3v3.2h2.79V22h3.4Z"/></svg>
-          </a>
-          <a class="grid h-9 w-9 place-items-center rounded-full border border-white/20 text-[#F8F4EC] transition-all hover:border-gold hover:bg-gold hover:text-accent" href="https://www.instagram.com/estele.co/" target="_blank" rel="noopener" aria-label="Instagram">
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none"/></svg>
-          </a>
-          <a class="grid h-9 w-9 place-items-center rounded-full border border-white/20 text-[#F8F4EC] transition-all hover:border-gold hover:bg-gold hover:text-accent" href="https://www.linkedin.com/company/30985476" target="_blank" rel="noopener" aria-label="LinkedIn">
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M6.94 8.5H3.56V21h3.38V8.5ZM5.25 3a1.96 1.96 0 1 0 0 3.92A1.96 1.96 0 0 0 5.25 3ZM21 13.9c0-3.6-1.92-5.28-4.48-5.28-2.07 0-2.99 1.14-3.5 1.94V8.5H9.64c.05 1 0 12.5 0 12.5h3.38v-6.98c0-.37.03-.75.14-1.02.3-.75 1-1.53 2.16-1.53 2.13 1.16 2.13 2.85V21H21v-7.1Z"/></svg>
-          </a>
+  <footer class="bg-accent text-white border-t border-accent-dark">
+   <div class="mx-auto w-full max-w-[1600px] px-4 md:px-8 lg:px-12 pt-12 md:pt-16 pb-10">
+    <div class="mx-auto grid w-full max-w-[1500px] grid-cols-1 gap-2 pb-6 border-b border-white/10 md:grid-cols-2 lg:grid-cols-4 lg:gap-8">
+
+    <!-- Col 1: About & Socials -->
+<div class="text-center md:text-left">
+
+  <h3 class="font-serif text-[14px] md:text-[15px] font-semibold uppercase tracking-[0.5px] text-gold mb-4">
+    About Estele
+  </h3>
+
+  <p class="text-[13px] leading-relaxed text-[#F8F4EC]/80 mb-5">
+    India's leading fashion jewellery destination since 1989.
+    Over 100,000 anti-tarnish 24K gold plated designs crafted with care.
+  </p>
+
+  <!-- Social Icons -->
+  <div class="flex items-center justify-center md:justify-start gap-3">
+
+    <!-- Facebook -->
+    <a class="grid h-9 w-9 place-items-center rounded-full border border-white/20 text-[#F8F4EC] transition-all hover:border-gold hover:bg-gold hover:text-accent"
+      href="https://www.facebook.com/estelejewelery/"
+      target="_blank"
+      rel="noopener"
+      aria-label="Facebook">
+
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+        <path
+          d="M13.5 22v-8.2h2.75l.41-3.2h-3.16V8.4c0-.93.26-1.56 1.6-1.56h1.7V3.98A22.7 22.7 0 0 0 14.2 3.8c-2.44 0-4.11 1.49-4.11 4.22v2.36H7.3v3.2h2.79V22h3.4Z" />
+      </svg>
+
+    </a>
+
+
+    <!-- Instagram -->
+    <a class="grid h-9 w-9 place-items-center rounded-full border border-white/20 text-[#F8F4EC] transition-all hover:border-gold hover:bg-gold hover:text-accent"
+      href="https://www.instagram.com/estele.co/"
+      target="_blank"
+      rel="noopener"
+      aria-label="Instagram">
+
+      <svg class="h-4 w-4"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8">
+
+        <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" />
+        <circle cx="12" cy="12" r="4" />
+        <circle cx="17.2" cy="6.8" r="1"
+          fill="currentColor"
+          stroke="none" />
+
+      </svg>
+
+    </a>
+
+
+    <!-- LinkedIn -->
+    <a class="grid h-9 w-9 place-items-center rounded-full border border-white/20 text-[#F8F4EC] transition-all hover:border-gold hover:bg-gold hover:text-accent"
+      href="https://www.linkedin.com/company/30985476"
+      target="_blank"
+      rel="noopener"
+      aria-label="LinkedIn">
+
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+        <path
+          d="M6.94 8.5H3.56V21h3.38V8.5ZM5.25 3a1.96 1.96 0 1 0 0 3.92A1.96 1.96 0 0 0 5.25 3ZM21 13.9c0-3.6-1.92-5.28-4.48-5.28-2.07 0-2.99 1.14-3.5 1.94V8.5H9.64c.05 1 0 12.5 0 12.5h3.38v-6.98c0-.37.03-.75.14-1.02.3-.75 1-1.53 2.16-1.53 1.52 0 2.13 1.16 2.13 2.85V21H21v-7.1Z" />
+      </svg>
+
+    </a>
+
+  </div>
+</div>
+
+        <!-- Col 2: Know Your Jewellery -->
+
+        <!-- Desktop View -->
+        <div class="hidden md:block">
+          <h3 class="font-serif text-[15px] font-semibold uppercase tracking-[0.5px] text-gold mb-4">
+            Know Your Jewellery
+          </h3>
+
+          <ul class="space-y-2.5 text-[13px] text-[#F8F4EC]/85">
+            <li>
+              <a class="transition-colors hover:text-gold" href="collection.html?collection=rose">
+                Rose Collection
+              </a>
+            </li>
+
+            <li>
+              <a class="transition-colors hover:text-gold" href="collection.html?cat=earrings">
+                Earrings
+              </a>
+            </li>
+
+            <li>
+              <a class="transition-colors hover:text-gold" href="collection.html?cat=maang-tikka">
+                Maang Tikka
+              </a>
+            </li>
+
+            <li>
+              <a class="transition-colors hover:text-gold" href="collection.html?collection=crystal-blooms">
+                Crystal Blooms
+              </a>
+            </li>
+
+            <li>
+              <a class="transition-colors hover:text-gold" href="collection.html?collection=hasli">
+                Hasli Collection
+              </a>
+            </li>
+          </ul>
         </div>
-      </div>
 
-      <!-- Col 2: Know Your Jewellery -->
-      <div>
-        <h3 class="font-serif text-[14px] md:text-[15px] font-semibold uppercase tracking-[0.5px] text-gold mb-4">Know Your Jewellery</h3>
-        <ul class="space-y-2.5 text-[13px] text-[#F8F4EC]/85">
-          <li><a class="transition-colors hover:text-gold" href="collection.html?collection=rose">Rose Collection</a></li>
-          <li><a class="transition-colors hover:text-gold" href="collection.html?cat=earrings">Earrings</a></li>
-          <li><a class="transition-colors hover:text-gold" href="collection.html?cat=maang-tikka">Maang Tikka</a></li>
-          <li><a class="transition-colors hover:text-gold" href="collection.html?collection=crystal-blooms">Crystal Blooms</a></li>
-          <li><a class="transition-colors hover:text-gold" href="collection.html?collection=hasli">Hasli Collection</a></li>
-        </ul>
-      </div>
 
-      <!-- Col 3: Customer Service -->
-      <div>
-        <h3 class="font-serif text-[14px] md:text-[15px] font-semibold uppercase tracking-[0.5px] text-gold mb-4">Customer Service</h3>
-        <ul class="space-y-2.5 text-[13px] text-[#F8F4EC]/85">
-          <li><a class="transition-colors hover:text-gold" href="account.html">Track Order</a></li>
-          <li><a class="transition-colors hover:text-gold" href="pages/return-policy.html">Return &amp; Exchange Policy</a></li>
-          <li><a class="transition-colors hover:text-gold" href="pages/shipping-and-handling.html">Shipping &amp; Delivery</a></li>
-          <li><a class="transition-colors hover:text-gold" href="pages/faq-s.html">Help &amp; FAQ</a></li>
-          <li><a class="transition-colors hover:text-gold" href="pages/contact.html">Contact Us</a></li>
-          <li><a class="transition-colors hover:text-gold" href="pages/storelocator.html">Store Locator</a></li>
-        </ul>
-      </div>
+        <!-- Mobile View Dropdown -->
+        <details class="group border-b border-white/10 py-0 md:hidden">
 
-      <!-- Col 4: Contact Us & Download -->
-      <div>
-        <h3 class="font-serif text-[14px] md:text-[15px] font-semibold uppercase tracking-[0.5px] text-gold mb-4">Contact Us</h3>
-        <div class="space-y-2 text-[13px] text-[#F8F4EC]/85">
-          <p class="font-semibold text-[#F8F4EC]">Estele Accessories Pvt. Ltd.</p>
-          <p class="leading-normal">9-47, Keshav Nagar, Boduppal, Hyderabad, Telangana 500092</p>
-          <p>Phone: <a href="tel:+918247476318" class="underline hover:text-gold">+91 8247476318</a></p>
-          <p>Email: <a href="mailto:info@estele.co" class="underline hover:text-gold">info@estele.co</a></p>
+          <summary
+            class="flex cursor-pointer list-none items-center justify-between py-1 font-serif text-[14px] font-semibold uppercase tracking-[0.5px] text-gold">
+
+            Know Your Jewellery
+
+            <!-- Plus Icon -->
+            <span class="text-[22px] font-normal group-open:hidden">
+              +
+            </span>
+
+            <!-- Minus Icon -->
+            <span class="hidden text-[22px] font-normal group-open:block">
+              −
+            </span>
+
+          </summary>
+
+          <ul class="space-y-3 pb-2 pt-3 text-[13px] text-[#F8F4EC]/85">
+
+            <li>
+              <a class="transition-colors hover:text-gold" href="collection.html?collection=rose">
+                Rose Collection
+              </a>
+            </li>
+
+            <li>
+              <a class="transition-colors hover:text-gold" href="collection.html?cat=earrings">
+                Earrings
+              </a>
+            </li>
+
+            <li>
+              <a class="transition-colors hover:text-gold" href="collection.html?cat=maang-tikka">
+                Maang Tikka
+              </a>
+            </li>
+
+            <li>
+              <a class="transition-colors hover:text-gold" href="collection.html?collection=crystal-blooms">
+                Crystal Blooms
+              </a>
+            </li>
+
+            <li>
+              <a class="transition-colors hover:text-gold" href="collection.html?collection=hasli">
+                Hasli Collection
+              </a>
+            </li>
+
+          </ul>
+
+        </details>
+
+        <!-- Desktop -->
+        <div class="hidden md:block">
+
+          <h3 class="font-serif text-[15px] font-semibold uppercase tracking-[0.5px] text-gold mb-4">
+            Customer Service
+          </h3>
+
+          <ul class="space-y-2.5 text-[13px] text-[#F8F4EC]/85">
+            <li><a href="account.html">Track Order</a></li>
+
+            <li>
+              <a href="pages/return-policy.html">
+                Return &amp; Exchange Policy
+              </a>
+            </li>
+
+            <li>
+              <a href="pages/shipping-and-handling.html">
+                Shipping &amp; Delivery
+              </a>
+            </li>
+
+            <li>
+              <a href="pages/faq-s.html">
+                Help &amp; FAQ
+              </a>
+            </li>
+
+            <li>
+              <a href="pages/contact.html">
+                Contact Us
+              </a>
+            </li>
+
+            <li>
+              <a href="pages/storelocator.html">
+                Store Locator
+              </a>
+            </li>
+          </ul>
+
         </div>
-        <div class="mt-4">
-          <h4 class="text-[11px] font-semibold uppercase tracking-[0.5px] text-[#F8F4EC]/70 mb-2">Download App</h4>
-          <div class="flex gap-2.5">
-            <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" class="h-8" alt="App Store" width="100" height="32" />
-            <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" class="h-8" alt="Google Play" width="100" height="32" />
+
+
+        <!-- Mobile Dropdown -->
+
+       <details class="group border-b border-white/10 py-0 md:hidden">
+
+          <summary
+            class="flex cursor-pointer list-none items-center justify-between py-1 font-serif text-[14px] font-semibold uppercase tracking-[0.5px] text-gold">
+
+            Customer Service
+
+            <span class="text-[22px] group-open:hidden">
+              +
+            </span>
+
+            <span class="hidden text-[22px] group-open:block">
+              −
+            </span>
+
+          </summary>
+
+
+          <ul class="space-y-3 pb-2 pt-3 text-[13px] text-[#F8F4EC]/85">
+
+            <li>
+              <a href="account.html">
+                Track Order
+              </a>
+            </li>
+
+            <li>
+              <a href="pages/return-policy.html">
+                Return &amp; Exchange Policy
+              </a>
+            </li>
+
+            <li>
+              <a href="pages/shipping-and-handling.html">
+                Shipping &amp; Delivery
+              </a>
+            </li>
+
+            <li>
+              <a href="pages/faq-s.html">
+                Help &amp; FAQ
+              </a>
+            </li>
+
+            <li>
+              <a href="pages/contact.html">
+                Contact Us
+              </a>
+            </li>
+
+            <li>
+              <a href="pages/storelocator.html">
+                Store Locator
+              </a>
+            </li>
+
+          </ul>
+
+        </details>
+
+        <!-- ================= Col 4: Contact Us ================= -->
+
+        <!-- Desktop View -->
+        <div class="hidden md:block">
+
+          <h3 class="font-serif text-[15px] font-semibold uppercase tracking-[0.5px] text-gold mb-4">
+            Contact Us
+          </h3>
+
+          <div class="space-y-2 text-[13px] text-[#F8F4EC]/85">
+
+            <p class="font-semibold text-[#F8F4EC]">
+              Estele Accessories Pvt. Ltd.
+            </p>
+
+            <p class="leading-normal">
+              9-47, Keshav Nagar, Boduppal, Hyderabad, Telangana 500092
+            </p>
+
+            <p>
+              Phone:
+              <a href="tel:+918247476318" class="underline hover:text-gold">
+                +91 8247476318
+              </a>
+            </p>
+
+            <p>
+              Email:
+              <a href="mailto:info@estele.co" class="underline hover:text-gold">
+                info@estele.co
+              </a>
+            </p>
+
           </div>
+
+
+          <div class="mt-4">
+
+            <h4 class="mb-2 text-[11px] font-semibold uppercase tracking-[0.5px] text-[#F8F4EC]/70">
+              Download App
+            </h4>
+
+            <div class="flex gap-2.5">
+
+              <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" class="h-8"
+                alt="App Store" width="100" height="32" />
+
+              <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" class="h-8"
+                alt="Google Play" width="100" height="32" />
+
+            </div>
+
+          </div>
+
         </div>
+
+
+        <!-- ================= MOBILE CONTACT US DROPDOWN ================= -->
+
+        <details class="group border-b border-white/10 py-0 md:hidden">
+
+          <summary
+            class="flex cursor-pointer list-none items-center justify-between py-1 font-serif text-[14px] font-semibold uppercase tracking-[0.5px] text-gold">
+
+            Contact Us
+
+            <!-- Plus -->
+            <span class="text-[22px] font-normal group-open:hidden">
+              +
+            </span>
+
+            <!-- Minus -->
+            <span class="hidden text-[22px] font-normal group-open:block">
+              −
+            </span>
+
+          </summary>
+
+
+          <!-- Dropdown Content -->
+
+          <div class="space-y-1 pt-2 text-[13px] text-[#F8F4EC]/85">
+
+            <p class="font-semibold text-[#F8F4EC]">
+              Estele Accessories Pvt. Ltd.
+            </p>
+
+            <p class="leading-normal">
+              9-47, Keshav Nagar, Boduppal, Hyderabad, Telangana 500092
+            </p>
+
+            <p>
+              Phone:
+              <a href="tel:+918247476318" class="underline hover:text-gold">
+                +91 8247476318
+              </a>
+            </p>
+
+            <p>
+              Email:
+              <a href="mailto:info@estele.co" class="underline hover:text-gold">
+                info@estele.co
+              </a>
+            </p>
+
+          </div>
+
+
+          <!-- Download App -->
+
+          <div class="mt-2 pb-1">
+
+            <h4 class="mb- text-[11px] font-semibold uppercase tracking-[0.5px] text-[#F8F4EC]/70">
+              Download App
+            </h4>
+
+            <div class="flex gap-2.5">
+
+              <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" class="h-8"
+                alt="App Store" width="100" height="32" />
+
+              <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" class="h-8"
+                alt="Google Play" width="100" height="32" />
+
+            </div>
+
+          </div>
+
+        </details>
+    </div>
+
+<!-- ================= BOTTOM FOOTER ================= -->
+<div class="bg-transparent text-[12px] text-[#D8CDC0]">
+
+  <!-- ============================================== -->
+<!-- MOBILE FOOTER -->
+<!-- Visible only on mobile -->
+<!-- ============================================== -->
+
+<div class="block px-3 py-4 text-center md:hidden">
+
+    <!-- Footer Links - First Line -->
+    <div class="flex items-center justify-center gap-3 whitespace-nowrap text-[10px]">
+
+        <a
+            class="transition-colors hover:text-gold"
+            href="pages/privacy-policy.html"
+        >
+            Privacy Policy
+        </a>
+
+        <a
+            class="transition-colors hover:text-gold"
+            href="pages/return-policy.html"
+        >
+            Terms &amp; Conditions
+        </a>
+
+        <a
+            class="transition-colors hover:text-gold"
+            href="pages/shipping-and-handling.html"
+        >
+            Shipping Policy
+        </a>
+
+    </div>
+
+
+    <!-- Copyright - Second Line -->
+    <p class="mt-3 text-[10px] leading-5">
+        Copyright &copy; 2026 ESTELE Accessories Pvt. Ltd.
+        All rights reserved.
+    </p>
+
+</div>
+
+
+  <!-- ============================================== -->
+  <!-- DESKTOP FOOTER -->
+  <!-- Visible only on tablet and desktop -->
+  <!-- ============================================== -->
+
+  <div class="hidden border-t border-white/10 px-8 py-4 md:block">
+
+    <div class="flex w-full items-center justify-between">
+
+      <!-- Copyright -->
+      <p class="shrink-0 whitespace-nowrap">
+        Copyright &copy; 2026 ESTELE Accessories Pvt. Ltd.
+        All rights reserved.
+      </p>
+
+
+      <!-- Footer Links -->
+      <div class="ml-8 flex shrink-0 items-center gap-8">
+
+        <a
+          class="whitespace-nowrap transition-colors hover:text-gold"
+          href="pages/privacy-policy.html">
+          Privacy Policy
+        </a>
+
+        <a
+          class="whitespace-nowrap transition-colors hover:text-gold"
+          href="pages/return-policy.html">
+          Terms &amp; Conditions
+        </a>
+
+        <a
+          class="whitespace-nowrap transition-colors hover:text-gold"
+          href="pages/shipping-and-handling.html">
+          Shipping Policy
+        </a>
+
       </div>
 
     </div>
+
   </div>
 
-  <!-- Bottom Darker Burgundy Strip (#3A0610 per doc4.pdf) -->
-  <div class="bg-[#3A0610] pt-4 pb-[160px] md:pb-20 text-[12px] text-[#D8CDC0]">
-    <div class="mx-auto w-full max-w-wrapper px-4 md:px-8 flex flex-col items-center justify-between gap-2.5 sm:flex-row">
-      <p>Copyright &copy; 2026 ESTELE Accessories Pvt. Ltd. All rights reserved.</p>
-      <div class="flex gap-4">
-        <a class="hover:text-gold transition-colors" href="pages/privacy-policy.html">Privacy Policy</a>
-        <a class="hover:text-gold transition-colors" href="pages/return-policy.html">Terms &amp; Conditions</a>
-        <a class="hover:text-gold transition-colors" href="pages/shipping-and-handling.html">Shipping Policy</a>
-      </div>
-    </div>
-  </div>
-</footer>
+</div>
+
 
 <!-- ============================ SUPPORT CHAT ========================== -->
 <div class="fixed bottom-[86px] right-3 z-[120] flex items-center justify-end gap-2 md:bottom-[18px] md:right-[18px]" data-chat>
@@ -849,10 +1680,28 @@
     <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2 4.5 13H11l-1 9 8.5-11H12z"/></svg>
     <span>Trending</span>
   </a>
-  <a class="flex flex-1 flex-col items-center gap-0.5 px-0.5 py-2 text-[10px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent" href="pages/storelocator.html">
-    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 21s7-5.7 7-11a7 7 0 1 0-14 0c0 5.3 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>
-    <span>Stores</span>
-  </a>
+  <a class="flex flex-1 flex-col items-center gap-0.5 px-0.5 py-2 text-[10px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent"
+   href="pages/cart.html">
+
+    <!-- CART ICON -->
+    <svg class="h-5 w-5"
+         viewBox="0 0 24 24"
+         fill="none"
+         stroke="currentColor"
+         stroke-width="1.5">
+
+        <path stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M3 3h2l2.5 12h10l2-8H6.2" />
+
+        <circle cx="9" cy="19" r="1.5"/>
+        <circle cx="17" cy="19" r="1.5"/>
+
+    </svg>
+
+    <span>Cart</span>
+
+</a>
   <a class="flex flex-1 flex-col items-center gap-0.5 px-0.5 py-2 text-[10px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent" href="account.html">
     <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 7-7h2a7 7 0 0 1 7 7v1"/></svg>
     <span>Account</span>
