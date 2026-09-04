@@ -37,6 +37,7 @@ class Review extends Model implements HasMedia
         'body',
         'status',
         'is_verified_purchase',
+        'review_date',
     ];
 
     protected function casts(): array
@@ -44,7 +45,17 @@ class Review extends Model implements HasMedia
         return [
             'rating' => 'integer',
             'is_verified_purchase' => 'boolean',
+            'review_date' => 'date',
         ];
+    }
+
+    /**
+     * The date to show on the storefront — an admin-set review_date (for
+     * backdating an admin-authored review) takes priority over created_at.
+     */
+    public function displayDate(): \Illuminate\Support\Carbon
+    {
+        return $this->review_date ?? $this->created_at;
     }
 
     public function product(): BelongsTo

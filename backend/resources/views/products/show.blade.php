@@ -48,7 +48,7 @@
       'review' => $reviews->isNotEmpty() ? $reviews->map(fn ($review) => [
         '@type' => 'Review',
         'author' => ['@type' => 'Person', 'name' => $review->customer_name],
-        'datePublished' => $review->created_at->toIso8601String(),
+        'datePublished' => $review->displayDate()->toIso8601String(),
         'reviewBody' => $review->body,
         'reviewRating' => [
           '@type' => 'Rating',
@@ -443,7 +443,7 @@
                   @endforeach
                 </div>
               @endif
-              <p class="text-[12px] text-muted">{{ $review->customer_name }} &middot; {{ $review->created_at->format('d M Y') }}</p>
+              <p class="text-[12px] text-muted">{{ $review->customer_name }} &middot; {{ $review->displayDate()->format('d M Y') }}</p>
             </li>
           @endforeach
         </ul>
