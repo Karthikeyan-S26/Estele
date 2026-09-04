@@ -31,10 +31,10 @@ class ProductsTable
                     ->badge()
                     ->label('Categories'),
                 TextColumn::make('price')
-                    ->money('inr')
+                    ->formatStateUsing(fn ($state) => '₹'.number_format((float) $state, 2))
                     ->sortable(),
                 TextColumn::make('compare_at_price')
-                    ->money('inr')
+                    ->formatStateUsing(fn ($state) => filled($state) ? '₹'.number_format((float) $state, 2) : null)
                     ->sortable(),
                 TextColumn::make('stock_quantity')
                     ->numeric()

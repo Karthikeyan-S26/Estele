@@ -34,7 +34,7 @@ class OrdersTable
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('total')
-                    ->money('inr')
+                    ->formatStateUsing(fn ($state) => '₹'.number_format((float) $state, 2))
                     ->sortable(),
                 // Explicit shorter labels — the auto-generated "Payment method"/
                 // "Payment status" headers were wider than the badge content
