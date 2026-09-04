@@ -5,6 +5,7 @@ namespace App\Filament\Resources\NewsletterSubscribers\Tables;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\PaginationMode;
 use Filament\Tables\Table;
 
 class NewsletterSubscribersTable
@@ -12,6 +13,7 @@ class NewsletterSubscribersTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->paginationMode(PaginationMode::Simple)
             ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('email')
