@@ -4,17 +4,13 @@ namespace App\Filament\Resources\Reviews\Tables;
 
 use App\Models\Review;
 use Filament\Actions\Action;
-use Filament\Actions\BulkAction;
-use Filament\Actions\BulkActionGroup;
 use Filament\Actions\EditAction;
-use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Enums\PaginationMode;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Collection;
 
 class ReviewsTable
 {
@@ -22,6 +18,13 @@ class ReviewsTable
     {
         return $table
             ->paginationMode(PaginationMode::Simple)
+            // Bulk-select checkbox column disabled: its "Select all N records"
+            // banner calls Number::format() unconditionally regardless of
+            // whether any bulk actions are registered, hard-requiring the intl
+            // PHP extension this environment doesn't have. toolbarActions()
+            // removal alone doesn't turn off selection in Filament v5 — this
+            // does.
+            ->disabledSelection()
             ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('product.title')
@@ -74,36 +77,6 @@ class ReviewsTable
                     ->visible(fn (Review $record) => $record->status !== 'rejected')
                     ->action(fn (Review $record) => $record->update(['status' => 'rejected'])),
                 EditAction::make(),
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    BulkAction::make('approve')
-                        ->label('Approve selected')
-                        ->icon(Heroicon::OutlinedCheckCircle)
-                        ->color('success')
-                        ->action(function (Collection $records) {
-                            $records->each(fn (Review $record) => $record->update(['status' => 'approved']));
-
-                            Notification::make()
-                                ->title("Approved {$records->count()} review(s).")
-                                ->success()
-                                ->send();
-                        })
-                        ->deselectRecordsAfterCompletion(),
-                    BulkAction::make('reject')
-                        ->label('Reject selected')
-                        ->icon(Heroicon::OutlinedXCircle)
-                        ->color('danger')
-                        ->action(function (Collection $records) {
-                            $records->each(fn (Review $record) => $record->update(['status' => 'rejected']));
-
-                            Notification::make()
-                                ->title("Rejected {$records->count()} review(s).")
-                                ->success()
-                                ->send();
-                        })
-                        ->deselectRecordsAfterCompletion(),
-                ]),
             ]);
     }
 }

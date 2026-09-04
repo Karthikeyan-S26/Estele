@@ -2,8 +2,6 @@
 
 namespace App\Filament\Resources\CmsPages\Tables;
 
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\PaginationMode;
@@ -15,6 +13,13 @@ class CmsPagesTable
     {
         return $table
             ->paginationMode(PaginationMode::Simple)
+            // Bulk-select checkbox column disabled: its "Select all N records"
+            // banner calls Number::format() unconditionally regardless of
+            // whether any bulk actions are registered, hard-requiring the intl
+            // PHP extension this environment doesn't have. toolbarActions()
+            // removal alone doesn't turn off selection in Filament v5 — this
+            // does.
+            ->disabledSelection()
             ->columns([
                 TextColumn::make('title')
                     ->searchable(),
@@ -37,11 +42,6 @@ class CmsPagesTable
             ])
             ->recordActions([
                 EditAction::make(),
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
             ]);
     }
 }

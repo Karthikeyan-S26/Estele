@@ -2,8 +2,6 @@
 
 namespace App\Filament\Resources\Popups\Tables;
 
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -18,6 +16,13 @@ class PopupsTable
     {
         return $table
             ->paginationMode(PaginationMode::Simple)
+            // Bulk-select checkbox column disabled: its "Select all N records"
+            // banner calls Number::format() unconditionally regardless of
+            // whether any bulk actions are registered, hard-requiring the intl
+            // PHP extension this environment doesn't have. toolbarActions()
+            // removal alone doesn't turn off selection in Filament v5 — this
+            // does.
+            ->disabledSelection()
             ->defaultSort('sort_order')
             ->columns([
                 TextColumn::make('name')
@@ -37,7 +42,6 @@ class PopupsTable
                     ->label('New visitors only')
                     ->boolean(),
                 TextColumn::make('sort_order')
-                    ->numeric()
                     ->sortable(),
             ])
             ->filters([
@@ -51,11 +55,6 @@ class PopupsTable
             ])
             ->recordActions([
                 EditAction::make(),
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
             ]);
     }
 }

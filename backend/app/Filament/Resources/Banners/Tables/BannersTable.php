@@ -2,8 +2,6 @@
 
 namespace App\Filament\Resources\Banners\Tables;
 
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
@@ -17,6 +15,13 @@ class BannersTable
     {
         return $table
             ->paginationMode(PaginationMode::Simple)
+            // Bulk-select checkbox column disabled: its "Select all N records"
+            // banner calls Number::format() unconditionally regardless of
+            // whether any bulk actions are registered, hard-requiring the intl
+            // PHP extension this environment doesn't have. toolbarActions()
+            // removal alone doesn't turn off selection in Filament v5 — this
+            // does.
+            ->disabledSelection()
             ->defaultSort('sort_order')
             ->columns([
                 SpatieMediaLibraryImageColumn::make('image')
@@ -27,7 +32,6 @@ class BannersTable
                 TextColumn::make('link_url')
                     ->searchable(),
                 TextColumn::make('sort_order')
-                    ->numeric()
                     ->sortable(),
                 IconColumn::make('is_active')
                     ->boolean(),
@@ -37,11 +41,6 @@ class BannersTable
             ])
             ->recordActions([
                 EditAction::make(),
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
             ]);
     }
 }

@@ -18,6 +18,13 @@ class CustomersTable
             // every other admin table in this app (see ProductsTable/
             // OrdersTable) rather than adding a fresh hard dependency here.
             ->paginationMode(PaginationMode::Simple)
+            // Bulk-select checkbox column disabled: its "Select all N records"
+            // banner calls Number::format() unconditionally regardless of
+            // whether any bulk actions are registered, hard-requiring the intl
+            // PHP extension this environment doesn't have. toolbarActions()
+            // removal alone doesn't turn off selection in Filament v5 — this
+            // does.
+            ->disabledSelection()
             // Customers are users with no panel role — the same distinction
             // WalletManagementTable already draws between staff and shoppers.
             ->query(fn () => User::query()->whereDoesntHave('roles'))
