@@ -25,7 +25,7 @@ class ShieldSeeder extends Seeder
         'Banner', 'Category', 'Collection', 'Coupon', 'Offer',
         'HomepageBlock', 'Order', 'Product', 'Role', 'Setting',
         'BlogCategory', 'Blog', 'CmsPage', 'FaqCategory', 'Faq', 'Review',
-        'Popup', 'NewsletterSubscriber', 'Redirect',
+        'Popup', 'NewsletterSubscriber', 'Redirect', 'Customer',
     ];
 
     private const ACTIONS = [

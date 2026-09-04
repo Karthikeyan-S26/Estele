@@ -18,6 +18,7 @@ use App\Models\Popup;
 use App\Models\Product;
 use App\Models\Review;
 use App\Models\Setting;
+use App\Models\User;
 use App\Observers\BannerObserver;
 use App\Observers\BlogCategoryObserver;
 use App\Observers\BlogObserver;
@@ -34,8 +35,10 @@ use App\Observers\PopupObserver;
 use App\Observers\ProductObserver;
 use App\Observers\ReviewObserver;
 use App\Observers\SettingObserver;
+use App\Policies\CustomerPolicy;
 use App\View\Composers\SiteDataComposer;
 use BezhanSalleh\FilamentShield\Facades\FilamentShield;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -55,6 +58,13 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         FilamentShield::enforcePolicies();
+
+        // Laravel's policy auto-discovery matches on class name
+        // ("FooPolicy" <-> "Foo"), which can't work for User: the Customers
+        // admin resource needs its own permission namespace (Customer, not
+        // User) so it never gets tangled up with panel-staff auth or any
+        // other resource that might key off App\Models\User later.
+        Gate::policy(User::class, CustomerPolicy::class);
 
         View::composer('layouts.app', SiteDataComposer::class);
 
