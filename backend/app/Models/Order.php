@@ -160,6 +160,32 @@ class Order extends Model
                 \Illuminate\Support\Facades\Mail::to($order->customer_email)->queue(new \App\Mail\OrderPacked($order));
             }
         });
+
+        // Runs post-commit (updating() cannot be used here — WalletService::credit()
+        // opens and commits its OWN transaction, so crediting the wallet from a
+        // pre-commit hook could leave the wallet credited even if the outer status
+        // update itself later rolled back). wasChanged() (not isDirty()) is the
+        // correct check here: by the time `updated` fires, dirty-tracking has
+        // already been cleared, but wasChanged() still reports what the save
+        // actually persisted.
+        static::updated(function (Order $order) {
+            if (! $order->wasChanged('status')) {
+                return;
+            }
+
+            if (
+                in_array($order->status, self::RESTOCKING_STATUSES, true)
+                && (float) $order->wallet_amount_used > 0
+                && $order->user_id
+            ) {
+                app(\App\Services\WalletService::class)->credit(
+                    $order->user,
+                    (float) $order->wallet_amount_used,
+                    'order_refund',
+                    $order,
+                );
+            }
+        });
     }
 
     /**
