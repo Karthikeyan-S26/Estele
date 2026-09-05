@@ -13,7 +13,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'phone', 'password'])]
+#[Fillable(['name', 'email', 'phone', 'password', 'wallet_balance'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser
 {
@@ -35,6 +35,16 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasMany(Address::class)->latest();
     }
 
+    public function walletTransactions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(WalletTransaction::class)->latest();
+    }
+
+    public function rewardSubmissions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(RewardSubmission::class)->latest();
+    }
+
     /**
      * Get the attributes that should be cast.
      *
@@ -45,6 +55,7 @@ class User extends Authenticatable implements FilamentUser
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'wallet_balance' => 'decimal:2',
         ];
     }
 }

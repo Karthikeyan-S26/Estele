@@ -42,6 +42,7 @@ class Order extends Model
         'discount_amount',
         'shipping_fee',
         'total',
+        'wallet_amount_used',
         'payment_method',
         'payment_status',
         'payment_reference',
@@ -76,6 +77,7 @@ class Order extends Model
             'discount_amount' => 'decimal:2',
             'shipping_fee' => 'decimal:2',
             'total' => 'decimal:2',
+            'wallet_amount_used' => 'decimal:2',
             'refunded_amount' => 'decimal:2',
             'tracking_synced_at' => 'datetime',
             'cancellation_requested_at' => 'datetime',
@@ -111,6 +113,11 @@ class Order extends Model
     public function couponUsages(): HasMany
     {
         return $this->hasMany(CouponUsage::class);
+    }
+
+    public function rewardSubmission(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(RewardSubmission::class);
     }
 
     protected static function booted(): void
