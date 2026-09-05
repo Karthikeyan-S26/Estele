@@ -10,6 +10,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\PaginationMode;
 use Filament\Tables\Table;
 
 class WalletManagementTable
@@ -17,6 +18,7 @@ class WalletManagementTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->paginationMode(PaginationMode::Simple)
             ->query(fn () => User::query()->whereDoesntHave('roles'))
             ->defaultSort('wallet_balance', 'desc')
             ->searchable()

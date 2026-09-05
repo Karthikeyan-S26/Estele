@@ -1,4 +1,4 @@
-<div class="fi-ta-ctn overflow-x-auto rounded-lg border border-gray-200 dark:border-white/10">
+<div class="fi-ta-ctn overflow-x-auto rounded-lg border border-gray-200 dark:border-white/10" style="max-width: calc(100vw - 5rem);">
     @if($transactions->isEmpty())
         <p class="p-4 text-sm text-gray-500 dark:text-gray-400">No wallet activity yet.</p>
     @else
