@@ -119,7 +119,7 @@ class EditOrder extends EditRecord
                 ])
                 ->action(function (array $data, Order $record) {
                     $alreadyRefunded = (float) ($record->refunded_amount ?? 0);
-                    $maxRefundable = (float) $record->total - $alreadyRefunded;
+                    $maxRefundable = (float) $record->total - (float) $record->wallet_amount_used - $alreadyRefunded;
                     $amount = (float) $data['amount'];
 
                     if ($amount > $maxRefundable) {

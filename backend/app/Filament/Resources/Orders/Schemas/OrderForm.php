@@ -151,6 +151,12 @@ class OrderForm
                             ->visible(fn (?Order $record) => $record && filled($record->coupon_code)),
                         TextInput::make('shipping_fee')->numeric()->prefix('₹')->disabled(),
                         TextInput::make('total')->numeric()->prefix('₹')->disabled(),
+                        TextInput::make('wallet_amount_used')
+                            ->label('Wallet Used')
+                            ->numeric()
+                            ->prefix('₹')
+                            ->disabled()
+                            ->visible(fn (?Order $record) => $record && (float) $record->wallet_amount_used > 0),
                         TextInput::make('refunded_amount')
                             ->label('Refunded')
                             ->numeric()

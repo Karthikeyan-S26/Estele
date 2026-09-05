@@ -81,6 +81,12 @@
             <td class="label">Shipping</td>
             <td class="text-right">₹{{ number_format($order->shipping_fee, 2) }}</td>
         </tr>
+        @if($order->wallet_amount_used > 0)
+            <tr>
+                <td class="label">Wallet Used</td>
+                <td class="text-right">&minus; Rs. {{ number_format($order->wallet_amount_used, 2) }}</td>
+            </tr>
+        @endif
         @if($order->refunded_amount > 0)
             <tr>
                 <td class="label">Refunded</td>

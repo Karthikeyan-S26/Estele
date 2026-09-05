@@ -11,6 +11,7 @@ use App\Models\ProductVariant;
 use App\Services\Payment\PaymentManager;
 use App\Services\Shipping\ShippingManager;
 use App\Services\Shipping\UnserviceableAddressException;
+use App\Services\WalletService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +23,7 @@ class CheckoutController extends Controller
     public function __construct(
         private readonly ShippingManager $shipping,
         private readonly PaymentManager $payments,
+        private readonly WalletService $wallet,
     ) {}
 
     public function index(Request $request)
@@ -114,6 +116,7 @@ class CheckoutController extends Controller
             'shipping_postal_code' => ['required', 'string', 'max:20'],
             'order_note' => ['nullable', 'string', 'max:1000'],
             'payment_method' => ['required', 'in:cod,razorpay'],
+            'wallet_amount' => ['nullable', 'numeric', 'min:0'],
         ], [], [
             'customer_first_name' => 'first name',
             'customer_last_name' => 'last name',
@@ -246,16 +249,61 @@ class CheckoutController extends Controller
                     ]);
                 }
 
+                $walletAmountUsed = 0.0;
+                if (auth()->check() && (float) ($validated['wallet_amount'] ?? 0) > 0) {
+                    $walletAmountUsed = min(
+                        (float) $validated['wallet_amount'],
+                        (float) $order->total,
+                        (float) auth()->user()->wallet_balance,
+                    );
+
+                    // Razorpay always charges $order->total in full — PaymentManager
+                    // doesn't know about wallet_amount_used. Applying a PARTIAL wallet
+                    // debit here while still routing the remainder through Razorpay
+                    // would charge the customer twice for that portion. So for razorpay
+                    // orders, only ever apply the wallet when it fully covers the total
+                    // (order is marked paid below and Razorpay is skipped entirely).
+                    // Otherwise leave the wallet untouched and let the full amount go
+                    // through the gateway as normal. COD has no such risk (settled at
+                    // delivery), so partial wallet use is always allowed there.
+                    if ($validated['payment_method'] === 'razorpay' && $walletAmountUsed < (float) $order->total) {
+                        $walletAmountUsed = 0.0;
+                    }
+
+                    if ($walletAmountUsed > 0) {
+                        // WalletService::debit() throws \DomainException on insufficient
+                        // balance. Should never actually happen here — $walletAmountUsed
+                        // is already clamped to the live wallet_balance above — but if it
+                        // somehow does, it must surface as a field error on the checkout
+                        // form rather than the generic cart-index redirect the stock-check
+                        // \DomainExceptions below use. Re-thrown as \RuntimeException so
+                        // the outer catch can tell the two apart.
+                        try {
+                            $this->wallet->debit(auth()->user(), $walletAmountUsed, 'order_payment', $order);
+                        } catch (\DomainException $e) {
+                            throw new \RuntimeException($e->getMessage(), previous: $e);
+                        }
+
+                        $order->update([
+                            'wallet_amount_used' => $walletAmountUsed,
+                            'payment_status' => $walletAmountUsed >= (float) $order->total ? 'paid' : $order->payment_status,
+                        ]);
+                    }
+                }
+
                 $cart->items()->delete();
                 $cart->update(['coupon_id' => null]);
 
                 return $order;
             }, 3);
+        } catch (\RuntimeException $e) {
+            return redirect()->route('checkout.index')->withInput()
+                ->withErrors(['wallet_amount' => $e->getMessage()]);
         } catch (\DomainException $e) {
             return redirect()->route('cart.index')->with('error', $e->getMessage());
         }
 
-        if ($order->payment_method !== 'razorpay') {
+        if ($order->payment_status === 'paid' || $order->payment_method !== 'razorpay') {
             return redirect()->route('checkout.confirmation', $order)->with('success', 'Order placed successfully.');
         }
 

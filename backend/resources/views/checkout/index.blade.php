@@ -96,6 +96,18 @@
           <textarea class="w-full border border-line-strong bg-white px-4 py-3 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-heading" id="order_note" name="order_note" rows="3">{{ old('order_note') }}</textarea>
         </div>
 
+        @auth
+          @if((float) auth()->user()->wallet_balance > 0)
+            <div class="mb-4 rounded-lg border border-line p-4">
+              <label class="mb-1.5 block text-[13px] font-medium text-heading" for="wallet_amount">
+                Use wallet balance (available: ₹{{ number_format((float) auth()->user()->wallet_balance, 2) }})
+              </label>
+              <input class="w-full border border-line-strong bg-white px-4 py-2.5 text-[13px]" id="wallet_amount" name="wallet_amount" type="number" min="0" step="0.01" max="{{ auth()->user()->wallet_balance }}" placeholder="0.00" value="{{ old('wallet_amount') }}">
+              @error('wallet_amount') <p class="mt-1 text-[12px] text-salebadge">{{ $message }}</p> @enderror
+            </div>
+          @endif
+        @endauth
+
         <button class="inline-flex items-center justify-center gap-2 border border-accent bg-accent px-8 py-[13px] text-[13px] font-medium uppercase tracking-[0.5px] text-white transition-colors hover:border-accent-dark hover:bg-accent-dark w-full" type="submit">Place Order</button>
       </form>
 
