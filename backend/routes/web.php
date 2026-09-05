@@ -15,6 +15,7 @@ use App\Http\Controllers\OtpAuthController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\RewardSubmissionController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SitemapController;
@@ -218,6 +219,13 @@ Route::middleware('auth')->group(function () {
 
     Route::delete('/account/addresses/{address}', [AccountController::class, 'addressDestroy'])
         ->name('account.addresses.destroy');
+
+    Route::get('/account/rewards', [RewardSubmissionController::class, 'index'])
+        ->name('account.rewards.index');
+
+    Route::post('/account/rewards', [RewardSubmissionController::class, 'store'])
+        ->name('account.rewards.store')
+        ->middleware('throttle:10,60');
 });
 
 
