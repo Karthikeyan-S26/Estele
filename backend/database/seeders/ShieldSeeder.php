@@ -26,6 +26,7 @@ class ShieldSeeder extends Seeder
         'HomepageBlock', 'Order', 'Product', 'Role', 'Setting',
         'BlogCategory', 'Blog', 'CmsPage', 'FaqCategory', 'Faq', 'Review',
         'Popup', 'NewsletterSubscriber', 'Redirect', 'Customer',
+        'RewardSubmission',
     ];
 
     private const ACTIONS = [
@@ -72,6 +73,16 @@ class ShieldSeeder extends Seeder
             'ViewAny:Popup', 'View:Popup', 'Create:Popup', 'Update:Popup', 'Delete:Popup',
             // Subscriber list is read-only everywhere — nobody hand-edits captured emails.
             'ViewAny:NewsletterSubscriber', 'View:NewsletterSubscriber',
+        ]);
+
+        // Reviews and approves/denies customer reward-submission videos —
+        // no other resource access. Update (not Create/Delete): the
+        // approve/reject actions on RewardSubmissionsTable both operate via
+        // an update, and the resource's own canCreate() is already false —
+        // there is nothing for a vendor to create or delete here.
+        $vendor = Role::firstOrCreate(['name' => 'vendor', 'guard_name' => 'web']);
+        $vendor->syncPermissions([
+            'ViewAny:RewardSubmission', 'View:RewardSubmission', 'Update:RewardSubmission',
         ]);
     }
 }
