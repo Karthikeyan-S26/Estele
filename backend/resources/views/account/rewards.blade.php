@@ -40,11 +40,13 @@
             <label class="mb-1.5 block text-[13px] font-medium text-heading" for="image-{{ $order->id }}">Image (max 3MB)</label>
             <input class="mb-1 w-full border border-line-strong bg-white px-4 py-2.5 text-[13px]" id="image-{{ $order->id }}" name="image" type="file" accept="image/*" required>
             <p class="reward-file-error mb-3 hidden text-[12px] text-salebadge" data-for="image-{{ $order->id }}"></p>
+            @error('image') <p class="mb-3 text-[12px] text-salebadge">{{ $message }}</p> @enderror
             <img class="reward-image-preview mb-3 hidden h-32 w-32 max-w-full rounded-lg border border-line object-cover sm:h-40 sm:w-40" alt="Selected image preview">
 
             <label class="mb-1.5 block text-[13px] font-medium text-heading" for="video-{{ $order->id }}">Video (max 10MB)</label>
             <input class="mb-1 w-full border border-line-strong bg-white px-4 py-2.5 text-[13px]" id="video-{{ $order->id }}" name="video" type="file" accept="video/mp4,video/webm" required>
             <p class="reward-file-error mb-3 hidden text-[12px] text-salebadge" data-for="video-{{ $order->id }}"></p>
+            @error('video') <p class="mb-3 text-[12px] text-salebadge">{{ $message }}</p> @enderror
             <video class="reward-video-preview mb-3 hidden w-full max-w-full rounded-lg border border-line sm:max-w-sm" controls playsinline></video>
 
             <button class="inline-flex w-full items-center justify-center gap-2 border border-accent bg-accent px-6 py-2.5 text-[12px] font-medium uppercase tracking-[0.5px] text-white transition-colors hover:border-accent-dark hover:bg-accent-dark sm:w-auto" type="submit">

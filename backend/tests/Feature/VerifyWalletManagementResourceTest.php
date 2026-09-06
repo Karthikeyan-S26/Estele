@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Resources\WalletManagement\Pages\ListWalletManagement;
 use App\Mail\WalletCredited;
 use App\Models\User;
 use App\Models\WalletTransaction;
@@ -9,17 +10,15 @@ use App\Services\WalletService;
 use Database\Seeders\ShieldSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 /**
  * Exercises the credit/debit closures from WalletManagementTable directly
  * (mirroring the runApprove/runReject helper pattern in
- * VerifyRewardSubmissionApprovalTest) rather than through a full Livewire
- * table render. Filament's table pagination component calls PHP's intl
- * Number::format() unconditionally, which this local environment's PHP
- * build doesn't have — an environment gap, not something specific to this
- * resource, and orthogonal to the actual credit/debit/query logic under
- * test here.
+ * VerifyRewardSubmissionApprovalTest) in addition to the page-render
+ * regression test below, so the credit/debit/query logic can be asserted
+ * without needing to drive Filament's action modals through Livewire.
  */
 class VerifyWalletManagementResourceTest extends TestCase
 {
@@ -98,5 +97,13 @@ class VerifyWalletManagementResourceTest extends TestCase
 
         $this->assertTrue($ids->contains($customer->id));
         $this->assertFalse($ids->contains($admin->id));
+    }
+
+    public function test_wallet_management_page_renders_for_a_super_admin(): void
+    {
+        $this->actingAsSuperAdmin();
+        User::factory()->create(['wallet_balance' => 200]);
+
+        Livewire::test(ListWalletManagement::class)->assertOk();
     }
 }
