@@ -39,15 +39,21 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Amber,
             ])
-            ->plugins([
-                FilamentShieldPlugin::make(),
-            ])
             // Publishes filament-shield's own RoleResource with a local fix
             // (see App\Filament\Resources\Roles\RoleResource's docblock) —
             // registering a resource whose class name ends in \RoleResource
             // makes Utils::isResourcePublished() skip the plugin's default.
+            // MUST run before ->plugins(): Panel::plugin() calls the
+            // plugin's register() immediately (not deferred), so
+            // isResourcePublished()'s check of $panel->getResources() only
+            // sees this resource if it was registered first — otherwise
+            // both the vendor and the published resource end up
+            // registered, doubling the "Roles" nav item.
             ->resources([
                 RoleResource::class,
+            ])
+            ->plugins([
+                FilamentShieldPlugin::make(),
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\Filament\Clusters')
