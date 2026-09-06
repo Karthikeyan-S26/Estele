@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Resources\Roles\RoleResource;
 use App\Http\Middleware\SecurityHeaders;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -40,6 +41,13 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->plugins([
                 FilamentShieldPlugin::make(),
+            ])
+            // Publishes filament-shield's own RoleResource with a local fix
+            // (see App\Filament\Resources\Roles\RoleResource's docblock) —
+            // registering a resource whose class name ends in \RoleResource
+            // makes Utils::isResourcePublished() skip the plugin's default.
+            ->resources([
+                RoleResource::class,
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\Filament\Clusters')
