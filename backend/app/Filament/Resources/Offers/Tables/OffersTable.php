@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Offers\Tables;
 
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -14,19 +16,14 @@ class OffersTable
     {
         return $table
             ->paginationMode(PaginationMode::Simple)
-            // Bulk-select checkbox column disabled: its "Select all N records"
-            // banner calls Number::format() unconditionally regardless of
-            // whether any bulk actions are registered, hard-requiring the intl
-            // PHP extension this environment doesn't have. toolbarActions()
-            // removal alone doesn't turn off selection in Filament v5 — this
-            // does.
-            ->disabledSelection()
+            ->disabledSelection(! extension_loaded('intl'))
             ->defaultSort('sort_order')
             ->columns([
                 TextColumn::make('text')
                     ->searchable()
                     ->wrap(),
                 TextColumn::make('sort_order')
+                    ->when(extension_loaded('intl'), fn (TextColumn $column) => $column->numeric())
                     ->sortable(),
                 IconColumn::make('is_active')
                     ->boolean(),
@@ -36,6 +33,11 @@ class OffersTable
             ])
             ->recordActions([
                 EditAction::make(),
-            ]);
+            ])
+            ->toolbarActions(extension_loaded('intl') ? [
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                ]),
+            ] : []);
     }
 }

@@ -5,7 +5,10 @@ namespace App\Filament\Resources\Orders\Tables;
 use App\Models\Order;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
+use Filament\Actions\BulkActionGroup;
 use Filament\Actions\EditAction;
+use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -14,6 +17,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Enums\PaginationMode;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 class OrdersTable
 {
@@ -21,13 +25,7 @@ class OrdersTable
     {
         return $table
             ->paginationMode(PaginationMode::Simple)
-            // Bulk-select checkbox column disabled: its "Select all N records"
-            // banner calls Number::format() unconditionally regardless of
-            // whether any bulk actions are registered, hard-requiring the intl
-            // PHP extension this environment doesn't have. toolbarActions()
-            // removal alone doesn't turn off selection in Filament v5 — this
-            // does.
-            ->disabledSelection()
+            ->disabledSelection(! extension_loaded('intl'))
             ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('order_number')
@@ -137,7 +135,32 @@ class OrdersTable
                 EditAction::make()
                     ->iconButton()
                     ->tooltip('Edit'),
-            ]);
+            ])
+            ->toolbarActions(extension_loaded('intl') ? [
+                BulkActionGroup::make([
+                    BulkAction::make('cancel')
+                        ->label('Cancel selected')
+                        ->icon(Heroicon::OutlinedXCircle)
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->modalDescription('Cancels every selected order that is still cancellable and restocks its items. Orders already shipped/delivered/cancelled/returned are left untouched.')
+                        ->action(function (Collection $records) {
+                            $cancelled = 0;
+                            foreach ($records as $record) {
+                                if (in_array('cancelled', Order::ALLOWED_TRANSITIONS[$record->status] ?? [], true)) {
+                                    $record->update(['status' => 'cancelled']);
+                                    $cancelled++;
+                                }
+                            }
+
+                            Notification::make()
+                                ->title("Cancelled {$cancelled} of {$records->count()} selected order(s).")
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
+                ]),
+            ] : []);
     }
 
     public static function streamInvoice(Order $record)

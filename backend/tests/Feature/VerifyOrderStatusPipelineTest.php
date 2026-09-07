@@ -27,9 +27,9 @@ class VerifyOrderStatusPipelineTest extends TestCase
     {
         $order = $this->makeOrder(['status' => 'placed']);
 
-        $order->update(['status' => 'packed']);
+        $order->update(['status' => 'accepted']);
 
-        $this->assertSame('packed', $order->fresh()->status);
+        $this->assertSame('accepted', $order->fresh()->status);
     }
 
     public function test_disallowed_transition_is_rejected(): void

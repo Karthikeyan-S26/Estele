@@ -32,5 +32,8 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <env name="SMS_DRIVER" value=""/>
+        <env name="VAS_SMS_API_KEY" value=""/>
+        <env name="TWILIO_SID" value=""/>
     </php>
 </phpunit>

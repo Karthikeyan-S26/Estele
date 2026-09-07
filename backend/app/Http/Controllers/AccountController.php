@@ -38,7 +38,7 @@ class AccountController extends Controller
         $user = Auth::user();
 
         $validated = $request->validate([
-            'current_password' => ['required', 'current_password'],
+            'current_password' => filled($user->password) ? ['required', 'current_password'] : ['nullable'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 

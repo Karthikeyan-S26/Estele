@@ -91,13 +91,17 @@
         </details>
 
         <details class="marker-pm rounded-lg border border-line p-4" id="change-password">
-          <summary class="cursor-pointer text-[13px] font-medium uppercase tracking-[0.4px] text-heading">Change Password</summary>
+          <summary class="cursor-pointer text-[13px] font-medium uppercase tracking-[0.4px] text-heading">{{ filled(auth()->user()->password) ? "Change Password" : "Set Password" }}</summary>
           <form class="mt-4" action="{{ route('account.password') }}" method="post">
             @csrf
             @method('PATCH')
+            @if(filled(auth()->user()->password))
             <label class="mb-1.5 block text-[13px] font-medium text-heading" for="current_password">Current password</label>
             <input class="w-full border border-line-strong bg-white px-4 py-3 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-heading mb-3.5" id="current_password" name="current_password" type="password" required>
             @error('current_password') <p class="mb-3.5 -mt-2 text-[12px] text-salebadge">{{ $message }}</p> @enderror
+            @else
+            <p class="mb-3.5 text-[12px] text-muted">You signed up with mobile OTP. Set a password to also log in with email.</p>
+            @endif
 
             <label class="mb-1.5 block text-[13px] font-medium text-heading" for="new_password">New password</label>
             <input class="w-full border border-line-strong bg-white px-4 py-3 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-heading mb-3.5" id="new_password" name="password" type="password" required minlength="8">

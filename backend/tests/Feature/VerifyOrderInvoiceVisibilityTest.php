@@ -34,7 +34,7 @@ class VerifyOrderInvoiceVisibilityTest extends TestCase
         $this->actingAsSuperAdmin();
         $order = $this->makeOrder(['status' => 'placed']);
 
-        Livewire::test(EditOrder::class, ['record' => $order->getKey()])
+        Livewire::test(EditOrder::class, ['record' => $order->getRouteKey()])
             ->assertActionHidden('invoice');
     }
 
@@ -43,7 +43,7 @@ class VerifyOrderInvoiceVisibilityTest extends TestCase
         $this->actingAsSuperAdmin();
         $order = $this->makeOrder(['status' => 'accepted']);
 
-        Livewire::test(EditOrder::class, ['record' => $order->getKey()])
+        Livewire::test(EditOrder::class, ['record' => $order->getRouteKey()])
             ->assertActionVisible('invoice');
     }
 

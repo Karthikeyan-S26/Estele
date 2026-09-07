@@ -114,6 +114,67 @@ class VerifyOtpLoginFlowTest extends TestCase
         // The flashed phone reaches the registration form's prefill.
         $this->get(route('register'))->assertSee('9998887770', false);
     }
+
+    private function registerViaOtp(string $phone, array $extra = []): \Illuminate\Testing\TestResponse
+    {
+        $this->postJson('/register/send-otp', ['phone' => $phone])->assertOk();
+        $this->postJson('/register/verify-otp', ['code' => RecordingOtpGatewayForTests::$lastCode])->assertOk();
+
+        return $this->post('/register', array_merge([
+            'name' => 'Reg User',
+            'email' => "reg{$phone}@example.com",
+            'phone' => $phone,
+        ], $extra));
+    }
+
+    public function test_registration_without_password_creates_an_otp_only_account(): void
+    {
+        $this->registerViaOtp('9990001111')->assertRedirect(route('account.index'));
+
+        $this->assertAuthenticated();
+        $this->assertNull(User::where('phone', '9990001111')->firstOrFail()->password);
+    }
+
+    public function test_registration_with_password_allows_email_login_too(): void
+    {
+        $this->registerViaOtp('9990002222', ['password' => 'secret-pass-123', 'password_confirmation' => 'secret-pass-123'])
+            ->assertRedirect(route('account.index'));
+
+        $this->post('/logout');
+        $this->assertGuest();
+
+        $this->post('/login', ['email' => 'reg9990002222@example.com', 'password' => 'secret-pass-123'])
+            ->assertRedirect(route('account.index'));
+        $this->assertAuthenticated();
+    }
+
+    public function test_registration_rejects_a_mismatched_password_confirmation(): void
+    {
+        $this->registerViaOtp('9990003333', ['password' => 'secret-pass-123', 'password_confirmation' => 'different'])
+            ->assertSessionHasErrors('password');
+
+        $this->assertGuest();
+    }
+
+    public function test_an_otp_only_user_can_set_a_password_without_a_current_one(): void
+    {
+        $user = User::factory()->create(['phone' => '9990004444', 'password' => null]);
+
+        $this->actingAs($user)
+            ->patch('/account/password', ['password' => 'brand-new-pass1', 'password_confirmation' => 'brand-new-pass1'])
+            ->assertRedirect(route('account.index'));
+
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('brand-new-pass1', $user->fresh()->password));
+    }
+
+    public function test_a_user_with_a_password_still_needs_the_current_one_to_change_it(): void
+    {
+        $user = User::factory()->create(['password' => 'old-pass-123']);
+
+        $this->actingAs($user)
+            ->patch('/account/password', ['password' => 'brand-new-pass1', 'password_confirmation' => 'brand-new-pass1'])
+            ->assertSessionHasErrors('current_password');
+    }
 }
 
 /**

@@ -201,6 +201,62 @@
                 </div>
 
 
+                {{-- Password (optional) --}}
+                <div>
+
+                    <label
+                        class="mb-1.5 block text-[13px] font-medium text-heading"
+                        for="password"
+                    >
+                        Password (Optional)
+                    </label>
+
+                    <input
+                        class="h-12 w-full rounded-lg border border-line-strong bg-white px-4 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent"
+                        id="password"
+                        name="password"
+                        type="password"
+                        placeholder="At least 8 characters"
+                        minlength="8"
+                        autocomplete="new-password"
+                    >
+
+                    <p class="mt-1 text-[12px] text-muted">
+                        Set a password to also log in with email. You can always log in with mobile OTP.
+                    </p>
+
+                    @error('password')
+                        <p class="mt-1 text-[12px] text-salebadge">
+                            {{ $message }}
+                        </p>
+                    @enderror
+
+                </div>
+
+
+                {{-- Confirm Password --}}
+                <div>
+
+                    <label
+                        class="mb-1.5 block text-[13px] font-medium text-heading"
+                        for="password_confirmation"
+                    >
+                        Confirm Password
+                    </label>
+
+                    <input
+                        class="h-12 w-full rounded-lg border border-line-strong bg-white px-4 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent"
+                        id="password_confirmation"
+                        name="password_confirmation"
+                        type="password"
+                        placeholder="Re-enter your password"
+                        minlength="8"
+                        autocomplete="new-password"
+                    >
+
+                </div>
+
+
                 {{-- Create Account --}}
                 <button
                     id="create-account-button"

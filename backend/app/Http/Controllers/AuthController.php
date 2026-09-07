@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -134,6 +135,7 @@ class AuthController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'phone' => ['required', 'digits:10', 'unique:users,phone'],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
         ]);
 
         // Get the phone number that was actually verified through OTP.
@@ -154,7 +156,7 @@ class AuthController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'phone' => $validated['phone'],
-            'password' => null,
+            'password' => filled($validated['password'] ?? null) ? Hash::make($validated['password']) : null,
         ]);
 
         // Remove temporary OTP registration session data.
