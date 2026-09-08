@@ -54,6 +54,7 @@ class CategoryController extends Controller
                 }
 
                 $query = Product::query()
+                    ->with('media')
                     ->whereHas('categories', fn ($q) => $q->whereIn('categories.id', $categoryIds))
                     ->where('is_active', true);
 

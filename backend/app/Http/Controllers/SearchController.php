@@ -25,7 +25,7 @@ class SearchController extends Controller
         } else {
             // Laravel Scout + MeiliSearch (spec §2/§5) — shouldBeSearchable() on Product
             // already restricts the index to is_active products, so no extra where() needed.
-            $search = Product::search($query);
+            $search = Product::search($query)->query(fn ($q) => $q->with('media'));
 
             if ($minPrice !== null && $minPrice !== '') {
                 $search->where('price', '>=', (float) $minPrice);

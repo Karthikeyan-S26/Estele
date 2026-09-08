@@ -19,6 +19,7 @@ class ProductController extends Controller
 
                 return Product::where('is_active', true)
                     ->where('id', '!=', $product->id)
+                    ->with('media')
                     ->whereHas('categories', function ($query) use ($product) {
                         $query->whereIn('categories.id', $product->categories->pluck('id'));
                     })

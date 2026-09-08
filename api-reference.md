@@ -1,6 +1,6 @@
 # API Reference
 
-For Alokesh — every backend route as of `ayush-feat` (+ wallet feature, not yet merged).
+Every backend route as of `ayush-feat` (+ wallet feature, not yet merged).
 
 ## How this app works
 

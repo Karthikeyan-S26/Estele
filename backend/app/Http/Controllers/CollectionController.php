@@ -9,7 +9,7 @@ class CollectionController extends Controller
 {
     public function index()
     {
-        $collections = Collection::active()->ordered()->get();
+        $collections = Collection::active()->ordered()->with('media')->get();
 
         return view('collections.index', compact('collections'));
     }
@@ -20,7 +20,7 @@ class CollectionController extends Controller
 
         $sort = $request->query('sort', 'featured');
 
-        $query = $collection->products()->where('is_active', true);
+        $query = $collection->products()->with('media')->where('is_active', true);
 
         match ($sort) {
             'price_asc' => $query->orderBy('price'),
