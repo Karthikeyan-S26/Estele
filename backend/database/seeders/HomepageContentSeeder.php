@@ -55,12 +55,13 @@ class HomepageContentSeeder extends Seeder
             'sort_order' => 0,
         ]);
 
-        // Real wide banner photography from the original homepage's own Rose Gold
-        // Collection section — distinct from the Collection's own square/tile image
-        // used in the "Shop by Collection" grid, which is the wrong crop for a banner.
+        // Estele photography, stored locally in storage/app/seed-images —
+        // distinct from the Collection's own square/tile image used in the "Shop by
+        // Collection" grid, which is the wrong crop for a banner.
         try {
-            $item->addMediaFromUrl('https://estele.co/cdn/shop/files/Rose_Gold_jpg.jpg?width=1400')
-                ->usingFileName('rose-gold-collection-banner.jpg')
+            $item->addMedia(storage_path('app/seed-images/homepage/rose-gold-collection-banner.png'))
+                ->preservingOriginal()
+                ->usingFileName('rose-gold-collection-banner.png')
                 ->toMediaCollection('image');
         } catch (\Throwable $e) {
             $this->command?->warn("Could not fetch Rose Gold Collection banner image: {$e->getMessage()}");
@@ -73,14 +74,16 @@ class HomepageContentSeeder extends Seeder
             return;
         }
 
-        // Real wide-format banner photography from the original site's hero carousel —
+        // Estele photography, stored locally in storage/app/seed-images —
         // distinct from product/category photos, purpose-shot at 1800x700.
+        $imagesDir = storage_path('app/seed-images/homepage');
+
         $slides = [
-            ['slug' => 'grand-sale', 'title' => 'Grand Sale', 'image' => 'https://estele.co/cdn/shop/files/2612-1080.jpg_2.jpg?width=1800'],
-            ['slug' => 'hasli', 'title' => 'Hasli Collection', 'image' => 'https://estele.co/cdn/shop/files/Hasli_Collection_Banner-2_jpg.jpg?width=1800'],
-            ['slug' => 'sitara', 'title' => 'Sitara Collection', 'image' => 'https://estele.co/cdn/shop/files/Banner.jpg_2.jpg?width=1800'],
-            ['slug' => 'wedding-season', 'title' => 'Wedding Season', 'image' => 'https://estele.co/cdn/shop/files/WEDDING_jpg.jpg?width=1800'],
-            ['slug' => 'maharani', 'title' => 'Maharani Collection', 'image' => 'https://estele.co/cdn/shop/files/Banner.jpg_1_54ef9678-0bf5-4964-a1a1-e441f615f57e.jpg?format=pjpg&v=1778837912&width=1800'],
+            ['slug' => 'grand-sale', 'title' => 'Grand Sale', 'image' => "{$imagesDir}/banner-grand-sale.png"],
+            ['slug' => 'hasli', 'title' => 'Hasli Collection', 'image' => "{$imagesDir}/banner-hasli.png"],
+            ['slug' => 'sitara', 'title' => 'Sitara Collection', 'image' => "{$imagesDir}/banner-sitara.png"],
+            ['slug' => 'wedding-season', 'title' => 'Wedding Season', 'image' => "{$imagesDir}/banner-wedding-season.png"],
+            ['slug' => 'maharani', 'title' => 'Maharani Collection', 'image' => "{$imagesDir}/banner-maharani.png"],
         ];
 
         foreach ($slides as $index => $slide) {
@@ -92,8 +95,9 @@ class HomepageContentSeeder extends Seeder
             ]);
 
             try {
-                $banner->addMediaFromUrl($slide['image'])
-                    ->usingFileName('banner-'.$slide['slug'].'.jpg')
+                $banner->addMedia($slide['image'])
+                    ->preservingOriginal()
+                    ->usingFileName('banner-'.$slide['slug'].'.png')
                     ->toMediaCollection('image');
             } catch (\Throwable $e) {
                 $this->command?->warn("Could not fetch banner image for {$slide['title']}: {$e->getMessage()}");
@@ -169,11 +173,12 @@ class HomepageContentSeeder extends Seeder
 
         // Decorative price-range tiles from the original site — links are generic
         // (no real price-filtered collection query on the original either).
+        $tierImagesDir = storage_path('app/seed-images/homepage');
         $tiers = [
-            ['title' => 'Under', 'body' => '₹999', 'image' => 'https://estele.co/cdn/shop/files/Path_84397_2x_c51eb4f5-4c4f-4ee3-a489-d5daec626af9.png?width=600'],
-            ['title' => 'Under', 'body' => '₹1,499', 'image' => 'https://estele.co/cdn/shop/files/Path_84397_2x_c51eb4f5-4c4f-4ee3-a489-d5daec626af9.png?width=600'],
-            ['title' => 'Under', 'body' => '₹2,999', 'image' => 'https://estele.co/cdn/shop/files/Path_84397_2x_c51eb4f5-4c4f-4ee3-a489-d5daec626af9.png?width=600'],
-            ['title' => 'Premium', 'body' => 'Pearls', 'image' => 'https://estele.co/cdn/shop/files/Mask_Group_406_2x_02f982e3-943b-4bbb-ba34-450e126d2bc5.png?width=600'],
+            ['title' => 'Under', 'body' => '₹999', 'image' => "{$tierImagesDir}/price-tier-under.png"],
+            ['title' => 'Under', 'body' => '₹1,499', 'image' => "{$tierImagesDir}/price-tier-under.png"],
+            ['title' => 'Under', 'body' => '₹2,999', 'image' => "{$tierImagesDir}/price-tier-under.png"],
+            ['title' => 'Premium', 'body' => 'Pearls', 'image' => "{$tierImagesDir}/price-tier-premium.png"],
         ];
 
         foreach ($tiers as $index => $tier) {
@@ -185,7 +190,8 @@ class HomepageContentSeeder extends Seeder
             ]);
 
             try {
-                $item->addMediaFromUrl($tier['image'])
+                $item->addMedia($tier['image'])
+                    ->preservingOriginal()
                     ->usingFileName('price-tier-'.$index.'.png')
                     ->toMediaCollection('image');
             } catch (\Throwable $e) {
@@ -238,12 +244,13 @@ class HomepageContentSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        // Real celebrity endorsement photography from the original site's "As Seen On" section.
+        $celebImagesDir = storage_path('app/seed-images/homepage');
+
         $celebrities = [
-            ['name' => 'Divyanka', 'image' => 'https://estele.co/cdn/shop/files/group-85141-2x-d643c9e8-3545-4cff-a23b-6622627ac982-68c29bd9bf857.webp?width=600'],
-            ['name' => 'Jannat Zubair Rahmani', 'image' => 'https://estele.co/cdn/shop/files/group-85140-2x-1ae68523-f124-423d-82b8-8cf6c623d9a0-68c29bd9842ef.webp?width=600'],
-            ['name' => 'Neeti Mohan', 'image' => 'https://estele.co/cdn/shop/files/group-85139-2x-b4cee16c-de95-48a8-bc24-c72ab9345c93-68c29bd84e263.webp?width=600'],
-            ['name' => 'Yuvika Chaudhary', 'image' => 'https://estele.co/cdn/shop/files/Yuvika_Chaudhary.png?width=600'],
+            ['name' => 'Divyanka', 'image' => "{$celebImagesDir}/divyanka.webp"],
+            ['name' => 'Jannat Zubair Rahmani', 'image' => "{$celebImagesDir}/jannat-zubair-rahmani.webp"],
+            ['name' => 'Neeti Mohan', 'image' => "{$celebImagesDir}/neeti-mohan.webp"],
+            ['name' => 'Yuvika Chaudhary', 'image' => "{$celebImagesDir}/yuvika-chaudhary.png"],
         ];
 
         foreach ($celebrities as $index => $celebrity) {
@@ -254,8 +261,9 @@ class HomepageContentSeeder extends Seeder
             ]);
 
             try {
-                $item->addMediaFromUrl($celebrity['image'])
-                    ->usingFileName(\Illuminate\Support\Str::slug($celebrity['name']).'.jpg')
+                $item->addMedia($celebrity['image'])
+                    ->preservingOriginal()
+                    ->usingFileName(basename($celebrity['image']))
                     ->toMediaCollection('image');
             } catch (\Throwable $e) {
                 $this->command?->warn("Could not fetch celebrity image for {$celebrity['name']}: {$e->getMessage()}");

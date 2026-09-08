@@ -39,7 +39,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap">
+        href="https://fonts.googleapis.com/css2?family=Allura&family=Cinzel:wght@500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap">
   <link rel="stylesheet" href="{{ asset('theme/app.css') }}?v={{ @filemtime(public_path('theme/app.css')) }}">
 
   {{-- Admin-managed GA4/GSC/Meta Pixel etc (Settings key 'tracking_head_scripts',
@@ -54,13 +54,26 @@
 <a class="sr-only-custom" href="#main">Skip to content</a>
 
 @php $announcements = json_decode($siteSettings['announcement_messages'] ?? '[]', true) ?: []; @endphp
-<div class="w-full bg-accent py-2 text-center text-[12px] font-medium tracking-[0.4px] uppercase text-white shadow-sm" data-announcement>
+<div class="w-full bg-announce py-2 text-center text-[11px] font-medium uppercase tracking-[0.12em] text-white" data-announcement>
   @if(count($announcements))
-    <p class="m-0 px-3">{{ $announcements[0] }}</p>
+    <div class="relative h-4">
+      @foreach($announcements as $index => $message)
+        <p class="absolute inset-x-0 top-0 m-0 px-3 transition-opacity duration-500 {{ $index === 0 ? 'opacity-100' : 'opacity-0 pointer-events-none' }}" data-announce-item>{{ $message }}</p>
+      @endforeach
+    </div>
   @else
     <p class="m-0 px-3">Free Express Shipping on Orders Above &#8377;1,499 &middot; Use Code <span class="font-semibold text-gold">ESTELE50</span> for Flat 50% Off</p>
   @endif
 </div>
+@if(count($activeOffers))
+  <div class="hidden w-full border-b border-line bg-pinksoft py-1.5 text-[11px] text-heading md:block">
+    <div class="mx-auto flex w-full max-w-wrapper items-center justify-center gap-6 px-4">
+      @foreach($activeOffers as $offer)
+        <span class="inline-flex items-center gap-1.5"><span class="text-gold">&#10022;</span>{{ $offer }}</span>
+      @endforeach
+    </div>
+  </div>
+@endif
 
 <header class="header-gradient sticky top-0 z-[100] px-3.5 pt-2.5 pb-2.5 md:px-[30px] md:pt-[15px] md:pb-3" data-header>
   <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-2 md:gap-5">
@@ -72,7 +85,7 @@
       </button>
     </div>
 
-    <a class="justify-self-center shrink-0 text-[20px] font-serif font-semibold text-heading" href="{{ route('home') }}">
+    <a class="wordmark justify-self-center shrink-0 text-[21px] text-heading md:text-[24px]" href="{{ route('home') }}">
       {{ $siteSettings['site_name'] ?? 'Estele' }}
     </a>
 
@@ -97,7 +110,7 @@
       <button class="relative grid h-[38px] w-[38px] place-items-center text-heading transition-colors hover:[color:var(--nav-hover-color)] lg:hidden" type="button" data-search-open aria-label="Search">
         <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
       </button>
-      <a class="relative grid h-[38px] w-[38px] place-items-center text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="/wishlist.html" aria-label="Wishlist">
+      <a class="relative grid h-[38px] w-[38px] place-items-center text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('wishlist') }}" aria-label="Wishlist">
         <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21.2l7.7-7.7 1.1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
         <span class="absolute right-0.5 top-0.5 hidden h-4 min-w-4 place-items-center rounded-lg bg-accent px-1 text-[10px] leading-none text-white" data-wishlist-count>0</span>
       </a>
@@ -128,26 +141,26 @@
   <nav class="mt-2 hidden lg:block" aria-label="Main navigation">
     <ul class="flex items-center justify-between">
       @if($hasliCollection)
-        <li><a class="relative inline-flex items-center whitespace-nowrap py-1.5 text-[12px] leading-[14px] uppercase tracking-[0.2px] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('collections.show', $hasliCollection['slug']) }}">HASLI COLLECTION<span class="ml-1 rounded-full bg-accent px-1.5 py-0.5 text-[8px] font-semibold leading-none text-white">NEW</span></a></li>
+        <li><a class="relative inline-flex items-center whitespace-nowrap py-2 text-[11.5px] font-medium leading-[14px] uppercase tracking-[0.1em] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('collections.show', $hasliCollection['slug']) }}">HASLI COLLECTION<span class="ml-1 rounded-full bg-accent px-1.5 py-0.5 text-[8px] font-semibold leading-none text-white">NEW</span></a></li>
       @endif
       @if($crystalBloomsCollection)
-        <li><a class="relative inline-flex items-center whitespace-nowrap py-1.5 text-[12px] leading-[14px] uppercase tracking-[0.2px] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('collections.show', $crystalBloomsCollection['slug']) }}">CRYSTAL BLOOMS</a></li>
+        <li><a class="relative inline-flex items-center whitespace-nowrap py-2 text-[11.5px] font-medium leading-[14px] uppercase tracking-[0.1em] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('collections.show', $crystalBloomsCollection['slug']) }}">CRYSTAL BLOOMS</a></li>
       @endif
       @if($newArrivalsCollection)
-        <li><a class="relative inline-flex items-center whitespace-nowrap py-1.5 text-[12px] leading-[14px] uppercase tracking-[0.2px] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('collections.show', $newArrivalsCollection['slug']) }}">NEW ARRIVALS</a></li>
+        <li><a class="relative inline-flex items-center whitespace-nowrap py-2 text-[11.5px] font-medium leading-[14px] uppercase tracking-[0.1em] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('collections.show', $newArrivalsCollection['slug']) }}">NEW ARRIVALS</a></li>
       @endif
       @if($sitaraCollection)
-        <li><a class="relative inline-flex items-center whitespace-nowrap py-1.5 text-[12px] leading-[14px] uppercase tracking-[0.2px] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('collections.show', $sitaraCollection['slug']) }}">SITARA COLLECTION</a></li>
+        <li><a class="relative inline-flex items-center whitespace-nowrap py-2 text-[11.5px] font-medium leading-[14px] uppercase tracking-[0.1em] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('collections.show', $sitaraCollection['slug']) }}">SITARA COLLECTION</a></li>
       @endif
       @if($weddingSeasonCollection)
-        <li><a class="relative inline-flex items-center whitespace-nowrap py-1.5 text-[12px] leading-[14px] uppercase tracking-[0.2px] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('collections.show', $weddingSeasonCollection['slug']) }}">WEDDING SEASON</a></li>
+        <li><a class="relative inline-flex items-center whitespace-nowrap py-2 text-[11.5px] font-medium leading-[14px] uppercase tracking-[0.1em] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('collections.show', $weddingSeasonCollection['slug']) }}">WEDDING SEASON</a></li>
       @endif
       @if($roseCollection)
-        <li><a class="relative inline-flex items-center whitespace-nowrap py-1.5 text-[12px] leading-[14px] uppercase tracking-[0.2px] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('collections.show', $roseCollection['slug']) }}">ROSE COLLECTION</a></li>
+        <li><a class="relative inline-flex items-center whitespace-nowrap py-2 text-[11.5px] font-medium leading-[14px] uppercase tracking-[0.1em] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('collections.show', $roseCollection['slug']) }}">ROSE COLLECTION</a></li>
       @endif
       @if($necklaceSubCategories->isNotEmpty())
         <li class="group relative">
-          <a class="relative flex items-center gap-1 whitespace-nowrap py-1.5 text-[12px] leading-[14px] uppercase tracking-[0.2px] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('categories.show', $necklaceSubCategories->first()['slug']) }}">NECKLACES
+          <a class="relative flex items-center gap-1 whitespace-nowrap py-2 text-[11.5px] font-medium leading-[14px] uppercase tracking-[0.1em] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('categories.show', $necklaceSubCategories->first()['slug']) }}">NECKLACES
             <svg class="h-2.5 w-2.5 shrink-0 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
           </a>
           <div class="invisible absolute left-1/2 top-full z-20 w-56 -translate-x-1/2 translate-y-1 rounded-lg border border-line header-gradient p-2 opacity-0 shadow-lg transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
@@ -159,7 +172,7 @@
       @endif
       @if(count($navCategories))
         <li class="group relative">
-          <a class="relative flex items-center gap-1 whitespace-nowrap py-1.5 text-[12px] leading-[14px] uppercase tracking-[0.2px] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('categories.index') }}">CATEGORIES
+          <a class="relative flex items-center gap-1 whitespace-nowrap py-2 text-[11.5px] font-medium leading-[14px] uppercase tracking-[0.1em] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('categories.index') }}">CATEGORIES
             <svg class="h-2.5 w-2.5 shrink-0 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
           </a>
           <div class="invisible absolute left-1/2 top-full z-20 w-56 -translate-x-1/2 translate-y-1 rounded-lg border border-line header-gradient p-2 opacity-0 shadow-lg transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
@@ -170,11 +183,11 @@
         </li>
       @endif
       @if($bestSellerCollection)
-        <li><a class="relative inline-flex items-center whitespace-nowrap py-1.5 text-[12px] leading-[14px] uppercase tracking-[0.2px] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('collections.show', $bestSellerCollection['slug']) }}">BEST SELLER</a></li>
+        <li><a class="relative inline-flex items-center whitespace-nowrap py-2 text-[11.5px] font-medium leading-[14px] uppercase tracking-[0.1em] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('collections.show', $bestSellerCollection['slug']) }}">BEST SELLER</a></li>
       @endif
       @if(count($navCollections))
         <li class="group relative">
-          <a class="relative flex items-center gap-1 whitespace-nowrap py-1.5 text-[12px] leading-[14px] uppercase tracking-[0.2px] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('collections.index') }}">COLLECTIONS
+          <a class="relative flex items-center gap-1 whitespace-nowrap py-2 text-[11.5px] font-medium leading-[14px] uppercase tracking-[0.1em] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('collections.index') }}">COLLECTIONS
             <svg class="h-2.5 w-2.5 shrink-0 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
           </a>
           {{-- Right-anchored (not center-anchored like the other two dropdowns
@@ -310,84 +323,7 @@
   .footer-mobile { display: block; }
   .footer-desktop { display: none; }
 </style>
-<footer class="bg-[#4A0713] text-[#F8F4EC] border-t border-[#3A0610]">
-  <div class="mx-auto w-full max-w-wrapper px-4 md:px-8 pt-12 md:pt-16 pb-10">
-    <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 pb-10 border-b border-white/10">
-      
-      <!-- Col 1: About & Socials -->
-      <div>
-        <h3 class="font-serif text-[14px] md:text-[15px] font-semibold uppercase tracking-[0.5px] text-[#B88A4A] mb-4">About {{ $siteSettings['site_name'] ?? 'Estele' }}</h3>
-        <p class="text-[13px] leading-relaxed text-[#F8F4EC]/80 mb-5">India's leading fashion jewellery destination since 1989. Over 100,000 anti-tarnish 24K gold plated designs crafted with care.</p>
-        <div class="flex items-center gap-3">
-          <a class="grid h-9 w-9 place-items-center rounded-full border border-white/20 text-[#F8F4EC] transition-all hover:border-[#B88A4A] hover:bg-[#B88A4A] hover:text-[#4A0713]" href="https://www.facebook.com/estelejewelery/" target="_blank" rel="noopener" aria-label="Facebook">
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 22v-8.2h2.75l.41-3.2h-3.16V8.4c0-.93.26-1.56 1.6-1.56h1.7V3.98A22.7 22.7 0 0 0 14.2 3.8c-2.44 0-4.11 1.49-4.11 4.22v2.36H7.3v3.2h2.79V22h3.4Z"/></svg>
-          </a>
-          <a class="grid h-9 w-9 place-items-center rounded-full border border-white/20 text-[#F8F4EC] transition-all hover:border-[#B88A4A] hover:bg-[#B88A4A] hover:text-[#4A0713]" href="https://www.instagram.com/estele.co/" target="_blank" rel="noopener" aria-label="Instagram">
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none"/></svg>
-          </a>
-          <a class="grid h-9 w-9 place-items-center rounded-full border border-white/20 text-[#F8F4EC] transition-all hover:border-[#B88A4A] hover:bg-[#B88A4A] hover:text-[#4A0713]" href="https://www.linkedin.com/company/30985476" target="_blank" rel="noopener" aria-label="LinkedIn">
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M6.94 8.5H3.56V21h3.38V8.5ZM5.25 3a1.96 1.96 0 1 0 0 3.92A1.96 1.96 0 0 0 5.25 3ZM21 13.9c0-3.6-1.92-5.28-4.48-5.28-2.07 0-2.99 1.14-3.5 1.94V8.5H9.64c.05 1 0 12.5 0 12.5h3.38v-6.98c0-.37.03-.75.14-1.02.3-.75 1-1.53 2.16-1.53 2.13 1.16 2.13 2.85V21H21v-7.1Z"/></svg>
-          </a>
-        </div>
-      </div>
-
-      <!-- Col 2: Know Your Jewellery -->
-      <div>
-        <h3 class="font-serif text-[14px] md:text-[15px] font-semibold uppercase tracking-[0.5px] text-[#B88A4A] mb-4">Know Your Jewellery</h3>
-        <ul class="space-y-2.5 text-[13px] text-[#F8F4EC]/85">
-          <li><a class="transition-colors hover:text-[#B88A4A]" href="{{ route('collections.show', 'rose-collection') }}">Rose Collection</a></li>
-          <li><a class="transition-colors hover:text-[#B88A4A]" href="{{ route('categories.show', 'earrings') }}">Earrings</a></li>
-          <li><a class="transition-colors hover:text-[#B88A4A]" href="{{ route('categories.show', 'maang-tikka') }}">Maang Tikka</a></li>
-          <li><a class="transition-colors hover:text-[#B88A4A]" href="{{ route('collections.show', 'crystal-blooms') }}">Crystal Blooms</a></li>
-          <li><a class="transition-colors hover:text-[#B88A4A]" href="{{ route('collections.show', 'hasli-collection') }}">Hasli Collection</a></li>
-        </ul>
-      </div>
-
-      <!-- Col 3: Customer Service -->
-      <div>
-        <h3 class="font-serif text-[14px] md:text-[15px] font-semibold uppercase tracking-[0.5px] text-[#B88A4A] mb-4">Customer Service</h3>
-        <ul class="space-y-2.5 text-[13px] text-[#F8F4EC]/85">
-          <li><a class="transition-colors hover:text-[#B88A4A]" href="{{ auth()->check() ? route('account.index') : route('login') }}">Track Order</a></li>
-          <li><a class="transition-colors hover:text-[#B88A4A]" href="{{ route('pages.show', 'return-policy') }}">Return &amp; Exchange Policy</a></li>
-          <li><a class="transition-colors hover:text-[#B88A4A]" href="{{ route('pages.show', 'shipping-policy') }}">Shipping &amp; Delivery</a></li>
-          <li><a class="transition-colors hover:text-[#B88A4A]" href="{{ route('faq.index') }}">Help &amp; FAQ</a></li>
-          <li><a class="transition-colors hover:text-[#B88A4A]" href="{{ route('pages.show', 'privacy-policy') }}">Privacy Policy</a></li>
-        </ul>
-      </div>
-
-      <!-- Col 4: Contact Us & Download -->
-      <div>
-        <h3 class="font-serif text-[14px] md:text-[15px] font-semibold uppercase tracking-[0.5px] text-[#B88A4A] mb-4">Contact Us</h3>
-        <div class="space-y-2 text-[13px] text-[#F8F4EC]/85">
-          <p class="font-semibold text-[#F8F4EC]">Estele Accessories Pvt. Ltd.</p>
-          <p class="leading-normal">9-47, Keshav Nagar, Boduppal, Hyderabad, Telangana 500092</p>
-          <p>Phone: <a href="tel:+918247476318" class="underline hover:text-[#B88A4A]">+91 8247476318</a></p>
-          <p>Email: <a href="mailto:info@estele.co" class="underline hover:text-[#B88A4A]">info@estele.co</a></p>
-        </div>
-        <div class="mt-4">
-          <h4 class="text-[11px] font-semibold uppercase tracking-[0.5px] text-[#F8F4EC]/70 mb-2">Download App</h4>
-          <div class="flex gap-2.5">
-            <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" class="h-8" alt="App Store" width="100" height="32" />
-            <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" class="h-8" alt="Google Play" width="100" height="32" />
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- Bottom Darker Burgundy Strip (#3A0610 per doc4.pdf) -->
-  <div class="bg-[#3A0610] pt-4 pb-[160px] md:pb-20 text-[12px] text-[#D8CDC0]">
-    <div class="mx-auto w-full max-w-wrapper px-4 md:px-8 flex flex-col items-center justify-between gap-2.5 sm:flex-row">
-      <p>{{ $siteSettings['footer_copyright'] ?? 'Copyright © 2026 ESTELE Accessories Pvt. Ltd. All rights reserved.' }}</p>
-      <div class="flex gap-4">
-        <a class="hover:text-[#B88A4A] transition-colors" href="{{ route('pages.show', 'privacy-policy') }}">Privacy Policy</a>
-        <a class="hover:text-[#B88A4A] transition-colors" href="{{ route('pages.show', 'return-policy') }}">Terms &amp; Conditions</a>
-        <a class="hover:text-[#B88A4A] transition-colors" href="{{ route('pages.show', 'shipping-policy') }}">Shipping Policy</a>
-      </div>
-    </div>
-  </div>
-</footer>
+@include('partials.footer')
 
 <div class="fixed bottom-[74px] right-3 z-[120] flex items-center justify-end gap-2 md:bottom-[18px] md:right-[18px]" data-chat>
   <span class="relative hidden items-center gap-2.5 whitespace-nowrap rounded-[22px] bg-[#1f1f1f] px-4 py-2.5 text-[13px] text-white shadow-lg md:inline-flex" data-chat-tip>
@@ -441,7 +377,7 @@
     <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
     <span>Categories</span>
   </a>
-  <a class="flex flex-1 flex-col items-center gap-0.5 px-0.5 py-2 text-[10px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent" href="/wishlist.html">
+  <a class="flex flex-1 flex-col items-center gap-0.5 px-0.5 py-2 text-[10px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent" href="{{ route('wishlist') }}">
     <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21.2l7.7-7.7 1.1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
     <span>Wishlist</span>
   </a>

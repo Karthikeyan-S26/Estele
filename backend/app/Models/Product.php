@@ -31,10 +31,10 @@ class Product extends Model implements HasMedia
     public function registerMediaConversions(?\Spatie\MediaLibrary\MediaCollections\Models\Media $media = null): void
     {
         // Sizes/quality follow the responsive image spec (§3.1).
-        $this->addMediaConversion('card')->width(400)->format('webp')->quality(78);
-        $this->addMediaConversion('mobile')->width(768)->format('webp')->quality(80);
-        $this->addMediaConversion('tablet')->width(1024)->format('webp')->quality(82);
-        $this->addMediaConversion('detail')->width(1600)->format('webp')->quality(83);
+        $this->addMediaConversion('card')->width(400)->format('png')->quality(78);
+        $this->addMediaConversion('mobile')->width(768)->format('png')->quality(80);
+        $this->addMediaConversion('tablet')->width(1024)->format('png')->quality(82);
+        $this->addMediaConversion('detail')->width(1600)->format('png')->quality(83);
     }
 
     protected $fillable = [
@@ -89,14 +89,26 @@ class Product extends Model implements HasMedia
         return $this->reviews()->where('status', 'approved');
     }
 
+    /**
+     * Both of these prefer a value already loaded by withCount/withAvg on the
+     * query (see HomeController) and only fall back to their own aggregate
+     * query otherwise — a product grid renders these once per card, so
+     * without the preload it is two extra queries per product.
+     */
     public function reviewsCount(): int
     {
+        if (array_key_exists('approved_reviews_count', $this->attributes)) {
+            return (int) $this->attributes['approved_reviews_count'];
+        }
+
         return $this->approvedReviews()->count();
     }
 
     public function reviewsAverageRating(): ?float
     {
-        $average = $this->approvedReviews()->avg('rating');
+        $average = array_key_exists('approved_reviews_avg_rating', $this->attributes)
+            ? $this->attributes['approved_reviews_avg_rating']
+            : $this->approvedReviews()->avg('rating');
 
         return $average !== null ? round((float) $average, 1) : null;
     }

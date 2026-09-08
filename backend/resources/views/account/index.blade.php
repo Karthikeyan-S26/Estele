@@ -36,7 +36,6 @@
           <li><a class="block rounded-md px-3 py-2.5 text-heading transition-colors hover:bg-pinksoft" href="{{ route('account.rewards.index') }}">Rewards & Wallet</a></li>
           <li><a class="block rounded-md px-3 py-2.5 text-heading transition-colors hover:bg-pinksoft" href="{{ route('account.addresses') }}">Addresses</a></li>
           <li><a class="block rounded-md px-3 py-2.5 text-heading transition-colors hover:bg-pinksoft" href="#profile-details">Profile</a></li>
-          <li><a class="block rounded-md px-3 py-2.5 text-heading transition-colors hover:bg-pinksoft" href="#change-password">Password</a></li>
         </ul>
       </nav>
 
@@ -80,38 +79,11 @@
             <input class="w-full border border-line-strong bg-white px-4 py-3 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-heading mb-3.5" id="name" name="name" type="text" value="{{ old('name', auth()->user()->name) }}" required>
             @error('name') <p class="mb-3.5 -mt-2 text-[12px] text-salebadge">{{ $message }}</p> @enderror
 
-            <label class="mb-1.5 block text-[13px] font-medium text-heading" for="email">Email</label>
-            <input class="w-full border border-line-strong bg-white px-4 py-3 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-heading mb-3.5" id="email" name="email" type="email" value="{{ old('email', auth()->user()->email) }}" required>
-            @error('email') <p class="mb-3.5 -mt-2 text-[12px] text-salebadge">{{ $message }}</p> @enderror
+            <label class="mb-1.5 block text-[13px] font-medium text-heading" for="phone">Mobile number</label>
+            <input class="w-full border border-line-strong bg-pinksoft/40 px-4 py-3 text-[14px] text-muted mb-3.5" id="phone" type="text" value="{{ auth()->user()->phone }}" disabled>
 
             <button class="inline-flex w-full items-center justify-center gap-2 border border-accent bg-accent px-6 py-3 text-[12px] font-medium uppercase tracking-[0.5px] text-white transition-colors hover:border-accent-dark hover:bg-accent-dark" type="submit">
               Save Changes
-            </button>
-          </form>
-        </details>
-
-        <details class="marker-pm rounded-lg border border-line p-4" id="change-password">
-          <summary class="cursor-pointer text-[13px] font-medium uppercase tracking-[0.4px] text-heading">{{ filled(auth()->user()->password) ? "Change Password" : "Set Password" }}</summary>
-          <form class="mt-4" action="{{ route('account.password') }}" method="post">
-            @csrf
-            @method('PATCH')
-            @if(filled(auth()->user()->password))
-            <label class="mb-1.5 block text-[13px] font-medium text-heading" for="current_password">Current password</label>
-            <input class="w-full border border-line-strong bg-white px-4 py-3 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-heading mb-3.5" id="current_password" name="current_password" type="password" required>
-            @error('current_password') <p class="mb-3.5 -mt-2 text-[12px] text-salebadge">{{ $message }}</p> @enderror
-            @else
-            <p class="mb-3.5 text-[12px] text-muted">You signed up with mobile OTP. Set a password to also log in with email.</p>
-            @endif
-
-            <label class="mb-1.5 block text-[13px] font-medium text-heading" for="new_password">New password</label>
-            <input class="w-full border border-line-strong bg-white px-4 py-3 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-heading mb-3.5" id="new_password" name="password" type="password" required minlength="8">
-            @error('password') <p class="mb-3.5 -mt-2 text-[12px] text-salebadge">{{ $message }}</p> @enderror
-
-            <label class="mb-1.5 block text-[13px] font-medium text-heading" for="password_confirmation">Confirm new password</label>
-            <input class="w-full border border-line-strong bg-white px-4 py-3 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-heading mb-5" id="password_confirmation" name="password_confirmation" type="password" required minlength="8">
-
-            <button class="inline-flex w-full items-center justify-center gap-2 border border-accent bg-accent px-6 py-3 text-[12px] font-medium uppercase tracking-[0.5px] text-white transition-colors hover:border-accent-dark hover:bg-accent-dark" type="submit">
-              Update Password
             </button>
           </form>
         </details>

@@ -26,7 +26,7 @@ class Category extends Model implements HasMedia
 
     public function registerMediaConversions(?Media $media = null): void
     {
-        $this->addMediaConversion('tile')->width(768)->format('webp')->quality(80);
+        $this->addMediaConversion('tile')->width(768)->format('png')->quality(80);
     }
 
     protected $fillable = [

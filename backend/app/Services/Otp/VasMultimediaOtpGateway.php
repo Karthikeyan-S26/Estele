@@ -67,7 +67,11 @@ class VasMultimediaOtpGateway implements OtpGateway
 
         $ok = $response->successful() && preg_match('/success|submitted|sent|ok|^[\da-f-]+$/i', trim($response->body()));
 
-        if (! $ok) {
+        if ($ok) {
+            Log::info('VAS Multimedia SMS gateway accepted the OTP request', [
+                'phone_suffix' => substr($cleanPhone, -4),
+            ]);
+        } else {
             Log::error('VAS Multimedia SMS gateway returned a non-success response', [
                 'status' => $response->status(),
                 'body' => \Illuminate\Support\Str::limit($response->body(), 200),

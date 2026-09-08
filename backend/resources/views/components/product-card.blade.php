@@ -1,50 +1,53 @@
 @props(['product'])
 
-<article class="group relative text-center">
-  {{--
-    Image area reduced ~20% (inline style, not a Tailwind p-[...] class: see
-    the note in home/index.blade.php — this backend has no live Tailwind
-    build of its own, so a brand-new arbitrary-value class here would compile
-    to nothing). ~5.3% inset on each side shrinks a square box's rendered
-    area by ~20% (side scales by sqrt(0.8) ≈ 0.894). The sale badge and
-    wishlist button below are unaffected — their `absolute` offsets are
-    relative to this box's padding edge, not its (now smaller) content box,
-    so they stay flush in the card's true corners.
-  --}}
-  {{-- No bg-placeholder here (was a light grey #f5f5f5 fill showing through
-       the 5.3% inset padding around every image) — removed per the ask. --}}
-  <a class="relative block aspect-square overflow-hidden" style="padding: 5.3%" href="{{ route('products.show', $product) }}" aria-label="{{ $product->title }}">
+@php
+  $rating = $product->reviewsAverageRating();
+  $reviewCount = $product->reviewsCount();
+  $discount = $product->compare_at_price
+    ? (int) round((($product->compare_at_price - $product->price) / $product->compare_at_price) * 100)
+    : 0;
+@endphp
+
+<article class="product-card group">
+  <a class="product-card__frame block" href="{{ route('products.show', $product) }}" aria-label="{{ $product->title }}">
     @if($product->hasMedia('gallery'))
-      <img class="h-full w-full object-cover" src="{{ $product->getFirstMediaUrl('gallery', 'card') }}" alt="{{ $product->title }}" loading="lazy" width="600" height="600">
+      <img class="product-card__img" src="{{ $product->getFirstMediaUrl('gallery', 'card') }}" alt="{{ $product->title }}" loading="lazy" width="600" height="600">
       @if($product->getMedia('gallery')->count() > 1)
-        <img class="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-300 group-hover:opacity-100" src="{{ $product->getMedia('gallery')[1]->getUrl('card') }}" alt="" loading="lazy" width="600" height="600">
+        <img class="product-card__img absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100" src="{{ $product->getMedia('gallery')[1]->getUrl('card') }}" alt="" loading="lazy" width="600" height="600">
       @endif
     @endif
-    @if($product->compare_at_price)
-      <span class="absolute left-2.5 top-2.5 z-[2] flex flex-col gap-1.5">
-        <span class="inline-block bg-salebadge px-2.5 py-1 text-[11px] font-medium uppercase leading-none tracking-[0.3px] text-white">Sale</span>
-      </span>
+
+    @if($discount > 0)
+      <span class="absolute left-2 top-2 z-[2] rounded-md bg-salebadge px-2 py-1 text-[9.5px] font-bold uppercase leading-none tracking-[0.06em] text-white md:text-[10.5px]">{{ $discount }}% off</span>
     @endif
-    <button class="absolute right-2.5 top-2.5 z-[2] grid h-[34px] w-[34px] place-items-center rounded-full bg-white opacity-100 md:opacity-0 transition-opacity md:group-hover:opacity-100" type="button" aria-label="Add to wishlist" data-product-id="{{ $product->id }}">
+
+    <button class="absolute right-2 top-2 z-[2] grid h-8 w-8 place-items-center rounded-full bg-white/95 text-heading shadow-sm transition-colors hover:text-rose md:h-9 md:w-9" type="button" aria-label="Save {{ $product->title }} to wishlist" data-wishlist-toggle data-product-id="{{ $product->id }}">
       <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21.2l7.7-7.7 1.1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
     </button>
   </a>
-  <div class="pt-3">
-    <h3 class="mb-1.5 text-[14px] font-normal leading-normal text-heading">
-      <a class="transition-colors hover:text-accent" href="{{ route('products.show', $product) }}">{{ $product->title }}</a>
+
+  <div class="flex flex-1 flex-col px-3 pb-3 pt-1.5 md:px-3.5 md:pb-3.5">
+    <h3 class="mb-1.5 line-clamp-2 font-serif text-[13px] font-medium leading-snug text-heading md:text-[14.5px] lg:text-[15px]">
+      <a class="transition-colors hover:text-rose" href="{{ route('products.show', $product) }}">{{ $product->title }}</a>
     </h3>
-    <div class="flex flex-wrap items-center justify-center gap-2">
-      <span class="font-medium text-price">₹{{ number_format($product->price, 0) }}</span>
+    @if($reviewCount > 0)
+      <div class="mb-1.5">
+        <x-review-stars :rating="$rating" :count="$reviewCount" size="text-[11px] md:text-[12px]" />
+      </div>
+    @endif
+    <div class="mb-2.5 flex flex-wrap items-baseline gap-x-1.5 md:mb-3">
+      <span class="text-[14px] font-bold text-price md:text-[15.5px] lg:text-[16.5px]">₹{{ number_format($product->price, 0) }}</span>
       @if($product->compare_at_price)
-        <span class="text-muted line-through">₹{{ number_format($product->compare_at_price, 0) }}</span>
-        @php $discount = round((($product->compare_at_price - $product->price) / $product->compare_at_price) * 100); @endphp
-        @if($discount > 0)
-          <span class="text-[11px] font-semibold text-gold">{{ $discount }}% OFF</span>
-        @endif
+        <span class="text-[11px] text-muted line-through md:text-[12.5px]">₹{{ number_format($product->compare_at_price, 0) }}</span>
       @endif
     </div>
-    <div class="mt-1 flex items-center justify-center gap-1 text-[12px] text-gold">
-      ★★★★☆ <span class="text-[11px] text-muted">(4.8)</span>
-    </div>
+    <form class="mt-auto" action="{{ route('cart.store', $product) }}" method="post" data-cart-form data-checkout-url="{{ route('checkout.index') }}">
+      @csrf
+      <input type="hidden" name="quantity" value="1">
+      <button class="flex w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-md bg-heading px-2 py-2 text-[10px] font-semibold uppercase tracking-[0.06em] text-white transition-colors hover:bg-rose md:px-3 md:py-2.5 md:text-[11px] md:tracking-[0.12em]" type="submit">
+        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 7h15l-1.5 8h-12z"/><path d="M6 7 5 3H2"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>
+        Add to cart
+      </button>
+    </form>
   </div>
 </article>

@@ -3,23 +3,22 @@
 @php $items = $block->items; @endphp
 
 @if($items->isNotEmpty())
-  <section class="py-6 md:py-8 bg-pinksoft">
+  <section class="border-y border-line bg-white py-6 md:py-8">
     <div class="mx-auto w-full max-w-wrapper px-3 md:px-4">
-      <div class="flex flex-col gap-4 md:flex-row md:items-center md:gap-6">
-        <div class="flex-shrink-0 md:w-[180px]">
-          <h2 class="text-[22px] font-normal leading-snug md:text-[28px]">Your Budget,<br><b class="font-semibold">Your Bling</b></h2>
+      <div class="flex flex-col gap-4 md:flex-row md:items-center md:gap-8">
+        <div class="shrink-0 md:w-[220px] lg:w-[260px]">
+          @if($block->subtitle)
+            <p class="section-head__eyebrow">{{ $block->subtitle }}</p>
+          @endif
+          <h2 class="font-serif text-[22px] leading-tight text-heading md:text-[26px] lg:text-[30px]">{!! nl2br(e($block->title ?: "Your Budget,\nYour Bling")) !!}</h2>
         </div>
-        <div class="grid grid-cols-2 gap-3 flex-1 md:grid-cols-4 md:gap-4">
+        <div class="grid flex-1 grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-5 md:gap-3.5">
           @foreach($items as $item)
-            <a class="group relative block overflow-hidden rounded-[14px]" href="{{ $item->link_url ?? route('home') }}" style="height:140px;">
-              @if($item->hasMedia('image'))
-                <img class="h-full w-full {{ $loop->last ? 'object-cover' : 'object-contain' }} transition-transform duration-300 group-hover:scale-[1.03]" src="{{ $item->getFirstMediaUrl('image', 'card') }}" alt="" loading="lazy">
-              @endif
-              <span class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-0.5">
-                <span class="text-[11px] uppercase tracking-[0.5px] {{ $loop->last ? 'text-white/80' : 'text-muted' }}">{{ $item->title }}</span>
-                <span class="text-[22px] font-semibold leading-tight md:text-[26px] {{ $loop->last ? 'text-white' : 'text-heading' }}">{{ $item->body }}</span>
-              </span>
-              <span class="absolute bottom-[12%] left-1/2 grid h-6 w-6 -translate-x-1/2 place-items-center rounded-full text-white transition-colors {{ $loop->last ? 'bg-white/35' : 'bg-gold group-hover:bg-accent' }}">
+            @php $isPremium = $loop->last; @endphp
+            <a class="group relative flex flex-col items-center justify-center rounded-xl border border-line px-3 py-5 text-center transition-all hover:-translate-y-0.5 hover:border-gold hover:shadow-md md:py-6 {{ $isPremium ? 'bg-deepwine text-white' : 'bg-gradient-to-br from-pinksoft to-white' }}" href="{{ $item->link_url ?: route('search') }}">
+              <span class="text-[10.5px] font-semibold uppercase tracking-[0.18em] {{ $isPremium ? 'text-gold' : 'text-muted' }}">{{ $item->title }}</span>
+              <span class="mt-1 font-serif text-[24px] font-semibold leading-none md:text-[28px] lg:text-[32px]">{{ $item->body }}</span>
+              <span class="mt-3 grid h-6 w-6 place-items-center rounded-full transition-colors {{ $isPremium ? 'bg-white/20 text-white group-hover:bg-gold group-hover:text-deepwine' : 'bg-gold text-white group-hover:bg-rose' }}">
                 <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
               </span>
             </a>

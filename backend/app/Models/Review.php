@@ -24,7 +24,7 @@ class Review extends Model implements HasMedia
 
     public function registerMediaConversions(?Media $media = null): void
     {
-        $this->addMediaConversion('thumb')->width(400)->format('webp')->quality(78);
+        $this->addMediaConversion('thumb')->width(400)->format('png')->quality(78);
     }
 
     protected $fillable = [

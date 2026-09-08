@@ -31,10 +31,10 @@ class Banner extends Model implements HasMedia
 
     public function registerMediaConversions(?Media $media = null): void
     {
-        $this->addMediaConversion('desktop')->width(1600)->format('webp')->quality(83);
+        $this->addMediaConversion('desktop')->width(1600)->format('png')->quality(83);
         // Still generated on 'image' too: existing banners with no mobile_image
         // upload fall back to this as their mobile source (see getMobileImageUrl()).
-        $this->addMediaConversion('mobile')->width(768)->format('webp')->quality(80);
+        $this->addMediaConversion('mobile')->width(768)->format('png')->quality(80);
     }
 
     /**

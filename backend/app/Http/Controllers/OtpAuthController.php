@@ -16,7 +16,7 @@ class OtpAuthController extends Controller
 
     public function showPhone()
     {
-        return view('auth.login-mobile');
+        return view('auth.login');
     }
 
     public function sendCode(Request $request): RedirectResponse
@@ -28,7 +28,7 @@ class OtpAuthController extends Controller
         $this->otp->issue($validated['phone']);
         $request->session()->put('otp_phone', $validated['phone']);
 
-        return redirect()->route('login.mobile.verify');
+        return redirect()->route('login.verify');
     }
 
     public function showVerify(Request $request)
@@ -36,7 +36,7 @@ class OtpAuthController extends Controller
         $phone = $request->session()->get('otp_phone');
         abort_unless($phone, 404);
 
-        return view('auth.login-mobile-verify', ['phone' => $phone]);
+        return view('auth.login-verify', ['phone' => $phone]);
     }
 
     public function verifyCode(Request $request): RedirectResponse
@@ -48,9 +48,8 @@ class OtpAuthController extends Controller
             'code' => ['required', 'digits:6'],
         ]);
 
-        // Same "don't reveal which part was wrong" posture as the email/password
-        // login above it — one generic message regardless of expired/wrong/
-        // too-many-attempts.
+        // One generic message regardless of expired/wrong/too-many-attempts —
+        // don't reveal which part was wrong.
         if (! $this->otp->verify($phone, $validated['code'])) {
             throw ValidationException::withMessages([
                 'code' => 'That code is incorrect or has expired.',
@@ -64,7 +63,11 @@ class OtpAuthController extends Controller
             // Not registered under this number yet — send to registration with
             // the verified number carried over and pre-filled, same as ZappDeal's
             // flow: register, don't silently create an account with no name/email.
-            $request->session()->flash('prefill_phone', $phone);
+            // 'registration_phone_verified' is what AuthController::register()
+            // actually trusts (this OTP round is the one and only verification —
+            // the registration form doesn't ask for OTP again).
+            $request->session()->put('prefill_phone', $phone);
+            $request->session()->put('registration_phone_verified', $phone);
 
             return redirect()->route('register')->with('success', 'Number verified — finish creating your account below.');
         }

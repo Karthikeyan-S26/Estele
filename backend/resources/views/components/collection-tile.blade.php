@@ -1,13 +1,13 @@
 @props(['category', 'route' => 'categories.show', 'objectPosition' => 'center'])
 
-<a class="block" href="{{ route($route, $category) }}">
-  <span class="block overflow-hidden bg-placeholder rounded-[8%]" style="aspect-ratio: 2/3;">
+<a class="cat-tile block" href="{{ route($route, $category) }}">
+  <span class="cat-tile__frame block">
     @if($category->hasMedia('image'))
-      <img class="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
+      <img class="cat-tile__img"
            style="object-position: {{ $objectPosition }};"
            src="{{ $category->getFirstMediaUrl('image', 'tile') }}"
            alt="{{ $category->image_alt_text ?: $category->name }}" loading="lazy">
     @endif
   </span>
-  <p class="mt-2 text-center text-[12px] uppercase tracking-[0.3px] text-heading">{{ $category->name }}</p>
+  <p class="mt-2.5 text-center font-serif text-[12px] font-semibold leading-tight text-heading md:mt-3 md:text-[13.5px] lg:text-[14.5px]">{{ $category->name }}</p>
 </a>

@@ -46,10 +46,7 @@
         @endif
       </p>
     @else
-      {{-- 4-up from tablet width up — see collections/show.blade.php's comment
-           on why this is a scoped class + media query, not sm:grid-cols-4. --}}
-      <style>@media (min-width: 640px) { .product-grid-4up { grid-template-columns: repeat(4, minmax(0, 1fr)); } }</style>
-      <div class="product-grid-4up grid grid-cols-2 gap-3 md:gap-5">
+      <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 md:gap-5">
         @foreach($products as $product)
           <x-product-card :product="$product" />
         @endforeach

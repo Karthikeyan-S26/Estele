@@ -236,10 +236,10 @@
       @endif
 
       <div class="mb-1 flex flex-wrap items-baseline gap-3">
-        <span class="font-serif text-[26px] md:text-[30px] font-semibold text-accent">₹{{ number_format($product->price, 0) }}</span>
+        <span class="font-serif text-[26px] font-semibold text-price md:text-[30px]">₹{{ number_format($product->price, 0) }}</span>
         @if($product->compare_at_price)
           <span class="text-[16px] text-muted line-through">₹{{ number_format($product->compare_at_price, 0) }}</span>
-          <span class="rounded-md bg-gold/15 px-2.5 py-1 text-[11px] font-semibold text-gold uppercase tracking-[0.5px]">{{ $discountPercent }}% OFF</span>
+          <span class="bg-salebadge px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-white">{{ $discountPercent }}% off</span>
         @endif
       </div>
       <p class="mb-5 text-[12px] text-muted">Inclusive of all taxes &middot; Free shipping available</p>
@@ -365,7 +365,7 @@
     <section class="py-12 md:py-16 bg-warmbeige/30 border-t border-line">
       <div class="mx-auto w-full max-w-wrapper px-4 md:px-8">
         <x-section-header title="You May Also Like" />
-        <div class="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
+        <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 md:gap-5 lg:gap-6 xl:grid-cols-5 xl:gap-7 2xl:grid-cols-6">
           @foreach($relatedProducts as $related)
             <x-product-card :product="$related" />
           @endforeach

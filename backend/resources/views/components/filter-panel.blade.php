@@ -20,10 +20,23 @@
   'selectedCategories' => [],
 ])
 
-<details class="mb-5 rounded-lg border border-line" data-filter-panel {{ ($minPrice || $maxPrice || $inStock || count($selectedCategories)) ? 'open' : '' }}>
-  <summary class="flex cursor-pointer select-none items-center gap-2 px-4 py-3 text-[13px] font-medium uppercase tracking-[0.4px] text-heading">
+@php
+  // Counted so a collapsed panel still says how many filters are narrowing the
+  // list — on mobile the panel is shut by default and the count is the only
+  // clue that what you are looking at is a filtered subset.
+  $activeFilters = collect([
+    filled($minPrice) || filled($maxPrice),
+    (bool) $inStock,
+  ])->filter()->count() + count($selectedCategories);
+@endphp
+
+<details class="mb-4 rounded-lg border border-line bg-paper md:mb-5" data-filter-panel {{ $activeFilters > 0 ? 'open' : '' }}>
+  <summary class="flex cursor-pointer select-none items-center gap-2 px-3.5 py-3 text-[12.5px] font-medium uppercase tracking-[0.1em] text-heading md:px-4 md:text-[13px]">
     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
     Filter
+    @if($activeFilters > 0)
+      <span class="grid h-[18px] min-w-[18px] place-items-center rounded-full bg-accent px-1 text-[10px] font-semibold leading-none text-white">{{ $activeFilters }}</span>
+    @endif
   </summary>
   <form class="grid grid-cols-1 gap-5 border-t border-line p-4 sm:grid-cols-2 md:grid-cols-3" method="get" action="{{ $action }}">
     @if($q !== null)
@@ -67,10 +80,12 @@
     @endif
 
     <div class="flex items-center gap-4 sm:col-span-2 md:col-span-3">
-      <button class="inline-flex items-center justify-center gap-2 border border-accent bg-accent px-6 py-2.5 text-[12px] font-medium uppercase tracking-[0.5px] text-white transition-colors hover:border-accent-dark hover:bg-accent-dark" type="submit">
-        Apply Filters
+      <button class="inline-flex flex-1 items-center justify-center border border-accent bg-accent px-6 py-3 text-[12px] font-medium uppercase tracking-[0.12em] text-white transition-colors hover:border-accent-dark hover:bg-accent-dark sm:flex-none" type="submit">
+        Apply filters
       </button>
-      <a class="text-[12px] text-muted underline hover:text-accent" href="{{ $action }}{{ $q !== null ? '?q='.urlencode($q) : '' }}">Clear filters</a>
+      @if($activeFilters > 0)
+        <a class="text-[12px] text-muted underline transition-colors hover:text-accent" href="{{ $action }}{{ $q !== null ? '?q='.urlencode($q) : '' }}">Clear all</a>
+      @endif
     </div>
   </form>
 </details>

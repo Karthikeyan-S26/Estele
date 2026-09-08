@@ -11,7 +11,7 @@
       <h1 class="font-serif text-[24px] font-semibold text-heading text-center mb-1">Enter Verification Code</h1>
       <p class="text-[13px] text-muted text-center mb-6">We sent a 6-digit code to <strong class="text-heading">{{ $phone }}</strong>.</p>
 
-      <form action="{{ route('login.mobile.verify.attempt') }}" method="post" class="space-y-4">
+      <form action="{{ route('login.verify.attempt') }}" method="post" class="space-y-4">
         @csrf
 
         <div>
@@ -25,13 +25,13 @@
         </button>
       </form>
 
-      <form class="mt-4" action="{{ route('login.mobile.resend') }}" method="post">
+      <form class="mt-4" action="{{ route('login.resend') }}" method="post">
         @csrf
         <button class="w-full text-center text-[13px] font-medium text-accent hover:underline" type="submit">Didn't receive code? Resend</button>
       </form>
 
       <p class="mt-6 text-center text-[13px] text-muted">
-        Wrong mobile number? <a class="font-semibold text-accent underline hover:text-accent-dark" href="{{ route('login.mobile') }}">Start over</a>
+        Wrong mobile number? <a class="font-semibold text-accent underline hover:text-accent-dark" href="{{ route('login') }}">Start over</a>
       </p>
 
     </div>

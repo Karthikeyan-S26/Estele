@@ -34,6 +34,8 @@ class DatabaseSeeder extends Seeder
             CouponOfferSeeder::class,
             ContentSeeder::class,
             PopupSeeder::class,
+            // Last: its journal/FAQ blocks link to rows ContentSeeder creates.
+            HomepageSectionsSeeder::class,
         ]);
     }
 }

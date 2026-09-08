@@ -24,8 +24,8 @@ class Collection extends Model implements HasMedia
 
     public function registerMediaConversions(?Media $media = null): void
     {
-        $this->addMediaConversion('tile')->width(768)->format('webp')->quality(80);
-        $this->addMediaConversion('banner')->width(1600)->format('webp')->quality(83);
+        $this->addMediaConversion('tile')->width(768)->format('png')->quality(80);
+        $this->addMediaConversion('banner')->width(1600)->format('png')->quality(83);
     }
 
     protected $fillable = [

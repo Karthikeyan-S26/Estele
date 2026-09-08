@@ -24,7 +24,7 @@ class Popup extends Model implements HasMedia
 
     public function registerMediaConversions(?Media $media = null): void
     {
-        $this->addMediaConversion('card')->width(600)->format('webp')->quality(82);
+        $this->addMediaConversion('card')->width(600)->format('png')->quality(82);
     }
 
     protected $fillable = [

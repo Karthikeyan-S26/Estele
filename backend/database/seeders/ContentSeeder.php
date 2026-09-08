@@ -104,8 +104,9 @@ class ContentSeeder extends Seeder
 
         if (! $necklaceSets->hasMedia('featured_image')) {
             try {
-                $necklaceSets->addMediaFromUrl('https://cdn.shopify.com/s/files/1/2436/4429/files/The_Power_of_a_Stunning_Necklace_Set.jpg?v=1740386026')
-                    ->usingFileName($necklaceSets->slug.'.jpg')
+                $necklaceSets->addMedia(storage_path('app/seed-images/homepage/necklace-sets-that-steal-the-spotlight.png'))
+                    ->preservingOriginal()
+                    ->usingFileName($necklaceSets->slug.'.png')
                     ->toMediaCollection('featured_image');
             } catch (\Throwable $e) {
                 $this->command?->warn("Could not fetch blog image for {$necklaceSets->title}: {$e->getMessage()}");
@@ -141,7 +142,8 @@ class ContentSeeder extends Seeder
 
         if (! $braceletsGuide->hasMedia('featured_image')) {
             try {
-                $braceletsGuide->addMediaFromUrl('https://cdn.shopify.com/s/files/1/2436/4429/files/Why_Bracelets_Are_the_Perfect_Valentine_s_Day_Gift.png?v=1737722045')
+                $braceletsGuide->addMedia(storage_path('app/seed-images/homepage/valentines-day-gift-guide-bracelets-for-women.png'))
+                    ->preservingOriginal()
                     ->usingFileName($braceletsGuide->slug.'.png')
                     ->toMediaCollection('featured_image');
             } catch (\Throwable $e) {

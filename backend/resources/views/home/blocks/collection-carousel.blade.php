@@ -3,34 +3,25 @@
 @php $collections = $block->items->pluck('itemable')->filter(); @endphp
 
 @if($collections->isNotEmpty())
-  <section class="py-10 md:py-[60px] bg-pinksoft">
+  <section class="bg-warmbeige py-6 md:py-9">
     <div class="mx-auto w-full max-w-wrapper px-3 md:px-4">
-      <div class="mb-5 text-center md:mb-[30px]">
-        <h2 class="relative pb-3 after:absolute after:bottom-0 after:left-1/2 after:h-0.5 after:w-[46px] after:-translate-x-1/2 after:bg-accent text-[18px] md:text-[21px] xl:text-[24px] font-medium uppercase tracking-[0.5px] text-heading">{{ $block->title }}</h2>
-        @if($block->subtitle)
-          <p class="mt-1 text-[13px] text-muted">{{ $block->subtitle }}</p>
-        @endif
-        @if($block->cta_label)
-          <a class="mt-2 inline-flex items-center gap-1.5 border-b border-current pb-0.5 text-[13px] font-medium uppercase tracking-[0.5px]" href="{{ $block->cta_url ?? '#' }}">{{ $block->cta_label }}</a>
-        @endif
-      </div>
-      <div class="mx-auto grid max-w-[1040px] grid-cols-2 gap-3 sm:gap-4 md:max-w-[1100px] md:grid-cols-4 md:gap-5 lg:gap-6">
+      <x-section-header eyebrow="Signature Edits" :title="$block->title" :subtitle="$block->subtitle" :cta-label="$block->cta_label" :cta-url="$block->cta_url" />
+      <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 md:gap-5 lg:grid-cols-5 lg:gap-6">
         @foreach($collections as $collection)
-          <a class="block" href="{{ route('collections.show', $collection) }}">
-            {{-- aspect-ratio reserves the tile's box before the image loads —
-                 without it this was the one image grid in the codebase with
-                 no CLS protection (every sibling block already has this).
-                 Kept object-contain/h-full (not object-cover): Collection's
-                 'tile' media conversion only constrains width, not aspect
-                 ratio, so forcing a crop here could cut off real uploads —
-                 object-contain letterboxes instead, same as before this fix. --}}
-            <span class="block overflow-hidden rounded-[8%]" style="aspect-ratio: 2/3;">
+          <a class="cat-tile block" href="{{ route('collections.show', $collection) }}">
+            {{-- Collection artwork arrives in two very different shapes (wide
+                 2.4:1 banners and 2:3 portraits), so object-contain letterboxed
+                 them to visibly different sizes inside identical boxes. A 4:5
+                 box plus object-cover renders every tile at one size; the
+                 centre of both shapes survives the crop. --}}
+            <span class="relative block aspect-[4/5] overflow-hidden rounded-[6px] border border-line bg-paper">
               @if($collection->hasMedia('image'))
-                <img class="h-full w-full object-contain transition-transform duration-700 hover:scale-[1.03]"
+                <img class="cat-tile__img"
                      src="{{ $collection->getFirstMediaUrl('image', 'tile') }}"
                      alt="{{ $collection->name }}" loading="lazy">
               @endif
             </span>
+            <p class="mt-2.5 text-center text-[10.5px] font-medium uppercase leading-tight tracking-[0.06em] text-heading md:mt-3 md:text-[12px] md:tracking-[0.1em] lg:mt-3.5 lg:text-[13px] xl:text-[13.5px]">{{ $collection->name }}</p>
           </a>
         @endforeach
       </div>

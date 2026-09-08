@@ -208,9 +208,13 @@ import './app.css';
     function show(n) {
       i = (n + slides.length) % slides.length;
       slides.forEach(function (s, idx) { s.classList.toggle('is-active', idx === i); });
+      /* Dots sit over the slide artwork, so the active state is a white
+         lozenge that widens rather than a dark dot (see home/index). */
       dots.forEach(function (d, idx) {
-        d.classList.toggle('bg-heading', idx === i);
-        d.classList.toggle('bg-line-strong', idx !== i);
+        d.classList.toggle('w-6', idx === i);
+        d.classList.toggle('bg-white', idx === i);
+        d.classList.toggle('w-1.5', idx !== i);
+        d.classList.toggle('bg-white/55', idx !== i);
       });
     }
 
@@ -461,7 +465,7 @@ import './app.css';
           '<a class="relative block aspect-square overflow-hidden bg-placeholder" href="product.html" aria-label="' + p.alt + '">' +
             '<img class="h-full w-full object-cover" src="' + p.img + '" alt="' + p.alt + '" loading="lazy" width="600" height="600">' +
             (p.del ? '<span class="absolute left-2.5 top-2.5 z-[2] flex flex-col gap-1.5"><span class="inline-block bg-salebadge px-2.5 py-1 text-[11px] font-medium uppercase leading-none tracking-[0.3px] text-white">Sale</span></span>' : '') +
-            '<button class="absolute right-2.5 top-2.5 z-[2] grid h-[34px] w-[34px] place-items-center rounded-full bg-white opacity-100 md:opacity-0 transition-opacity md:group-hover:opacity-100" type="button" aria-label="Add to wishlist">' +
+            '<button class="absolute right-2.5 top-2.5 z-[2] grid h-[34px] w-[34px] place-items-center rounded-full bg-white opacity-100 md:opacity-0 transition-opacity md:group-hover:opacity-100" type="button" aria-label="Add to wishlist" data-wishlist-toggle>' +
               '<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21.2l7.7-7.7 1.1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>' +
             '</button>' +
           '</a>' +
@@ -1252,11 +1256,11 @@ import './app.css';
   });
 
   /* ------------------------------------------------------------------------
-     WISHLIST PAGE — every card here is already saved, so seed localStorage
-     with its key up front and show the heart as filled. Clicking a heart
-     un-saves it (via the shared toggle handler below) and this block drops
-     the card from the grid to match. Must run before the generic WISHLIST
-     toggle block so that handler reads the seeded localStorage on init.
+     WISHLIST PAGE — the server sends the whole active catalogue because saved
+     items live only in this browser (see ProductController::wishlist). This
+     block drops every card the visitor never saved, then marks the survivors'
+     hearts as filled. Must run before the generic WISHLIST toggle block so
+     that handler reads the same localStorage this one just filtered against.
      ---------------------------------------------------------------------- */
   (function () {
     var grid = $('[data-wishlist-grid]');
@@ -1274,26 +1278,28 @@ import './app.css';
     }
 
     cards.forEach(function (card) {
-      var key = keyFor(card);
-      if (saved.indexOf(key) === -1) saved.push(key);
+      if (saved.indexOf(keyFor(card)) === -1) {
+        card.remove();
+        return;
+      }
 
-      var btn = $('[aria-label="Add to wishlist"]', card);
+      var btn = $("[data-wishlist-toggle]", card);
       if (btn) {
         btn.classList.add('opacity-100', 'text-accent');
         var svg = btn.querySelector('svg');
         if (svg) svg.setAttribute('fill', 'currentColor');
       }
     });
-    try { localStorage.setItem('estele-wishlist', JSON.stringify(saved)); } catch (e2) {}
 
     function updateEmptyState() {
       var remaining = grid.querySelectorAll('article').length;
       grid.hidden = remaining === 0;
       if (emptyEl) emptyEl.hidden = remaining !== 0;
     }
+    updateEmptyState();
 
     grid.addEventListener('click', function (e) {
-      var btn = e.target.closest('[aria-label="Add to wishlist"]');
+      var btn = e.target.closest("[data-wishlist-toggle]");
       if (!btn) return;
 
       var card = btn.closest('article');
@@ -1328,7 +1334,7 @@ import './app.css';
     render();
 
     document.addEventListener('click', function (e) {
-      var btn = e.target.closest('[aria-label="Add to wishlist"]');
+      var btn = e.target.closest("[data-wishlist-toggle]");
       if (!btn) return;
       e.preventDefault();
       e.stopPropagation();

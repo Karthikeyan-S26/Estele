@@ -19,8 +19,27 @@ class CollectionController extends Controller
         abort_unless($collection->is_active, 404);
 
         $sort = $request->query('sort', 'featured');
+        $minPrice = $request->query('min_price');
+        $maxPrice = $request->query('max_price');
+        $inStock = $request->boolean('in_stock');
 
         $query = $collection->products()->with('media')->where('is_active', true);
+
+        if ($minPrice !== null && $minPrice !== '') {
+            $query->where('price', '>=', (float) $minPrice);
+        }
+        if ($maxPrice !== null && $maxPrice !== '') {
+            $query->where('price', '<=', (float) $maxPrice);
+        }
+        if ($inStock) {
+            // Same in_stock resolution as CategoryController: variant stock
+            // takes over once a product has variants.
+            $query->where(function ($q) {
+                $q->where(function ($plain) {
+                    $plain->doesntHave('variants')->where('stock_quantity', '>', 0);
+                })->orWhereHas('variants', fn ($v) => $v->where('stock_quantity', '>', 0));
+            });
+        }
 
         match ($sort) {
             'price_asc' => $query->orderBy('price'),
@@ -31,6 +50,8 @@ class CollectionController extends Controller
 
         $products = $query->paginate(24)->withQueryString();
 
-        return view('collections.show', compact('collection', 'products', 'sort'));
+        return view('collections.show', compact(
+            'collection', 'products', 'sort', 'minPrice', 'maxPrice', 'inStock'
+        ));
     }
 }

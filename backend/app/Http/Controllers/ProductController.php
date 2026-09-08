@@ -37,4 +37,19 @@ class ProductController extends Controller
 
         return view('products.show', compact('product', 'relatedProducts', 'reviews'));
     }
+
+    /**
+     * Saved items live in the visitor's own browser, not the database, so the
+     * server has no way to know which products to send. It sends the active
+     * catalogue and app.js hides every card the visitor never saved.
+     */
+    public function wishlist()
+    {
+        $products = Product::where('is_active', true)
+            ->with('media')
+            ->latest()
+            ->get();
+
+        return view('products.wishlist', compact('products'));
+    }
 }

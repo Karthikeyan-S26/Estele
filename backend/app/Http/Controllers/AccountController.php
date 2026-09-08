@@ -8,7 +8,6 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 
 class AccountController extends Controller
 {
@@ -25,26 +24,11 @@ class AccountController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$user->id],
         ]);
 
         $user->update($validated);
 
         return redirect()->route('account.index')->with('success', 'Profile updated.');
-    }
-
-    public function updatePassword(Request $request)
-    {
-        $user = Auth::user();
-
-        $validated = $request->validate([
-            'current_password' => filled($user->password) ? ['required', 'current_password'] : ['nullable'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-        ]);
-
-        $user->update(['password' => Hash::make($validated['password'])]);
-
-        return redirect()->route('account.index')->with('success', 'Password updated.');
     }
 
     public function orderShow(Order $order)

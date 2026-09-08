@@ -67,13 +67,12 @@
         than intent — sidestepped here since inline style always wins CSS
         cascade order regardless of stylesheet compile order.
 
-        No left/right padding on this wrapper (unlike every section below,
-        which uses px-3 md:px-4) — the banner is meant to run edge-to-edge on
-        both mobile and desktop, so the rounded corners were dropped too
-        (they read oddly on a full-bleed element).
+        The wrapper has no padding of its own; the section carries the same
+        px-3 md:px-4 inset as every block below as margin, plus rounded
+        corners, so the banner sits as a card instead of running full-bleed.
       --}}
       <style>@media (min-width: 768px) { .hero-banner-shortened { aspect-ratio: 1800 / 420 !important; } }</style>
-      <section class="hero-fade hero-banner-shortened relative overflow-hidden mb-2 w-full" style="aspect-ratio: 750 / 600" aria-label="Featured collections" data-carousel data-autoplay="5000" data-fade>
+      <section class="hero-fade hero-banner-shortened relative mx-3 mt-3 overflow-hidden rounded-xl md:mx-4 md:mt-4 md:rounded-2xl" style="aspect-ratio: 768 / 320" aria-label="Featured collections" data-carousel data-autoplay="5000" data-fade>
         @foreach($banners as $index => $banner)
           <div class="hero-slide {{ $index === 0 ? 'is-active' : '' }}" data-carousel-slide>
             <a href="{{ $banner->link_url ?? '#' }}" aria-label="{{ $banner->title }}">
@@ -89,18 +88,20 @@
           </div>
         @endforeach
         {{-- Arrows visible on all breakpoints now (previously desktop-only via hidden md:grid) --}}
-        <button class="absolute left-3 top-1/2 z-[3] grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/90 shadow-md" type="button" data-hero-prev aria-label="Previous slide">
+        <button class="absolute left-3 top-1/2 z-[3] grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/85 text-heading shadow-sm backdrop-blur-sm transition-colors hover:bg-white md:left-5" type="button" data-hero-prev aria-label="Previous slide">
           <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
-        <button class="absolute right-3 top-1/2 z-[3] grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/90 shadow-md" type="button" data-hero-next aria-label="Next slide">
+        <button class="absolute right-3 top-1/2 z-[3] grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/85 text-heading shadow-sm backdrop-blur-sm transition-colors hover:bg-white md:right-5" type="button" data-hero-next aria-label="Next slide">
           <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
         </button>
+        {{-- Dots sit over the slide's lower edge rather than in a white strip
+             below it, so the banner keeps its full-bleed edge. --}}
+        <div class="absolute inset-x-0 bottom-4 z-[3] flex justify-center gap-2" data-hero-dots>
+          @foreach($banners as $index => $banner)
+            <button class="h-1.5 rounded-full transition-all duration-300 {{ $index === 0 ? 'w-6 bg-white' : 'w-1.5 bg-white/55' }}" type="button" data-hero-dot="{{ $index }}" aria-label="Go to slide {{ $index + 1 }}"></button>
+          @endforeach
+        </div>
       </section>
-      <div class="flex justify-center gap-2 bg-white py-2.5" data-hero-dots>
-        @foreach($banners as $index => $banner)
-          <button class="h-2 w-2 rounded-full transition-colors {{ $index === 0 ? 'bg-heading' : 'bg-line-strong' }}" type="button" data-hero-dot="{{ $index }}" aria-label="Go to slide {{ $index + 1 }}"></button>
-        @endforeach
-      </div>
     </div>
   @endif
 

@@ -12,7 +12,6 @@ use App\Http\Controllers\FaqController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\OtpAuthController;
-use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RewardSubmissionController;
@@ -63,6 +62,13 @@ Route::post('/products/{product:slug}/reviews', [ReviewController::class, 'store
     ->name('products.reviews.store')
     ->middleware('throttle:5,60');
 
+// The wishlist itself lives in the visitor's own browser (localStorage, see
+// the WISHLIST blocks in app.js), so this route just renders every active
+// product and the client hides the ones that were never saved — no account
+// needed to keep a wishlist, same as before the Blade port.
+Route::get('/wishlist', [ProductController::class, 'wishlist'])
+    ->name('wishlist');
+
 Route::get('/search', [SearchController::class, 'index'])
     ->name('search')
     ->middleware('throttle:60,1');
@@ -82,21 +88,32 @@ Route::middleware('guest')->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Normal Email + Password Login
+    | Mobile OTP Login (only login method — no email/password)
     |--------------------------------------------------------------------------
     */
 
-    Route::get('/login', [AuthController::class, 'showLogin'])
+    Route::get('/login', [OtpAuthController::class, 'showPhone'])
         ->name('login');
 
-    Route::post('/login', [AuthController::class, 'login'])
-        ->name('login.attempt')
+    Route::post('/login', [OtpAuthController::class, 'sendCode'])
+        ->name('login.send')
+        ->middleware('throttle:5,1');
+
+    Route::get('/login/verify', [OtpAuthController::class, 'showVerify'])
+        ->name('login.verify');
+
+    Route::post('/login/verify', [OtpAuthController::class, 'verifyCode'])
+        ->name('login.verify.attempt')
         ->middleware('throttle:10,1');
+
+    Route::post('/login/resend', [OtpAuthController::class, 'resend'])
+        ->name('login.resend')
+        ->middleware('throttle:3,1');
 
 
     /*
     |--------------------------------------------------------------------------
-    | Registration
+    | Registration (only reached after OTP verification finds no account)
     |--------------------------------------------------------------------------
     */
 
@@ -106,67 +123,6 @@ Route::middleware('guest')->group(function () {
     Route::post('/register', [AuthController::class, 'register'])
         ->name('register.attempt')
         ->middleware('throttle:10,1');
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Registration OTP
-    |--------------------------------------------------------------------------
-    */
-
-    Route::post('/register/send-otp', [AuthController::class, 'sendRegistrationOtp'])
-        ->name('register.otp.send')
-        ->middleware('throttle:5,1');
-
-    Route::post('/register/verify-otp', [AuthController::class, 'verifyRegistrationOtp'])
-        ->name('register.otp.verify')
-        ->middleware('throttle:10,1');
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Forgot / Reset Password
-    |--------------------------------------------------------------------------
-    */
-
-    Route::get('/forgot-password', [PasswordResetController::class, 'showRequest'])
-        ->name('password.request');
-
-    Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])
-        ->name('password.email')
-        ->middleware('throttle:5,1');
-
-    Route::get('/reset-password/{token}', [PasswordResetController::class, 'showReset'])
-        ->name('password.reset');
-
-    Route::post('/reset-password', [PasswordResetController::class, 'update'])
-        ->name('password.update')
-        ->middleware('throttle:5,1');
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Mobile OTP Login
-    |--------------------------------------------------------------------------
-    */
-
-    Route::get('/login/mobile', [OtpAuthController::class, 'showPhone'])
-        ->name('login.mobile');
-
-    Route::post('/login/mobile', [OtpAuthController::class, 'sendCode'])
-        ->name('login.mobile.send')
-        ->middleware('throttle:5,1');
-
-    Route::get('/login/mobile/verify', [OtpAuthController::class, 'showVerify'])
-        ->name('login.mobile.verify');
-
-    Route::post('/login/mobile/verify', [OtpAuthController::class, 'verifyCode'])
-        ->name('login.mobile.verify.attempt')
-        ->middleware('throttle:10,1');
-
-    Route::post('/login/mobile/resend', [OtpAuthController::class, 'resend'])
-        ->name('login.mobile.resend')
-        ->middleware('throttle:3,1');
 });
 
 
@@ -194,9 +150,6 @@ Route::middleware('auth')->group(function () {
 
     Route::patch('/account/profile', [AccountController::class, 'updateProfile'])
         ->name('account.profile');
-
-    Route::patch('/account/password', [AccountController::class, 'updatePassword'])
-        ->name('account.password');
 
     Route::get('/account/orders/{order:order_number}', [AccountController::class, 'orderShow'])
         ->name('account.orders.show');

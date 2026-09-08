@@ -41,18 +41,15 @@ return Application::configure(basePath: dirname(__DIR__))
         // defines its own middleware stack, not this one.
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
 
-        // Mobile OTP is the primary login method now (ZappDeal parity) —
-        // any 'auth'-gated route hit while logged out (checkout, /account)
-        // sends the guest to /login/mobile ("ask for the mobile number
-        // first") rather than Laravel's default target, the email/password
-        // page. That page still links to email/password login for anyone
-        // who prefers it. Generic wording (not "finish your order") since
-        // this same redirect also fires for a bare /account visit, not just
-        // checkout.
+        // Mobile OTP is the only login method — any 'auth'-gated route hit
+        // while logged out (checkout, /account) sends the guest to /login to
+        // ask for their mobile number. Generic wording (not "finish your
+        // order") since this same redirect also fires for a bare /account
+        // visit, not just checkout.
         $middleware->redirectGuestsTo(function () {
             session()->flash('error', 'Please log in to continue.');
 
-            return route('login.mobile');
+            return route('login');
         });
     })
     ->withExceptions(function (Exceptions $exceptions): void {

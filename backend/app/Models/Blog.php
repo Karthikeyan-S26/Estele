@@ -26,10 +26,10 @@ class Blog extends Model implements HasMedia
     public function registerMediaConversions(?Media $media = null): void
     {
         // Sizes/quality follow the responsive image spec (§3.1).
-        $this->addMediaConversion('card')->width(400)->format('webp')->quality(78);
-        $this->addMediaConversion('mobile')->width(768)->format('webp')->quality(80);
-        $this->addMediaConversion('tablet')->width(1024)->format('webp')->quality(82);
-        $this->addMediaConversion('detail')->width(1600)->format('webp')->quality(83);
+        $this->addMediaConversion('card')->width(400)->format('png')->quality(78);
+        $this->addMediaConversion('mobile')->width(768)->format('png')->quality(80);
+        $this->addMediaConversion('tablet')->width(1024)->format('png')->quality(82);
+        $this->addMediaConversion('detail')->width(1600)->format('png')->quality(83);
     }
 
     protected $fillable = [
