@@ -1,0 +1,54 @@
+server {
+    listen ${PORT};
+    server_name _;
+    root /app/public;
+    index index.php;
+
+    # Real client IP / scheme from Railway's edge, so Laravel's request()->ip()
+    # and https detection are correct (paired with bootstrap/app.php trustProxies).
+    set_real_ip_from 0.0.0.0/0;
+    real_ip_header X-Forwarded-For;
+    real_ip_recursive on;
+
+    client_max_body_size 25m;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+    location = /robots.txt  { access_log off; log_not_found off; }
+
+    # Static assets: serve directly, skip PHP entirely.
+    # Excludes /livewire-{hash}/... — Livewire serves its JS/CSS/maps (and the
+    # update/upload/preview endpoints) dynamically through PHP, they are not
+    # real files under public/, so this regex must not swallow them into a 404
+    # before PHP gets a chance. Without this exclusion Filament's admin login
+    # (and every other Livewire component) silently fails: the page loads,
+    # but livewire.min.js 404s, so no click handler is ever attached and no
+    # request is ever sent when the user submits the form.
+    location ~* ^/(?!livewire-).*\.(?:css|js|map|jpg|jpeg|png|gif|ico|svg|webp|woff|woff2|ttf|eot)$ {
+        try_files $uri =404;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+
+    location ~ \.php$ {
+        try_files $uri /index.php =404;
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        fastcgi_pass 127.0.0.1:9000;
+        fastcgi_index index.php;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param PATH_INFO $fastcgi_path_info;
+        fastcgi_read_timeout 120;
+    }
+
+    location ~ /\.(?!well-known).* {
+        deny all;
+    }
+
+    access_log /dev/stdout;
+    error_log /dev/stderr;
+}

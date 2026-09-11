@@ -1,0 +1,262 @@
+/* ==========================================================================
+   ESTELE — Tailwind entry
+   Every design token lives in the @theme block below. Change a value here and
+   it updates across every page and every utility class Tailwind generates.
+   Values were read off the live site's theme CSS (gh.css / inline :root).
+   ========================================================================== */
+
+@import 'tailwindcss';
+
+/* Scan the generated HTML so Tailwind knows which utilities to emit. */
+@source '../*.html';
+@source '../pages/*.html';
+@source '../backend/resources/views/**/*.blade.php';
+
+/* --------------------------------------------------------------------------
+   DESIGN TOKENS
+   In Tailwind v4 these ARE the config — `--color-accent` creates `bg-accent`,
+   `text-accent`, `border-accent`, and so on.
+   -------------------------------------------------------------------------- */
+@theme {
+  /* ---- Fonts ----
+     Cinzel carries the brand name and section titles (engraved-capital feel,
+     the register jewellery houses use); Playfair for editorial headings;
+     Allura only ever for a single scripted accent word; Plus Jakarta for UI. */
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Playfair Display', ui-serif, Georgia, serif;
+  --font-display: 'Cinzel', ui-serif, Georgia, serif;
+  --font-script: 'Allura', ui-serif, cursive;
+
+  /* ---- Brand (Rose + Gold on warm white) ---- */
+  --color-accent: #CB6B88;
+  --color-accent-dark: #AD3D5F;
+  --color-rose: #CB6B88;
+  --color-rose-dark: #AD3D5F;
+  --color-gold: #D4AF37;
+  --color-gold-hover: #B38728;
+  --color-gold-light: #F5E6BE;
+
+  /* ---- Text ---- */
+  --color-ink: #33302F;
+  --color-heading: #1F1D1D;
+  --color-muted: #666666;
+
+  /* ---- Surfaces ---- */
+  --color-ivory: #FAF8F5;
+  --color-warmbeige: #F3EDE7;
+  --color-pinksoft: #FBF1F4;
+  --color-greysoft: #F2EFEB;
+  --color-cream: #FAF8F5;
+  --color-placeholder: #F2EFEB;
+  --color-paper: #FFFFFF;
+  /* Jewellery reads brightest against a dark case — carries the light/dark
+     alternation the homepage sections scroll through. */
+  --color-deepwine: #2B141C;
+
+  /* ---- Lines ---- */
+  --color-line: #EAE4DE;
+  --color-line-strong: #D9D0C8;
+
+  /* ---- Commerce ---- */
+  --color-price: #1F1D1D;
+  --color-salebadge: #AD3D5F;
+  --color-newbadge: #CB6B88;
+  --color-soldout: #8C807B;
+  --color-star: #D4AF37;
+
+  /* ---- Header + announcement ---- */
+  --color-headergold: #FAF8F5;
+  --color-announce: #AD3D5F;
+
+  /* ---- Layout ---- */
+  /* Wide displays were letterboxing the grid into 1360px, which forced the
+     same column count to render at a much larger card size. */
+  --container-wrapper: 1480px;
+
+  /* ---- Breakpoints ---- */
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1200px;
+  --breakpoint-2xl: 1360px;
+}
+
+/* --------------------------------------------------------------------------
+   BASE
+   -------------------------------------------------------------------------- */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
+  }
+
+  body {
+    /* Base sizes are tuned for a phone; a desktop viewport gets a step up so
+       the same components don't read as undersized on a wide display. */
+    @apply bg-ivory font-sans text-[14px] leading-relaxed text-ink antialiased;
+    overflow-x: hidden;
+  }
+
+  @media (min-width: 1024px) { body { font-size: 15px; } }
+  @media (min-width: 1200px) { body { font-size: 15.5px; } }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif font-medium leading-tight text-heading;
+  }
+
+  img {
+    @apply block max-w-full h-auto;
+  }
+
+  /* Native disclosure markers off — every <details> here is custom-styled. */
+  summary { list-style: none; cursor: pointer; }
+  summary::-webkit-details-marker { display: none; }
+
+  [hidden] { display: none !important; }
+}
+
+/* --------------------------------------------------------------------------
+   COMPONENTS
+   -------------------------------------------------------------------------- */
+@layer components {
+
+  /* ---- Header: warm white with a hairline rule ---- */
+  .header-gradient {
+    background-color: #FAF8F5;
+    border-bottom: 1px solid #EAE4DE;
+  }
+
+  /* ---- Header nav/icon hover ---- */
+  [data-header] {
+    --nav-hover-color: #AD3D5F;
+  }
+  [data-header].is-stuck {
+    --nav-hover-color: #AD3D5F;
+  }
+
+  /* ---- Brand wordmark: engraved capitals, gold leaf ----
+     Gradient stops read as light catching a polished gold edge, which is why
+     it is reserved for the wordmark and never applied to body copy. */
+  .wordmark {
+    @apply font-display font-semibold tracking-[0.08em];
+  }
+  .gold-leaf {
+    background: linear-gradient(135deg, #BF953F, #FCF6BA, #B38728, #FBF5B7);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  /* ---- Carousel: CSS does the layout, JS only moves scrollLeft ---- */
+  .carousel-track {
+    @apply flex overflow-x-auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .carousel-track::-webkit-scrollbar { display: none; }
+  .carousel-track > * { scroll-snap-align: start; flex: 0 0 auto; }
+
+  /* ---- Carousel pagination dots (generic, populated by data-carousel-dots) ---- */
+  .carousel__dot {
+    @apply h-1.5 w-1.5 rounded-full bg-line-strong transition-all duration-300;
+  }
+  .carousel__dot.is-active {
+    @apply w-5 bg-heading;
+  }
+
+  /* ---- Hero uses a cross-fade, matching the live theme's slide-eff-fade ---- */
+  .hero-fade { @apply relative; }
+  .hero-fade > .hero-slide {
+    @apply absolute inset-0 opacity-0 transition-opacity duration-700 ease-in-out;
+    pointer-events: none;
+  }
+  .hero-fade > .hero-slide.is-active {
+    @apply opacity-100;
+    pointer-events: auto;
+  }
+  /* First slide holds the height so the box does not collapse. */
+  .hero-fade > .hero-slide:first-child {
+    @apply relative;
+  }
+
+  /* ---- +/- markers on <details> ---- */
+  .marker-pm > summary::after {
+    content: '+';
+    @apply text-[17px] text-muted;
+  }
+  .marker-pm[open] > summary::after { content: '\2212'; }
+
+  /* ---- Product card: quiet by default, gold edge + slow zoom on hover ----
+     The zoom lives on the image inside a fixed-ratio clipping frame so the
+     card box itself never shifts and no reflow reaches neighbouring cards. --}}
+  */
+  .product-card {
+    @apply relative flex h-full flex-col overflow-hidden rounded-xl border border-line bg-white transition-[border-color,box-shadow] duration-300;
+  }
+  .product-card:hover {
+    @apply border-gold;
+    box-shadow: 0 14px 32px -16px rgba(51, 48, 47, 0.28);
+  }
+  .product-card__frame {
+    @apply relative m-2 overflow-hidden rounded-lg bg-placeholder;
+    aspect-ratio: 1 / 1;
+  }
+  .product-card__img {
+    @apply h-full w-full object-cover;
+    transition: transform .6s cubic-bezier(.16, 1, .3, 1);
+  }
+  .product-card:hover .product-card__img { transform: scale(1.06); }
+  @media (prefers-reduced-motion: reduce) {
+    .product-card__img { transition: none; }
+    .product-card:hover .product-card__img { transform: none; }
+  }
+
+  /* ---- Category tile: circular frame, the shape Indian jewellery retail
+     uses to show a piece rather than a packshot ---- */
+  .cat-tile__frame {
+    @apply relative mx-auto max-w-[150px] overflow-hidden rounded-full border-2 border-line bg-placeholder transition-colors duration-300;
+    aspect-ratio: 1 / 1;
+  }
+  .cat-tile:hover .cat-tile__frame { @apply border-gold; }
+  .cat-tile__img {
+    @apply h-full w-full object-cover;
+    transition: transform .6s cubic-bezier(.16, 1, .3, 1);
+  }
+  .cat-tile:hover .cat-tile__img { transform: scale(1.07); }
+  @media (prefers-reduced-motion: reduce) {
+    .cat-tile__img { transition: none; }
+    .cat-tile:hover .cat-tile__img { transform: none; }
+  }
+
+  /* ---- Section heading: serif title with a short gold rule under it ---- */
+  .section-head { @apply text-center; }
+  .section-head__title {
+    @apply font-display text-[17px] font-semibold uppercase leading-tight tracking-[0.08em] text-heading md:text-[26px] md:tracking-[0.1em] lg:text-[30px] xl:text-[34px];
+  }
+  .section-head__script {
+    @apply font-script text-[30px] leading-none text-rose md:text-[38px] lg:text-[44px] xl:text-[48px];
+  }
+  .section-head__rule {
+    @apply mx-auto mt-3 block h-px w-12 bg-gold lg:mt-4 lg:w-16;
+  }
+  .section-head__sub {
+    @apply mx-auto mt-3 max-w-[46ch] text-[13.5px] leading-relaxed text-muted lg:mt-4 lg:text-[15px];
+  }
+  .section-head__eyebrow {
+    @apply mb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.22em] text-rose md:mb-2 md:text-[11.5px];
+  }
+  .section-head__cta {
+    @apply inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap pb-1 text-[11px] font-semibold uppercase tracking-[0.14em] transition-colors hover:text-rose md:text-[12px];
+  }
+
+  /* ---- Screen-reader only ---- */
+  .sr-only-custom {
+    position: absolute; width: 1px; height: 1px;
+    padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+}

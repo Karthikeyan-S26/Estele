@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>@yield('meta_title', ($siteSettings['site_name'] ?? 'Estele').' — '.($siteSettings['site_tagline'] ?? ''))</title>
+  <meta name="description" content="@yield('meta_description', $siteSettings['site_tagline'] ?? '')">
+  <link rel="canonical" href="@yield('canonical', url()->current())">
+
+  {{-- hreflang scaffolding (spec §4.1 — "even if single-language at launch,
+       future multi-region readiness"). Self-referencing en-IN plus x-default
+       is the minimum valid hreflang set; add more <link> tags here per
+       locale/region if the site ever ships additional languages. --}}
+  <link rel="alternate" hreflang="en-in" href="@yield('canonical', url()->current())">
+  <link rel="alternate" hreflang="x-default" href="@yield('canonical', url()->current())">
+
+  {{-- rel=next/prev on paginated listing pages (spec §4.1 — avoids duplicate-
+       content signals across category/blog/search pagination); pushed from
+       the individual views via @push('pagination_links'), see x-pagination-links. --}}
+  @stack('pagination_links')
+
+  <meta property="og:type" content="@yield('og_type', 'website')">
+  <meta property="og:site_name" content="{{ $siteSettings['site_name'] ?? 'Estele' }}">
+  <meta property="og:url" content="@yield('canonical', url()->current())">
+  <meta property="og:title" content="@yield('meta_title', ($siteSettings['site_name'] ?? 'Estele').' — '.($siteSettings['site_tagline'] ?? ''))">
+  <meta property="og:description" content="@yield('meta_description', $siteSettings['site_tagline'] ?? '')">
+  @hasSection('og_image')
+    <meta property="og:image" content="@yield('og_image')">
+  @endif
+
+  <meta name="twitter:card" content="{{ $__env->hasSection('og_image') ? 'summary_large_image' : 'summary' }}">
+  <meta name="twitter:title" content="@yield('meta_title', ($siteSettings['site_name'] ?? 'Estele').' — '.($siteSettings['site_tagline'] ?? ''))">
+  <meta name="twitter:description" content="@yield('meta_description', $siteSettings['site_tagline'] ?? '')">
+  @hasSection('og_image')
+    <meta name="twitter:image" content="@yield('og_image')">
+  @endif
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Allura&family=Cinzel:wght@500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap">
+  <link rel="stylesheet" href="{{ asset('theme/app.css') }}?v={{ @filemtime(public_path('theme/app.css')) }}">
+
+  {{-- Admin-managed GA4/GSC/Meta Pixel etc (Settings key 'tracking_head_scripts',
+       see the SEO Settings section of the admin Settings resource) — raw
+       markup rendered verbatim, blank/no-op until an admin pastes a real
+       snippet in. Trusted input: only super_admin can edit Settings. --}}
+  @if(! empty($siteSettings['tracking_head_scripts']))
+    {!! $siteSettings['tracking_head_scripts'] !!}
+  @endif
+</head>
+<body>
+<a class="sr-only-custom" href="#main">Skip to content</a>
+
+@php $announcements = json_decode($siteSettings['announcement_messages'] ?? '[]', true) ?: []; @endphp
+<div class="w-full bg-announce py-2 text-center text-[11px] font-medium uppercase tracking-[0.12em] text-white" data-announcement>
+  @if(count($announcements))
+    <div class="relative h-4">
+      @foreach($announcements as $index => $message)
+        <p class="absolute inset-x-0 top-0 m-0 px-3 transition-opacity duration-500 {{ $index === 0 ? 'opacity-100' : 'opacity-0 pointer-events-none' }}" data-announce-item>{{ $message }}</p>
+      @endforeach
+    </div>
+  @else
+    <p class="m-0 px-3">Free Express Shipping on Orders Above &#8377;1,499 &middot; Use Code <span class="font-semibold text-gold">ESTELE50</span> for Flat 50% Off</p>
+  @endif
+</div>
+@if(count($activeOffers))
+  <div class="hidden w-full border-b border-line bg-pinksoft py-1.5 text-[11px] text-heading md:block">
+    <div class="mx-auto flex w-full max-w-wrapper items-center justify-center gap-6 px-4">
+      @foreach($activeOffers as $offer)
+        <span class="inline-flex items-center gap-1.5"><span class="text-gold">&#10022;</span>{{ $offer }}</span>
+      @endforeach
+    </div>
+  </div>
+@endif
+
+<header class="header-gradient sticky top-0 z-[100] px-3.5 pt-2.5 pb-2.5 md:px-[30px] md:pt-[15px] md:pb-3" data-header>
+  <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-2 md:gap-5">
+    <div class="flex items-center gap-1.5">
+      <button class="grid h-[38px] w-[38px] place-items-center lg:hidden" type="button"
+              data-menu-open aria-label="Open menu" aria-expanded="false">
+        <span class="sr-only-custom">Menu</span>
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+    </div>
+
+    <a class="wordmark justify-self-center shrink-0 text-[21px] text-heading md:text-[24px]" href="{{ route('home') }}">
+      {{ $siteSettings['site_name'] ?? 'Estele' }}
+    </a>
+
+    <div class="flex items-center justify-end gap-1 md:gap-2">
+      {{-- overflow-hidden used to live on this <form> itself (to round the pill
+           shape), but the suggestions dropdown below is an absolutely-positioned
+           child of the same form sitting at top-full — entirely outside the
+           form's own box — so that overflow-hidden clipped it to invisible even
+           though the JS was populating it correctly. Moved the pill clipping to
+           an inner wrapper around just the input+button row so the dropdown,
+           still a direct child of the form, is no longer inside a clipping box. --}}
+      <form class="relative hidden items-center lg:flex lg:w-[230px] xl:w-[300px]"
+            action="{{ route('search') }}" method="get" role="search" data-search-autocomplete>
+        <div class="flex w-full items-center overflow-hidden rounded-full border border-line-strong bg-white/70 text-muted">
+          <input class="w-full min-w-0 border-0 bg-transparent px-3 py-2 text-[13px] text-ink outline-none placeholder:text-muted" type="search" name="q" placeholder="Search for products" aria-label="Search for products" autocomplete="off">
+          <button class="grid h-[38px] w-[38px] shrink-0 place-items-center text-heading" type="submit" aria-label="Submit search">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          </button>
+        </div>
+        <div class="absolute left-0 top-full z-20 mt-1 hidden w-full min-w-[280px] overflow-hidden rounded-lg border border-line bg-white text-ink shadow-lg" data-search-suggestions></div>
+      </form>
+      <button class="relative grid h-[38px] w-[38px] place-items-center text-heading transition-colors hover:[color:var(--nav-hover-color)] lg:hidden" type="button" data-search-open aria-label="Search">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      </button>
+      <a class="relative grid h-[38px] w-[38px] place-items-center text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('wishlist') }}" aria-label="Wishlist">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21.2l7.7-7.7 1.1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+        <span class="absolute right-0.5 top-0.5 hidden h-4 min-w-4 place-items-center rounded-lg bg-accent px-1 text-[10px] leading-none text-white" data-wishlist-count>0</span>
+      </a>
+      <a class="relative grid h-[38px] w-[38px] place-items-center text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('cart.index') }}" aria-label="Cart" data-cart-open>
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <span class="absolute right-0.5 top-0.5 grid h-4 min-w-4 place-items-center rounded-lg bg-accent px-1 text-[10px] leading-none text-white" style="{{ $cartCount > 0 ? '' : 'display:none' }}" data-cart-count-badge>{{ $cartCount }}</span>
+      </a>
+      <a class="relative grid h-[38px] w-[38px] place-items-center text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ auth()->check() ? route('account.index') : route('login') }}" aria-label="Account">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 7-7h2a7 7 0 0 1 7 7v1"/></svg>
+      </a>
+    </div>
+  </div>
+
+  @php
+    $navCollectionsBySlug = collect($navCollections)->keyBy('slug');
+    $hasliCollection = $navCollectionsBySlug->get('hasli-collection');
+    $crystalBloomsCollection = $navCollectionsBySlug->get('crystal-blooms');
+    $newArrivalsCollection = $navCollectionsBySlug->get('new-arrivals');
+    $sitaraCollection = $navCollectionsBySlug->get('sitara-collection');
+    $weddingSeasonCollection = $navCollectionsBySlug->get('wedding-season');
+    $roseCollection = $navCollectionsBySlug->get('rose-collection');
+    $bestSellerCollection = $navCollectionsBySlug->get('best-seller');
+    $navCategoriesBySlug = collect($navCategories)->keyBy('slug');
+    $necklaceSubCategories = collect(['necklace-sets', 'pendant-sets', 'choker-sets', 'mangalsutra'])
+      ->map(fn ($slug) => $navCategoriesBySlug->get($slug))
+      ->filter();
+  @endphp
+  <nav class="mt-2 hidden lg:block" aria-label="Main navigation">
+    <ul class="flex items-center justify-between">
+      @if($hasliCollection)
+        <li><a class="relative inline-flex items-center whitespace-nowrap py-2 text-[11.5px] font-medium leading-[14px] uppercase tracking-[0.1em] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('collections.show', $hasliCollection['slug']) }}">HASLI COLLECTION<span class="ml-1 rounded-full bg-accent px-1.5 py-0.5 text-[8px] font-semibold leading-none text-white">NEW</span></a></li>
+      @endif
+      @if($crystalBloomsCollection)
+        <li><a class="relative inline-flex items-center whitespace-nowrap py-2 text-[11.5px] font-medium leading-[14px] uppercase tracking-[0.1em] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('collections.show', $crystalBloomsCollection['slug']) }}">CRYSTAL BLOOMS</a></li>
+      @endif
+      @if($newArrivalsCollection)
+        <li><a class="relative inline-flex items-center whitespace-nowrap py-2 text-[11.5px] font-medium leading-[14px] uppercase tracking-[0.1em] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('collections.show', $newArrivalsCollection['slug']) }}">NEW ARRIVALS</a></li>
+      @endif
+      @if($sitaraCollection)
+        <li><a class="relative inline-flex items-center whitespace-nowrap py-2 text-[11.5px] font-medium leading-[14px] uppercase tracking-[0.1em] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('collections.show', $sitaraCollection['slug']) }}">SITARA COLLECTION</a></li>
+      @endif
+      @if($weddingSeasonCollection)
+        <li><a class="relative inline-flex items-center whitespace-nowrap py-2 text-[11.5px] font-medium leading-[14px] uppercase tracking-[0.1em] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('collections.show', $weddingSeasonCollection['slug']) }}">WEDDING SEASON</a></li>
+      @endif
+      @if($roseCollection)
+        <li><a class="relative inline-flex items-center whitespace-nowrap py-2 text-[11.5px] font-medium leading-[14px] uppercase tracking-[0.1em] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('collections.show', $roseCollection['slug']) }}">ROSE COLLECTION</a></li>
+      @endif
+      @if($necklaceSubCategories->isNotEmpty())
+        <li class="group relative">
+          <a class="relative flex items-center gap-1 whitespace-nowrap py-2 text-[11.5px] font-medium leading-[14px] uppercase tracking-[0.1em] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('categories.show', $necklaceSubCategories->first()['slug']) }}">NECKLACES
+            <svg class="h-2.5 w-2.5 shrink-0 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+          </a>
+          <div class="invisible absolute left-1/2 top-full z-20 w-56 -translate-x-1/2 translate-y-1 rounded-lg border border-line header-gradient p-2 opacity-0 shadow-lg transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+            @foreach($necklaceSubCategories as $category)
+              <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="{{ route('categories.show', $category['slug']) }}">{{ $category['name'] }}</a>
+            @endforeach
+          </div>
+        </li>
+      @endif
+      @if(count($navCategories))
+        <li class="group relative">
+          <a class="relative flex items-center gap-1 whitespace-nowrap py-2 text-[11.5px] font-medium leading-[14px] uppercase tracking-[0.1em] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('categories.index') }}">CATEGORIES
+            <svg class="h-2.5 w-2.5 shrink-0 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+          </a>
+          <div class="invisible absolute left-1/2 top-full z-20 w-56 -translate-x-1/2 translate-y-1 rounded-lg border border-line header-gradient p-2 opacity-0 shadow-lg transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+            @foreach($navCategories as $category)
+              <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="{{ route('categories.show', $category['slug']) }}">{{ $category['name'] }}</a>
+            @endforeach
+          </div>
+        </li>
+      @endif
+      @if($bestSellerCollection)
+        <li><a class="relative inline-flex items-center whitespace-nowrap py-2 text-[11.5px] font-medium leading-[14px] uppercase tracking-[0.1em] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('collections.show', $bestSellerCollection['slug']) }}">BEST SELLER</a></li>
+      @endif
+      @if(count($navCollections))
+        <li class="group relative">
+          <a class="relative flex items-center gap-1 whitespace-nowrap py-2 text-[11.5px] font-medium leading-[14px] uppercase tracking-[0.1em] text-heading transition-colors hover:[color:var(--nav-hover-color)]" href="{{ route('collections.index') }}">COLLECTIONS
+            <svg class="h-2.5 w-2.5 shrink-0 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+          </a>
+          {{-- Right-anchored (not center-anchored like the other two dropdowns
+               above): this is the last item in the nav bar, so a w-56 panel
+               centered under its trigger runs past the right edge of the
+               viewport — invisible (visibility:hidden, not display:none) so
+               nothing looks visually broken, but it still occupies layout
+               space and was forcing a horizontal scrollbar on every single
+               page (this partial is shared by the whole site's header).
+               right-0 keeps the panel's right edge flush with the trigger's
+               own right edge, which is already safely inside the viewport. --}}
+          <div class="invisible absolute right-0 top-full z-20 max-h-[380px] w-56 translate-y-1 overflow-y-auto rounded-lg border border-line header-gradient p-2 opacity-0 shadow-lg transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+            @foreach($navCollections as $collection)
+              <a class="block rounded-md px-3 py-2 text-[12px] text-heading transition-colors hover:bg-pinksoft hover:text-accent" href="{{ route('collections.show', $collection['slug']) }}">{{ $collection['name'] }}</a>
+            @endforeach
+          </div>
+        </li>
+      @endif
+    </ul>
+  </nav>
+
+  <form class="relative mt-2.5 flex items-center gap-2.5 rounded-lg border border-line-strong bg-white px-3.5 py-2.5 text-muted md:hidden"
+        action="{{ route('search') }}" method="get" role="search" data-search-autocomplete>
+    <svg class="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+    <input class="w-full border-0 bg-transparent text-[14px] text-ink outline-none placeholder:text-muted"
+           type="search" name="q" placeholder="Search for products" aria-label="Search for products" autocomplete="off">
+    <div class="absolute left-0 right-0 top-full z-20 mt-1 hidden overflow-hidden rounded-lg border border-line bg-white shadow-lg" data-search-suggestions></div>
+  </form>
+</header>
+
+<div class="fixed inset-0 z-[200]" data-drawer hidden>
+  <div class="absolute inset-0 bg-black/45 opacity-0 transition-opacity duration-300" data-drawer-backdrop data-menu-close></div>
+  <nav class="header-gradient absolute left-0 top-0 flex h-full w-[min(320px,85vw)] -translate-x-full flex-col transition-transform duration-300"
+       data-drawer-panel aria-label="Mobile navigation">
+    <div class="flex items-center justify-between border-b border-line px-5 py-[18px]">
+      <span class="text-[13px] font-medium uppercase tracking-[0.5px]">Menu</span>
+      <button class="text-[28px] leading-none text-heading" type="button" data-menu-close aria-label="Close menu">&times;</button>
+    </div>
+    <ul class="flex-1 overflow-y-auto py-2">
+      @if($hasliCollection)
+        <li class="border-b border-line"><a class="flex items-center gap-2 px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent" href="{{ route('collections.show', $hasliCollection['slug']) }}">Hasli Collection</a></li>
+      @endif
+      @if($crystalBloomsCollection)
+        <li class="border-b border-line"><a class="flex items-center gap-2 px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent" href="{{ route('collections.show', $crystalBloomsCollection['slug']) }}">Crystal Blooms</a></li>
+      @endif
+      @if($newArrivalsCollection)
+        <li class="border-b border-line"><a class="flex items-center gap-2 px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent" href="{{ route('collections.show', $newArrivalsCollection['slug']) }}">New Arrivals</a></li>
+      @endif
+      @if($sitaraCollection)
+        <li class="border-b border-line"><a class="flex items-center gap-2 px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent" href="{{ route('collections.show', $sitaraCollection['slug']) }}">Sitara Collection</a></li>
+      @endif
+      @if($weddingSeasonCollection)
+        <li class="border-b border-line"><a class="flex items-center gap-2 px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent" href="{{ route('collections.show', $weddingSeasonCollection['slug']) }}">Wedding Season</a></li>
+      @endif
+      @if($roseCollection)
+        <li class="border-b border-line"><a class="flex items-center gap-2 px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent" href="{{ route('collections.show', $roseCollection['slug']) }}">Rose Collection</a></li>
+      @endif
+      @if($bestSellerCollection)
+        <li class="border-b border-line"><a class="flex items-center gap-2 px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent" href="{{ route('collections.show', $bestSellerCollection['slug']) }}">Best Seller</a></li>
+      @endif
+      @if(count($navCategories))
+        <li class="border-b border-line">
+          <details class="marker-pm">
+            <summary class="flex items-center justify-between px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading">Shop by Category</summary>
+            <ul class="bg-white/60">
+              @foreach($navCategories as $category)
+                <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="{{ route('categories.show', $category['slug']) }}">{{ $category['name'] }}</a></li>
+              @endforeach
+            </ul>
+          </details>
+        </li>
+      @endif
+      @if(count($navCollections))
+        <li class="border-b border-line">
+          <details class="marker-pm">
+            <summary class="flex items-center justify-between px-5 py-3.5 text-[13px] uppercase tracking-[0.3px] text-heading">Collections</summary>
+            <ul class="bg-white/60">
+              @foreach($navCollections as $collection)
+                <li class="border-t border-line"><a class="block py-3 pl-[34px] pr-5 text-[12.5px] text-muted transition-colors hover:text-accent" href="{{ route('collections.show', $collection['slug']) }}">{{ $collection['name'] }}</a></li>
+              @endforeach
+            </ul>
+          </details>
+        </li>
+      @endif
+    </ul>
+    <div class="p-5">
+      @auth
+        <a class="inline-flex items-center justify-center gap-2 border border-accent bg-accent px-8 py-[13px] text-[13px] font-medium uppercase tracking-[0.5px] text-white transition-colors hover:border-accent-dark hover:bg-accent-dark w-full" href="{{ route('account.index') }}">My Account</a>
+      @else
+        <a class="inline-flex items-center justify-center gap-2 border border-accent bg-accent px-8 py-[13px] text-[13px] font-medium uppercase tracking-[0.5px] text-white transition-colors hover:border-accent-dark hover:bg-accent-dark w-full" href="{{ route('login') }}">Login / Register</a>
+      @endauth
+    </div>
+  </nav>
+</div>
+
+@include('partials.cart-drawer')
+@include('partials.coupons-modal')
+@include('partials.popup')
+
+<div class="fixed inset-0 z-[200]" data-search hidden>
+  <div class="absolute inset-0 bg-black/45" data-search-close></div>
+  <div class="relative bg-white py-10">
+    <form class="relative mx-auto flex max-w-[720px] items-center gap-2.5 px-4" action="{{ route('search') }}" method="get" role="search" data-search-autocomplete>
+      <input class="w-full border border-line-strong bg-white px-4 py-3 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-heading" type="search" name="q" placeholder="Search for jewellery..." aria-label="Search" autocomplete="off">
+      <button class="inline-flex items-center justify-center gap-2 border border-accent bg-accent px-8 py-[13px] text-[13px] font-medium uppercase tracking-[0.5px] text-white transition-colors hover:border-accent-dark hover:bg-accent-dark" type="submit">Search</button>
+      <button class="text-[30px] leading-none text-heading" type="button" data-search-close aria-label="Close search">&times;</button>
+      <div class="absolute left-4 right-[86px] top-full z-20 mt-1 hidden overflow-hidden rounded-lg border border-line bg-white shadow-lg" data-search-suggestions></div>
+    </form>
+  </div>
+</div>
+
+<main id="main">
+  @if(session('success'))
+    <div class="mx-auto w-full max-w-wrapper px-3 pt-4 md:px-4">
+      <p class="rounded-lg border border-line bg-pinksoft px-4 py-3 text-[13px] text-heading">{{ session('success') }}</p>
+    </div>
+  @endif
+  @if(session('error'))
+    <div class="mx-auto w-full max-w-wrapper px-3 pt-4 md:px-4">
+      <p class="rounded-lg border border-salebadge bg-white px-4 py-3 text-[13px] text-salebadge">{{ session('error') }}</p>
+    </div>
+  @endif
+  @yield('content')
+</main>
+
+{{--
+  A few rules below (mobile/desktop split, copyright row layout, social-icon hover) are
+  hand-written instead of Tailwind md:/hover:bg-* utility classes: backend/public/theme has
+  no live Tailwind rebuild, so any utility class not already compiled in silently no-ops on
+  the deployed site (see project memory). Scoped here rather than relying on new classes.
+--}}
+<style>
+  .footer-mobile { display: block; }
+  .footer-desktop { display: none; }
+</style>
+@include('partials.footer')
+
+<div class="fixed bottom-[74px] right-3 z-[120] flex items-center justify-end gap-2 md:bottom-[18px] md:right-[18px]" data-chat>
+  <span class="relative hidden items-center gap-2.5 whitespace-nowrap rounded-[22px] bg-[#1f1f1f] px-4 py-2.5 text-[13px] text-white shadow-lg md:inline-flex" data-chat-tip>
+    Need help?
+    <button class="text-[16px] leading-none opacity-70 transition-opacity hover:opacity-100" type="button" data-chat-tip-close aria-label="Dismiss">&times;</button>
+  </span>
+  <button class="relative order-2 h-[50px] w-[50px] shrink-0 rounded-full bg-white shadow-lg md:h-[58px] md:w-[58px]"
+          type="button" data-chat-open aria-label="Open support chat" aria-expanded="false">
+    <img class="h-full w-full rounded-full object-cover p-1.5" src="{{ asset('assets/images/chat-avatar.svg') }}" alt="" width="56" height="56">
+    <span class="absolute -right-0.5 -top-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-[#eb001b] text-[11px] font-medium text-white" data-chat-badge>1</span>
+    <span class="absolute bottom-0.5 right-0.5 h-3 w-3 rounded-full border-2 border-white bg-[#22c55e]"></span>
+  </button>
+  <div class="absolute bottom-[72px] right-0 flex w-[min(340px,calc(100vw-36px))] flex-col overflow-hidden rounded-[18px] bg-white shadow-2xl"
+       data-chat-panel hidden>
+    <div class="flex items-center justify-between gap-3 bg-[#232323] px-4 py-3.5 text-white">
+      <div class="flex items-center gap-3">
+        <div>
+          <strong class="block text-sm font-semibold">{{ $siteSettings['site_name'] ?? 'Estele' }} Style Expert</strong>
+          <div class="mt-1 flex items-center gap-2 text-[12px] text-[#cbd5e1]">
+            <span class="h-2.5 w-2.5 rounded-full bg-[#22c55e]"></span>
+            <span>Online</span>
+          </div>
+        </div>
+      </div>
+      <button class="text-2xl leading-none text-white" type="button" data-chat-close aria-label="Close chat">&times;</button>
+    </div>
+    <div class="flex max-h-[280px] flex-col gap-3 overflow-y-auto bg-[#f7f5f6] p-4" data-chat-log>
+      <p class="max-w-[85%] self-start rounded-[28px] border border-line bg-white px-4 py-3 text-[13px] leading-relaxed shadow-sm">Hey! <strong>How can I help you?</strong></p>
+    </div>
+    <div class="flex flex-col gap-2.5 px-4 pt-4">
+      <button class="rounded-full border border-[#dadada] bg-white px-4 py-3 text-[13px] text-heading transition hover:bg-[#fafafa]" type="button" data-chat-quick>Suggest something for me</button>
+      <button class="rounded-full border border-[#dadada] bg-white px-4 py-3 text-[13px] text-heading transition hover:bg-[#fafafa]" type="button" data-chat-quick>Tell me about best seller</button>
+    </div>
+    <form class="flex items-center gap-2 px-4 pb-4 pt-3" data-chat-form>
+      <label class="sr-only-custom" for="chat-input">Message</label>
+      <input class="w-full rounded-full border border-line-strong bg-[#f4f2f3] px-4 py-3 text-[13px] outline-none focus:border-accent"
+             id="chat-input" type="text" placeholder="You can talk to me in any language" autocomplete="off">
+      <button class="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-full bg-[#1f1f1f] text-white transition hover:bg-[#111111]" type="submit" aria-label="Send">
+        <svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>
+      </button>
+    </form>
+  </div>
+</div>
+
+<nav class="fixed inset-x-0 bottom-0 z-[110] flex border-t border-line bg-white pb-[env(safe-area-inset-bottom)] md:hidden" aria-label="Quick navigation">
+  <a class="flex flex-1 flex-col items-center gap-0.5 px-0.5 py-2 text-[10px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent" href="{{ route('home') }}">
+    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2h-4v-7H9v7H5a2 2 0 0 1-2-2z"/></svg>
+    <span>Home</span>
+  </a>
+  <a class="flex flex-1 flex-col items-center gap-0.5 px-0.5 py-2 text-[10px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent" href="{{ route('search') }}">
+    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+    <span>Categories</span>
+  </a>
+  <a class="flex flex-1 flex-col items-center gap-0.5 px-0.5 py-2 text-[10px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent" href="{{ route('wishlist') }}">
+    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21.2l7.7-7.7 1.1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+    <span>Wishlist</span>
+  </a>
+  <a class="flex flex-1 flex-col items-center gap-0.5 px-0.5 py-2 text-[10px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent" href="{{ auth()->check() ? route('account.index') : route('login') }}">
+    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 7-7h2a7 7 0 0 1 7 7v1"/></svg>
+    <span>Account</span>
+  </a>
+</nav>
+
+{{--
+  Back-to-top used to sit at the exact same fixed coordinates as the chat
+  bubble below (bottom-[74px]/right-3, md:bottom-[18px]/md:right-[18px]) —
+  the chat bubble's higher z-index meant it silently covered this button
+  whenever both were visible, making "back to top" unreachable near the
+  chat widget. Stacked above the chat bubble instead (bubble height + a
+  small gap): mobile 50px bubble at bottom-74px -> clear at 134px; desktop
+  58px bubble at bottom-18px -> clear at 86px. Inline style + scoped
+  breakpoint override rather than new bottom-[...] utility classes, since
+  this backend has no live Tailwind build of its own (see home/index.blade.php).
+--}}
+<style>@media (min-width: 768px) { .back-to-top-btn { bottom: 86px !important; } }</style>
+<button class="back-to-top-btn fixed right-3 z-[90] grid h-[42px] w-[42px] translate-y-2.5 place-items-center rounded-full bg-heading text-white opacity-0 transition-all hover:bg-accent md:right-[18px]"
+        style="bottom: 134px" type="button" data-to-top aria-label="Back to top">
+  <svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+</button>
+
+<script src="{{ asset('theme/app.js') }}?v={{ @filemtime(public_path('theme/app.js')) }}"></script>
+@stack('scripts')
+
+{{-- Admin-managed tracking scripts that need to run after page content (e.g.
+     a GTM noscript fallback or a pixel that expects the DOM to be ready) —
+     counterpart to 'tracking_head_scripts' above. --}}
+@if(! empty($siteSettings['tracking_body_scripts']))
+  {!! $siteSettings['tracking_body_scripts'] !!}
+@endif
+</body>
+</html>

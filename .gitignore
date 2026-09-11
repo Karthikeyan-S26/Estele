@@ -1,0 +1,9 @@
+node_modules/
+.vscode/
+.claude/
+.gstack/
+.DS_Store
+Thumbs.db
+Current-tech.md/
+.Current-tech.md/
+.worktrees/Currect-tech.md

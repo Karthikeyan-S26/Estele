@@ -1,0 +1,520 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Estele Mobile App API",
+    "description": "REST API backing the Estele Flutter mobile app. Stateless bearer-token auth (POST /api/login returns a token; send it as `Authorization: Bearer <token>`). Guest cart operations require the `X-Cart-Token` header (a UUID the app generates once and persists). Error shape is always `{\"success\": false, \"message\": \"...\"}` with 401/403/404/422. List endpoints accept `per_page` (default 24) and return `{data: [...], meta: {...}}`.",
+    "version": "1.0.0"
+  },
+  "servers": [{ "url": "https://your-backend.example.com/api" }],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "token" }
+    },
+    "parameters": {
+      "CartTokenHeader": {
+        "in": "header",
+        "name": "X-Cart-Token",
+        "required": false,
+        "schema": { "type": "string" },
+        "description": "Required for guest cart calls (unauthenticated). A UUID you generate once and persist on the device."
+      },
+      "PerPage": {
+        "in": "query",
+        "name": "per_page",
+        "required": false,
+        "schema": { "type": "integer", "default": 24, "maximum": 100 }
+      }
+    },
+    "schemas": {
+      "ProductCard": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "title": { "type": "string" },
+          "slug": { "type": "string" },
+          "sku": { "type": "string" },
+          "price": { "type": "number" },
+          "compare_at_price": { "type": ["number", "null"] },
+          "in_stock": { "type": "boolean" },
+          "is_active": { "type": "boolean" },
+          "is_featured": { "type": "boolean" },
+          "is_new": { "type": "boolean" },
+          "discount_percent": { "type": ["integer", "null"] },
+          "rating": { "type": ["number", "null"] },
+          "review_count": { "type": "integer" },
+          "image": { "type": ["string", "null"] },
+          "images": {
+            "type": "object",
+            "properties": {
+              "card": { "type": ["string", "null"] },
+              "tablet": { "type": ["string", "null"] },
+              "detail": { "type": ["string", "null"] }
+            }
+          }
+        }
+      },
+      "ProductDetail": {
+        "allOf": [
+          { "$ref": "#/components/schemas/ProductCard" },
+          {
+            "type": "object",
+            "properties": {
+              "description": { "type": "string" },
+              "has_variants": { "type": "boolean" },
+              "stock_quantity": { "type": "integer" },
+              "gallery": { "type": "array", "items": { "type": "object" } },
+              "variants": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "integer" },
+                    "sku": { "type": "string" },
+                    "price": { "type": "number" },
+                    "stock_quantity": { "type": "integer" },
+                    "in_stock": { "type": "boolean" },
+                    "attributes": { "type": "object" }
+                  }
+                }
+              },
+              "categories": { "type": "array", "items": { "type": "object" } },
+              "collections": { "type": "array", "items": { "type": "object" } }
+            }
+          }
+        ]
+      },
+      "Cart": {
+        "type": "object",
+        "properties": {
+          "items": { "type": "array", "items": { "type": "object" } },
+          "coupon": {
+            "type": ["object", "null"],
+            "properties": { "code": { "type": "string" }, "summary": { "type": "string" } }
+          },
+          "totals": {
+            "type": "object",
+            "properties": {
+              "subtotal": { "type": "number" },
+              "discount": { "type": "number" },
+              "shipping": { "type": "number" },
+              "total": { "type": "number" },
+              "shipping_is_free": { "type": "boolean" }
+            }
+          },
+          "cart_count": { "type": "integer" }
+        }
+      },
+      "Order": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "order_number": { "type": "string" },
+          "customer_name": { "type": "string" },
+          "customer_email": { "type": "string" },
+          "customer_phone": { "type": "string" },
+          "shipping_address": { "type": "object" },
+          "order_note": { "type": ["string", "null"] },
+          "subtotal": { "type": "number" },
+          "coupon_code": { "type": ["string", "null"] },
+          "discount_amount": { "type": "number" },
+          "shipping_fee": { "type": "number" },
+          "total": { "type": "number" },
+          "payment_method": { "type": "string", "enum": ["COD", "RAZORPAY"] },
+          "payment_status": { "type": "string" },
+          "status": { "type": "string", "enum": ["placed", "accepted", "packed", "shipped", "delivered", "cancelled", "returned"] },
+          "cancellation_requested": { "type": "boolean" },
+          "placed_at": { "type": "string" },
+          "items": { "type": "array", "items": { "type": "object" } }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "email": { "type": "string" },
+          "phone": { "type": "string" },
+          "wallet_balance": { "type": "number" }
+        }
+      },
+      "Address": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "label": { "type": "string" },
+          "line1": { "type": "string" },
+          "line2": { "type": ["string", "null"] },
+          "city": { "type": "string" },
+          "state": { "type": "string" },
+          "postal_code": { "type": "string" },
+          "country": { "type": "string" },
+          "phone": { "type": ["string", "null"] },
+          "is_default": { "type": "boolean" }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/health": {
+      "get": { "summary": "Service health check", "responses": { "200": { "description": "OK" } } }
+    },
+    "/home": {
+      "get": {
+        "summary": "Everything the home screen needs (banners, categories, blocks, offers)",
+        "responses": { "200": { "description": "Home payload" } }
+      }
+    },
+    "/categories": {
+      "get": { "summary": "All categories with counts + images", "responses": { "200": { "description": "Categories" } } }
+    },
+    "/categories/{slug}/products": {
+      "get": {
+        "summary": "Paginated products in a category",
+        "parameters": [
+          { "$ref": "#/components/parameters/PerPage" },
+          { "name": "sort", "in": "query", "schema": { "type": "string", "enum": ["relevance", "price_asc", "price_desc", "newest"] } }
+        ],
+        "responses": { "200": { "description": "Paginated product cards" }, "404": { "description": "Category not found" } }
+      }
+    },
+    "/collections": {
+      "get": { "summary": "All active collections", "responses": { "200": { "description": "Collections" } } }
+    },
+    "/collections/{slug}/products": {
+      "get": {
+        "summary": "Paginated products in a collection",
+        "parameters": [
+          { "$ref": "#/components/parameters/PerPage" },
+          { "name": "sort", "in": "query", "schema": { "type": "string", "enum": ["relevance", "price_asc", "price_desc", "newest"] } }
+        ],
+        "responses": { "200": { "description": "Paginated product cards" }, "404": { "description": "Collection not found" } }
+      }
+    },
+    "/products/{slug}": {
+      "get": {
+        "summary": "Product detail: variants, gallery, reviews, related products",
+        "responses": {
+          "200": { "description": "Product detail payload" },
+          "404": { "description": "Product not found" }
+        }
+      }
+    },
+    "/search": {
+      "get": {
+        "summary": "Filtered product search",
+        "parameters": [
+          { "$ref": "#/components/parameters/PerPage" },
+          { "name": "q", "in": "query", "schema": { "type": "string" } },
+          { "name": "sort", "in": "query", "schema": { "type": "string", "enum": ["relevance", "price_asc", "price_desc", "newest"] } },
+          { "name": "min_price", "in": "query", "schema": { "type": "number" } },
+          { "name": "max_price", "in": "query", "schema": { "type": "number" } },
+          { "name": "in_stock", "in": "query", "schema": { "type": "boolean" } },
+          { "name": "category", "in": "query", "schema": { "type": "array", "items": { "type": "string" } } }
+        ],
+        "responses": { "200": { "description": "Paginated product cards" } }
+      }
+    },
+    "/search/suggest": {
+      "get": {
+        "summary": "Autocomplete suggestions (top 6)",
+        "parameters": [{ "name": "q", "in": "query", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Array of lightweight suggestions" } }
+      }
+    },
+    "/wishlist": {
+      "get": {
+        "summary": "Hydrate saved product ids into full cards",
+        "parameters": [{ "name": "ids[]", "in": "query", "schema": { "type": "array", "items": { "type": "integer" } } }],
+        "responses": { "200": { "description": "Array of product cards" } }
+      }
+    },
+    "/register/send-otp": {
+      "post": {
+        "summary": "Issue register OTP to a phone not yet registered",
+        "parameters": [{ "$ref": "#/components/parameters/CartTokenHeader" }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["phone"], "properties": { "phone": { "type": "string", "pattern": "^\\d{10}$" } } } } }
+        },
+        "responses": { "200": { "description": "OTP sent" }, "422": { "description": "Phone already registered" } }
+      }
+    },
+    "/register/verify-otp": {
+      "post": {
+        "summary": "Verify register OTP",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["phone", "code"], "properties": { "phone": { "type": "string" }, "code": { "type": "string", "pattern": "^\\d{6}$" } } } } }
+        },
+        "responses": { "200": { "description": "Verified" }, "422": { "description": "Wrong/expired code" } }
+      }
+    },
+    "/register": {
+      "post": {
+        "summary": "Register a new account (phone must have passed verify-otp)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "email", "phone", "password", "password_confirmation"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "email": { "type": "string", "format": "email" },
+                  "phone": { "type": "string" },
+                  "password": { "type": "string", "minLength": 8 },
+                  "password_confirmation": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Created. Returns { user, token }" },
+          "422": { "description": "Validation failure" }
+        }
+      }
+    },
+    "/login": {
+      "post": {
+        "summary": "Email + password login. Returns bearer token.",
+        "security": [],
+        "parameters": [{ "$ref": "#/components/parameters/CartTokenHeader" }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["email", "password"], "properties": { "email": { "type": "string" }, "password": { "type": "string" } } } } }
+        },
+        "responses": {
+          "200": { "description": "Returns { user, token }" },
+          "401": { "description": "Bad credentials" }
+        }
+      }
+    },
+    "/login/mobile/send-otp": {
+      "post": {
+        "summary": "Issue OTP for phone login (existing account)",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["phone"], "properties": { "phone": { "type": "string" } } } } } },
+        "responses": { "200": { "description": "OTP sent" }, "422": { "description": "No account" } }
+      }
+    },
+    "/login/mobile/verify-otp": {
+      "post": {
+        "summary": "Verify OTP and log in via phone",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["phone", "code"], "properties": { "phone": { "type": "string" }, "code": { "type": "string" } } } } } },
+        "responses": { "200": { "description": "Returns { user, token }" } }
+      }
+    },
+    "/forgot-password": {
+      "post": {
+        "summary": "Email a password reset link",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["email"], "properties": { "email": { "type": "string" } } } } } },
+        "responses": { "200": { "description": "Generic confirmation" } }
+      }
+    },
+    "/reset-password": {
+      "post": {
+        "summary": "Complete a password reset",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["token", "email", "password", "password_confirmation"], "properties": { "token": { "type": "string" }, "email": { "type": "string" }, "password": { "type": "string" }, "password_confirmation": { "type": "string" } } } } } },
+        "responses": { "200": { "description": "Success" }, "400": { "description": "Bad token" } }
+      }
+    },
+    "/cart": {
+      "get": {
+        "summary": "Current cart (items, coupon, totals). Bearer token OR X-Cart-Token.",
+        "security": [],
+        "parameters": [{ "$ref": "#/components/parameters/CartTokenHeader" }],
+        "responses": { "200": { "description": "Cart payload", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Cart" } } } } }
+      }
+    },
+    "/cart/{product_slug}": {
+      "post": {
+        "summary": "Add a product to the cart",
+        "security": [],
+        "parameters": [{ "$ref": "#/components/parameters/CartTokenHeader" }],
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "object", "properties": { "quantity": { "type": "integer", "default": 1 }, "product_variant_id": { "type": "integer" } } } } }
+        },
+        "responses": { "200": { "description": "Updated cart" }, "422": { "description": "Out of stock / validation" } }
+      }
+    },
+    "/cart/items/{id}": {
+      "patch": {
+        "summary": "Update a line item's quantity",
+        "security": [],
+        "parameters": [{ "$ref": "#/components/parameters/CartTokenHeader" }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["quantity"], "properties": { "quantity": { "type": "integer", "minimum": 1 } } } } } },
+        "responses": { "200": { "description": "Updated cart" } }
+      },
+      "delete": {
+        "summary": "Remove a line item",
+        "security": [],
+        "parameters": [{ "$ref": "#/components/parameters/CartTokenHeader" }],
+        "responses": { "200": { "description": "Updated cart" } }
+      }
+    },
+    "/cart/coupon": {
+      "post": {
+        "summary": "Apply a coupon",
+        "security": [],
+        "parameters": [{ "$ref": "#/components/parameters/CartTokenHeader" }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["code"], "properties": { "code": { "type": "string" } } } } } },
+        "responses": { "200": { "description": "Updated cart" }, "422": { "description": "Invalid coupon" } }
+      },
+      "delete": {
+        "summary": "Remove the applied coupon",
+        "security": [],
+        "parameters": [{ "$ref": "#/components/parameters/CartTokenHeader" }],
+        "responses": { "200": { "description": "Updated cart" } }
+      }
+    },
+    "/checkout/pincode/{postal_code}": {
+      "get": {
+        "summary": "Look up city/state for a 6-digit Indian PIN",
+        "responses": { "200": { "description": "{ city, state }" }, "404": { "description": "PIN not found" } }
+      }
+    },
+    "/checkout": {
+      "post": {
+        "summary": "Place an order (bearer token required). Clears the cart. Returns a Razorpay order id for online payment.",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["customer_first_name", "customer_last_name", "customer_email", "customer_phone", "shipping_address_line1", "shipping_city", "shipping_state", "shipping_postal_code", "payment_method"],
+                "properties": {
+                  "customer_first_name": { "type": "string" },
+                  "customer_last_name": { "type": "string" },
+                  "customer_email": { "type": "string" },
+                  "customer_phone": { "type": "string" },
+                  "shipping_address_line1": { "type": "string" },
+                  "shipping_address_line2": { "type": "string" },
+                  "shipping_city": { "type": "string" },
+                  "shipping_state": { "type": "string" },
+                  "shipping_postal_code": { "type": "string" },
+                  "order_note": { "type": "string" },
+                  "payment_method": { "type": "string", "enum": ["cod", "razorpay"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Order created. `razorpay.order_id` present when online payment is required." },
+          "401": { "description": "Unauthenticated" }
+        }
+      }
+    },
+    "/payment/callback/{order_number}": {
+      "post": {
+        "summary": "Verify a Razorpay signature after the SDK checkout completes",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["razorpay_order_id", "razorpay_payment_id", "razorpay_signature"], "properties": { "razorpay_order_id": { "type": "string" }, "razorpay_payment_id": { "type": "string" }, "razorpay_signature": { "type": "string" } } } } } },
+        "responses": { "200": { "description": "Payment verified" }, "422": { "description": "Signature mismatch" } }
+      }
+    },
+    "/account": {
+      "get": { "summary": "Current user profile", "security": [{ "bearerAuth": [] }], "responses": { "200": { "description": "User profile", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } } } }
+    },
+    "/logout": {
+      "post": { "summary": "Log out (revoke all tokens)", "security": [{ "bearerAuth": [] }], "responses": { "200": { "description": "Logged out" } } }
+    },
+    "/account/profile": {
+      "patch": {
+        "summary": "Update name/email",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["name"], "properties": { "name": { "type": "string" }, "email": { "type": "string" } } } } } },
+        "responses": { "200": { "description": "Updated user" } }
+      }
+    },
+    "/account/password": {
+      "patch": {
+        "summary": "Change password",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["current_password", "password", "password_confirmation"], "properties": { "current_password": { "type": "string" }, "password": { "type": "string" }, "password_confirmation": { "type": "string" } } } } } },
+        "responses": { "200": { "description": "Password updated" } }
+      }
+    },
+    "/account/orders": {
+      "get": {
+        "summary": "Paginated order history",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/PerPage" }],
+        "responses": { "200": { "description": "Paginated orders", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Order" } }, "meta": { "type": "object" } } } } } } }
+      }
+    },
+    "/account/orders/{order_number}": {
+      "get": { "summary": "One order's detail", "security": [{ "bearerAuth": [] }], "responses": { "200": { "description": "Order", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Order" } } } }, "404": { "description": "Not found" } } }
+    },
+    "/account/orders/{order_number}/invoice": {
+      "get": { "summary": "PDF invoice download", "security": [{ "bearerAuth": [] }], "responses": { "200": { "description": "PDF stream" } } }
+    },
+    "/account/orders/{order_number}/cancellation-request": {
+      "post": {
+        "summary": "Request cancellation (flags for admin review, does not cancel)",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["reason"], "properties": { "reason": { "type": "string", "maxLength": 255 } } } } } },
+        "responses": { "200": { "description": "Request submitted" }, "422": { "description": "Order not cancellable" } }
+      }
+    },
+    "/account/addresses": {
+      "get": { "summary": "Address book", "security": [{ "bearerAuth": [] }], "responses": { "200": { "description": "Array of addresses", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Address" } } } } } } },
+      "post": {
+        "summary": "Add an address",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Address" } } } },
+        "responses": { "201": { "description": "Created address" } }
+      }
+    },
+    "/account/addresses/{id}": {
+      "patch": {
+        "summary": "Update an address",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Address" } } } },
+        "responses": { "200": { "description": "Updated address" } }
+      },
+      "delete": { "summary": "Delete an address", "security": [{ "bearerAuth": [] }], "responses": { "200": { "description": "Removed" } } }
+    },
+    "/blogs": {
+      "get": {
+        "summary": "Paginated blog posts + categories",
+        "parameters": [{ "$ref": "#/components/parameters/PerPage" }, { "name": "category", "in": "query", "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Paginated posts plus a `categories` field" } }
+      }
+    },
+    "/blogs/{slug}": {
+      "get": { "summary": "One published post", "responses": { "200": { "description": "{ post, related_posts }" }, "404": { "description": "Not found" } } }
+    },
+    "/faq": {
+      "get": { "summary": "FAQ categories with questions", "responses": { "200": { "description": "Array of categories" } } }
+    },
+    "/pages/{slug}": {
+      "get": { "summary": "Published CMS page (about, privacy, shipping, etc.)", "responses": { "200": { "description": "{ id, title, slug, content }" }, "404": { "description": "Not found" } } }
+    },
+    "/stores": {
+      "get": { "summary": "Physical store list", "responses": { "200": { "description": "Array of stores" } } }
+    },
+    "/newsletter/subscribe": {
+      "post": {
+        "summary": "Subscribe to the newsletter",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["email"], "properties": { "email": { "type": "string" } } } } } },
+        "responses": { "200": { "description": "Subscribed" } }
+      }
+    },
+    "/products/{slug}/reviews": {
+      "post": {
+        "summary": "Submit a review (starts pending)",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["customer_name", "customer_email", "rating", "body"], "properties": { "customer_name": { "type": "string" }, "customer_email": { "type": "string" }, "rating": { "type": "integer", "minimum": 1, "maximum": 5 }, "title": { "type": "string" }, "body": { "type": "string" } } } } } },
+        "responses": { "201": { "description": "Review submitted" } }
+      }
+    },
+    "/webhooks/razorpay": {
+      "post": {
+        "summary": "Razorpay server-to-server webhook (signature-verified). Not for app use.",
+        "responses": { "200": { "description": "Acknowledged" } }
+      }
+    }
+  }
+}

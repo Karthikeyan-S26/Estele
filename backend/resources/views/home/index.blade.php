@@ -1,0 +1,112 @@
+@extends('layouts.app')
+
+@if($banners->isNotEmpty() && $banners->first()->hasMedia('image'))
+  @section('og_image', $banners->first()->getFirstMediaUrl('image', 'desktop'))
+@endif
+
+@section('content')
+
+  {{-- Organization JSON-LD (SEO checklist item) — name, logo, social links, all admin-editable via Settings. --}}
+  <script type="application/ld+json">
+    {!! json_encode(array_filter([
+      '@context' => 'https://schema.org',
+      '@type' => 'Organization',
+      'name' => $siteSettings['site_name'] ?? 'Estele',
+      'url' => route('home'),
+      'logo' => $siteSettings['site_logo_url'] ?? null,
+      'sameAs' => array_values(array_filter([
+        $siteSettings['social_instagram'] ?? null,
+        $siteSettings['social_facebook'] ?? null,
+        $siteSettings['social_twitter'] ?? null,
+        $siteSettings['social_youtube'] ?? null,
+      ])),
+      'contactPoint' => ($siteSettings['contact_phone'] ?? null) ? array_filter([
+        '@type' => 'ContactPoint',
+        'telephone' => $siteSettings['contact_phone'],
+        'email' => $siteSettings['contact_email'] ?? null,
+        'contactType' => 'customer service',
+      ]) : null,
+    ]), JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) !!}
+  </script>
+
+  {{-- WebSite + SearchAction JSON-LD (spec §4.1) — tells Google the site has
+       an internal search box it can offer as a "Sitelinks Search Box" in
+       results; {search_term_string} is the schema.org placeholder Google's
+       own docs specify, substituted with the real query at click time. --}}
+  <script type="application/ld+json">
+    {!! json_encode([
+      '@context' => 'https://schema.org',
+      '@type' => 'WebSite',
+      'name' => $siteSettings['site_name'] ?? 'Estele',
+      'url' => route('home'),
+      'potentialAction' => [
+        '@type' => 'SearchAction',
+        'target' => [
+          '@type' => 'EntryPoint',
+          'urlTemplate' => route('search').'?q={search_term_string}',
+        ],
+        'query-input' => 'required name=search_term_string',
+      ],
+    ], JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) !!}
+  </script>
+
+  @if($banners->isNotEmpty())
+    <div class="mx-auto w-full">
+      {{--
+        Banner height reduced 40% from the original aspect ratios (mobile
+        750/1000 -> 750/600, desktop 1800/700 -> 1800/420). Uses an inline
+        style rather than a new Tailwind aspect-[...] utility class: this
+        backend has no live Tailwind build of its own — public/theme/app.css
+        is a static copy of the separate root project's compiled CSS (see
+        tcongs-d2c-spec memory), so any brand-new arbitrary-value class
+        written only in a backend Blade file compiles to nothing and the
+        element would silently lose its aspect ratio entirely. The old class
+        list also had a latent bug: two unprefixed aspect-[...] utilities of
+        equal specificity with no breakpoint on the mobile one, so which
+        ratio actually won depended on Tailwind's generation order rather
+        than intent — sidestepped here since inline style always wins CSS
+        cascade order regardless of stylesheet compile order.
+
+        The wrapper has no padding of its own; the section carries the same
+        px-3 md:px-4 inset as every block below as margin, plus rounded
+        corners, so the banner sits as a card instead of running full-bleed.
+      --}}
+      <style>@media (min-width: 768px) { .hero-banner-shortened { aspect-ratio: 1800 / 420 !important; } }</style>
+      <section class="hero-fade hero-banner-shortened relative mx-3 mt-3 overflow-hidden rounded-xl md:mx-4 md:mt-4 md:rounded-2xl" style="aspect-ratio: 768 / 320" aria-label="Featured collections" data-carousel data-autoplay="5000" data-fade>
+        @foreach($banners as $index => $banner)
+          <div class="hero-slide {{ $index === 0 ? 'is-active' : '' }}" data-carousel-slide>
+            <a href="{{ $banner->link_url ?? '#' }}" aria-label="{{ $banner->title }}">
+              @if($banner->hasMedia('image'))
+                <picture>
+                  @if($banner->getMobileImageUrl())
+                    <source media="(max-width: 767px)" srcset="{{ $banner->getMobileImageUrl() }}">
+                  @endif
+                  <img class="h-full w-full object-cover" src="{{ $banner->getFirstMediaUrl('image', 'desktop') }}" alt="{{ $banner->image_alt_text ?: $banner->title }}" loading="{{ $index === 0 ? 'eager' : 'lazy' }}" fetchpriority="{{ $index === 0 ? 'high' : 'auto' }}">
+                </picture>
+              @endif
+            </a>
+          </div>
+        @endforeach
+        {{-- Arrows visible on all breakpoints now (previously desktop-only via hidden md:grid) --}}
+        <button class="absolute left-3 top-1/2 z-[3] grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/85 text-heading shadow-sm backdrop-blur-sm transition-colors hover:bg-white md:left-5" type="button" data-hero-prev aria-label="Previous slide">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <button class="absolute right-3 top-1/2 z-[3] grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/85 text-heading shadow-sm backdrop-blur-sm transition-colors hover:bg-white md:right-5" type="button" data-hero-next aria-label="Next slide">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+        {{-- Dots sit over the slide's lower edge rather than in a white strip
+             below it, so the banner keeps its full-bleed edge. --}}
+        <div class="absolute inset-x-0 bottom-4 z-[3] flex justify-center gap-2" data-hero-dots>
+          @foreach($banners as $index => $banner)
+            <button class="h-1.5 rounded-full transition-all duration-300 {{ $index === 0 ? 'w-6 bg-white' : 'w-1.5 bg-white/55' }}" type="button" data-hero-dot="{{ $index }}" aria-label="Go to slide {{ $index + 1 }}"></button>
+          @endforeach
+        </div>
+      </section>
+    </div>
+  @endif
+
+  @foreach($homepageBlocks as $block)
+    @includeIf('home.blocks.'.str_replace('_', '-', $block->type), ['block' => $block, 'categories' => $categories])
+  @endforeach
+
+@endsection
