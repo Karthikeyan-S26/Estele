@@ -152,6 +152,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('/account/profile', [AccountController::class, 'updateProfile'])
         ->name('account.profile');
 
+    Route::patch('/account/password', [AccountController::class, 'updatePassword'])
+        ->name('account.password');
+
     Route::get('/account/orders/{order:order_number}', [AccountController::class, 'orderShow'])
         ->name('account.orders.show');
 

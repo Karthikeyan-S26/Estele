@@ -8,6 +8,8 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class AccountController extends Controller
 {
@@ -29,6 +31,40 @@ class AccountController extends Controller
         $user->update($validated);
 
         return redirect()->route('account.index')->with('success', 'Profile updated.');
+    }
+
+    /**
+     * PATCH /account/password - set or change the account password. An
+     * OTP-only account (no password yet) sets one freely; an account that
+     * already has a password must present it correctly.
+     */
+    public function updatePassword(Request $request): RedirectResponse
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        $rules = [
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ];
+
+        if ($user->password) {
+            $rules['current_password'] = ['required', 'string'];
+        }
+
+        $validated = $request->validate($rules);
+
+        if (
+            $user->password
+            && ! Hash::check($validated['current_password'], $user->password)
+        ) {
+            throw ValidationException::withMessages([
+                'current_password' => 'Your current password is incorrect.',
+            ]);
+        }
+
+        $user->update(['password' => Hash::make($validated['password'])]);
+
+        return redirect()->route('account.index')->with('success', 'Password updated.');
     }
 
     public function orderShow(Order $order)

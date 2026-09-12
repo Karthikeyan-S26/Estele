@@ -80,7 +80,7 @@ class RewardSubmissionController extends Controller
         // path" placement WalletService::credit() uses for its own
         // notification — a mail failure here must never roll back or block
         // the submission itself.
-        $reviewers = User::role(['vendor', 'super_admin'])->whereNotNull('email')->get();
+        $reviewers = User::role(['vendor', 'super_admin'], 'web')->whereNotNull('email')->get();
         foreach ($reviewers as $reviewer) {
             Mail::to($reviewer->email)->queue(new NewRewardSubmissionNotification($submission->fresh(['user', 'order'])));
         }

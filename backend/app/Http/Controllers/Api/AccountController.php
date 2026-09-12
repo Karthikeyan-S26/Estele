@@ -104,7 +104,7 @@ class AccountController
             ->latest('id')
             ->paginate($this->perPage($request, 20));
 
-        return $this->paginated($page, fn (WalletTransaction $t) => [
+        $payload = $this->paginated($page, fn (WalletTransaction $t) => [
             'id' => $t->id,
             'type' => $t->type,
             'amount' => (float) $t->amount,
@@ -114,6 +114,13 @@ class AccountController
             'expires_at' => $t->expires_at?->toIso8601String(),
             'created_at' => $t->created_at?->toIso8601String(),
         ]);
+
+        // The ledger and the display balance are kept in sync here so the app
+        // never shows a stale cached wallet figure after an order/settlement.
+        $data = json_decode($payload->getContent(), true);
+        $data['balance'] = (float) $request->user()->wallet_balance;
+
+        return response()->json($data);
     }
 
     /**

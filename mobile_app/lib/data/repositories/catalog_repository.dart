@@ -71,6 +71,26 @@ class CatalogRepository {
     );
   }
 
+  /// POST /api/products/{slug}/reviews — submit a review (rating 1–5).
+  /// The backend dedupes per user+product and marks verified purchases.
+  static Future<String> storeReview({
+    required String slug,
+    required int rating,
+    String? title,
+    required String body,
+  }) async {
+    final json = await ApiClient.post(
+      '/products/$slug/reviews',
+      body: {
+        'rating': rating,
+        if (title != null && title.trim().isNotEmpty) 'title': title.trim(),
+        'body': body.trim(),
+      },
+      auth: true,
+    );
+    return (json['message'] as String?) ?? 'Thanks for your review!';
+  }
+
   /// Filtered search results.
   static Future<({List<Product> items, Map<String, dynamic> meta})> search(
     String query, {

@@ -1,16 +1,21 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../data/repositories/account_repository.dart';
 import '../../data/repositories/checkout_repository.dart';
 import '../../models/address.dart';
+import '../../models/order.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
+import '../../services/razorpay_service.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/load_state.dart';
 import '../auth/login_screen.dart';
+import '../orders/order_detail_screen.dart';
 import 'order_confirmation_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
@@ -39,15 +44,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   String? _error;
 
   String _paymentMethod = 'cod';
+  bool _useWallet = false;
+  Timer? _pincodeDebounce;
 
   @override
   void initState() {
     super.initState();
+    _postalCode.addListener(_onPincodeEdited);
     _boot();
   }
 
   @override
   void dispose() {
+    _pincodeDebounce?.cancel();
+    _postalCode.removeListener(_onPincodeEdited);
     for (final c in [_label, _line1, _line2, _city, _state, _postalCode, _phone, _note]) {
       c.dispose();
     }
@@ -67,13 +77,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       _guest = false;
       _loading = true;
     });
+    // Pull the freshest profile (wallet_balance) before rendering checkout.
+    await auth.refreshProfile();
     try {
       final result = await AccountRepository.addresses();
-      final defaultAddress = result.items.firstWhere((a) => a.isDefault, orElse: () => result.items.firstOrNull as Address);
+      final defaultAddress = result.items.where((a) => a.isDefault).firstOrNull
+          ?? result.items.firstOrNull;
       if (mounted) {
         setState(() {
           _saved = result.items;
-          _selectedSaved = result.items.isEmpty ? null : defaultAddress;
+          _selectedSaved = defaultAddress;
           _loading = false;
         });
         _fillFromSelected();
@@ -93,6 +106,28 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     _state.text = a.state;
     _postalCode.text = a.postalCode;
     _phone.text = a.phone ?? '';
+  }
+
+  /// Auto-fill city/state as soon as a complete 6-digit PIN is entered.
+  void _onPincodeEdited() {
+    final value = _postalCode.text.trim();
+    _pincodeDebounce?.cancel();
+    if (value.length != 6 || !RegExp(r'^\d{6}$').hasMatch(value)) return;
+    _pincodeDebounce = Timer(const Duration(milliseconds: 500), () async {
+      try {
+        final result = await CheckoutRepository.pincodeLookup(value);
+        if (!mounted) return;
+        final city = result['city'] as String? ?? '';
+        final state = result['state'] as String? ?? '';
+        if (city.isEmpty && state.isEmpty) return;
+        setState(() {
+          if (city.isNotEmpty) _city.text = city;
+          if (state.isNotEmpty) _state.text = state;
+        });
+      } catch (_) {
+        // PIN lookup failed (unserved/unknown) — leave city/state as entered.
+      }
+    });
   }
 
   CheckoutDetails _checkoutDetails(AuthProvider auth) {
@@ -115,6 +150,38 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
+  /// Amount payable before any wallet deduction (subtotal − discount + shipping).
+  double get _payable {
+    final cart = context.read<CartProvider>().cart;
+    return (cart.totals.total).clamp(0, double.infinity);
+  }
+
+  /// Wallet credit actually applied this session (0 when not opted in).
+  double get _walletAmount {
+    if (!_useWallet) return 0;
+    final balance = context.read<AuthProvider>().user?.walletBalance ?? 0;
+    return (balance < _payable ? balance : _payable).clamp(0, double.infinity);
+  }
+
+  /// Remainder to pay after wallet credit.
+  double get _due => _payable - _walletAmount;
+
+  void _goToConfirmation(Order order) {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => OrderConfirmationScreen(order: order)),
+    );
+  }
+
+  Future<void> _settleSuccess(Order order) async {
+    final cartProvider = context.read<CartProvider>();
+    await cartProvider.clear();
+    // Wallet balance changed (and the cart changed) — refresh the shared
+    // profile so the Account/Wallet screens don't show stale figures.
+    await context.read<AuthProvider>().refreshProfile();
+    if (!mounted) return;
+    _goToConfirmation(order);
+  }
+
   Future<void> _placeOrder() async {
     if (!(_addressFormKey.currentState?.validate() ?? false)) {
       return;
@@ -125,31 +192,76 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     });
 
     final details = _checkoutDetails(context.read<AuthProvider>());
+    final walletAmount = _walletAmount;
 
     try {
       if (_paymentMethod == 'cod') {
-        final order = await CheckoutRepository.placeOrder(details: details);
-        if (!mounted) return;
-        final cartProvider = context.read<CartProvider>();
-        await cartProvider.clear();
-        if (!mounted) return;
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => OrderConfirmationScreen(order: order)),
+        final order = await CheckoutRepository.placeOrder(
+          details: details,
+          walletAmountUsed: walletAmount,
         );
-      } else {
-        // Razorpay: hand off to the hosted checkout flow returned by the server.
-        final handoff = await CheckoutRepository.createPaymentOrder(details: details);
         if (!mounted) return;
-        if (handoff.razorpayOrderId.isEmpty) {
-          setState(() {
-            _placing = false;
-            _error =
-                'Online payment is currently unavailable. Please choose Cash on Delivery.';
-          });
-        } else {
-          _showRazorpayInstructions(handoff.razorpayOrderId);
-        }
+        await _settleSuccess(order);
+        return;
       }
+
+      // Razorpay — create the gateway order, then open the in-app checkout.
+      final handoff = await CheckoutRepository.createPaymentOrder(
+        details: details,
+        walletAmountUsed: walletAmount,
+      );
+      if (!mounted) return;
+
+      if (!handoff.paymentRequired && handoff.order != null) {
+        // Wallet covered the full total — server already settled it as paid.
+        await _settleSuccess(handoff.order!);
+        return;
+      }
+
+      final keyId = handoff.keyId;
+      if (keyId == null || keyId.isEmpty || handoff.razorpayOrderId.isEmpty) {
+        setState(() {
+          _placing = false;
+          _error =
+              'Online payment is currently unavailable. Please choose Cash on Delivery.';
+        });
+        return;
+      }
+
+      final orderNumber = handoff.orderNumber ?? '';
+      final outcome = await RazorpayService.open(
+        keyId: keyId,
+        amountPaise: handoff.amountPaise,
+        orderId: handoff.razorpayOrderId,
+        orderNumber: orderNumber,
+        contact: details.phone,
+        email: details.email,
+      );
+      if (!mounted) return;
+
+      final cartProvider = context.read<CartProvider>();
+      await cartProvider.clear();
+
+      if (outcome.success) {
+        try {
+          final order = await CheckoutRepository.verifyPayment(
+            orderNumber: orderNumber,
+            razorpayOrderId: outcome.orderId ?? handoff.razorpayOrderId,
+            razorpayPaymentId: outcome.paymentId ?? '',
+            razorpaySignature: outcome.signature ?? '',
+          );
+          if (!mounted) return;
+          _goToConfirmation(order);
+        } catch (_) {
+          if (!mounted) return;
+          _offerReservedOrder(orderNumber,
+              'Payment received but could not be verified with the server. Your order is reserved — check Order details shortly.');
+        }
+        return;
+      }
+
+      // Payment failed or cancelled. The order itself is reserved server-side.
+      _offerReservedOrder(orderNumber, outcome.message);
     } on Exception catch (e) {
       if (!mounted) return;
       setState(() {
@@ -159,21 +271,33 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
   }
 
-  void _showRazorpayInstructions(String razorpayOrderId) {
+  /// A Razorpay order was created but not paid — let the user pay it from
+  /// Order details instead of stranding them here.
+  void _offerReservedOrder(String orderNumber, String? message) {
     showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Complete your payment'),
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Payment pending'),
         content: Text(
-          'A Razorpay order has been created (ID: $razorpayOrderId). '
-          'Open the Razorpay app or gateway and pay against this order ID to finish. '
-          'Once paid, your order will be booked.',
+          '${message ?? 'Payment was not completed.'}\n\n'
+          'Your order $orderNumber is reserved. You can complete payment from the order.',
           style: AppTypography.body(size: 13.5),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Done'),
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Close'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(
+                    builder: (_) => OrderDetailScreen(orderNumber: orderNumber)),
+                (route) => route.isFirst,
+              );
+            },
+            child: const Text('Pay from order'),
           ),
         ],
       ),
@@ -215,6 +339,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
 
     final cart = context.watch<CartProvider>().cart;
+    final walletBalance = context.watch<AuthProvider>().user?.walletBalance ?? 0;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Checkout')),
@@ -241,8 +366,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               label: Text(a.label.isEmpty ? 'Home' : a.label),
                               selected: selected,
                               onSelected: (_) {
-                                setState(() => _selectedSaved = selected ? a : null);
-                                if (selected) _fillFromSelected();
+                                setState(() => _selectedSaved = selected ? null : a);
+                                if (!selected) _fillFromSelected();
                               },
                             ),
                           );
@@ -307,6 +432,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             labelText: 'PIN code *',
                             isDense: true,
                             counterText: '',
+                            helperText: 'City & state auto-fill',
                           ),
                           validator: (v) => (v == null || v.length != 6 || !RegExp(r'^\d{6}$').hasMatch(v))
                               ? 'Valid 6-digit PIN required'
@@ -334,7 +460,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     groupValue: _paymentMethod,
                     onChanged: (v) => setState(() => _paymentMethod = v!),
                     title: const Text('Cash on Delivery'),
-                    subtitle: const Text('Pay when your order arrives. Small convenience fee may apply.'),
+                    subtitle: const Text('Pay when your order arrives.'),
                     secondary: const Icon(Icons.payments_outlined),
                   ),
                   RadioListTile<String>(
@@ -345,6 +471,23 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     subtitle: const Text('UPI, cards, netbanking and wallets.'),
                     secondary: const Icon(Icons.account_balance_wallet_outlined),
                   ),
+
+                  if (walletBalance > 0) ...[
+                    const SizedBox(height: 4),
+                    CheckboxListTile(
+                      value: _useWallet,
+                      onChanged: (v) => setState(() => _useWallet = v ?? false),
+                      title: Text('Use wallet balance (${formatINR(walletBalance)})'),
+                      subtitle: Text(
+                        _walletAmount > 0
+                            ? 'Wallet credit: ${formatINR(_walletAmount)} · To pay: ${formatINR(_due)}'
+                            : 'Available for this order: ${formatINR(_payable < walletBalance ? _payable : walletBalance)}',
+                        style: AppTypography.bodySmall(size: 12),
+                      ),
+                      controlAffinity: ListTileControlAffinity.trailing,
+                      secondary: const Icon(Icons.account_balance_wallet, color: AppColors.accent),
+                    ),
+                  ],
 
                   const Divider(height: 32),
                   // Summary
@@ -363,8 +506,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         if (cart.totals.discount > 0)
                           _Row(label: 'Coupon discount', value: -cart.totals.discount, sale: true),
                         _Row(label: 'Shipping', value: cart.totals.shipping),
+                        if (_walletAmount > 0) _Row(label: 'Wallet credit', value: -_walletAmount, sale: true),
                         const Divider(height: 16),
-                        _Row(label: 'Order total', value: cart.totals.total, bold: true),
+                        _Row(label: _walletAmount > 0 ? 'To pay' : 'Order total', value: _due, bold: true),
                       ],
                     ),
                   ),
@@ -384,7 +528,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     onPressed: _placing ? null : _placeOrder,
                     child: _placing
                         ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                        : Text('Place order · ${formatINR(cart.totals.total)}'),
+                        : Text('Place order · ${formatINR(_due)}'),
                   ),
                   const SizedBox(height: 20),
                 ],

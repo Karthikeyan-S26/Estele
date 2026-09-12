@@ -159,6 +159,14 @@ class Order extends Model
             if ($order->wasChanged('status') && $order->status === 'accepted' && filled($order->customer_email)) {
                 \Illuminate\Support\Facades\Mail::to($order->customer_email)->queue(new \App\Mail\OrderPacked($order));
             }
+
+            if ($order->wasChanged('status') && $order->status === 'accepted' && filled($order->customer_phone)) {
+                app(\App\Services\WhatsApp\WhatsAppManager::class)->send(
+                    $order->customer_phone,
+                    "Your Estele order {$order->order_number} is packed and heading to shipping — you can track it from your account. Order total: ₹".number_format((float) $order->total, 2),
+                    ['order_id' => $order->id, 'order_number' => $order->order_number],
+                );
+            }
         });
 
         // Runs post-commit (updating() cannot be used here — WalletService::credit()

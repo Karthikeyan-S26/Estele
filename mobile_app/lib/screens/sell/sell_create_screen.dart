@@ -1,7 +1,8 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../data/repositories/sell_repository.dart';
@@ -17,8 +18,7 @@ class SellCreateScreen extends StatefulWidget {
 }
 
 class _SellCreateScreenState extends State<SellCreateScreen> {
-  static const String _samplePhotoAsset = 'assets/sample/sample_photo.jpg';
-  static const String _sampleVideoAsset = 'assets/sample/sample_video.mp4';
+  final ImagePicker _picker = ImagePicker();
 
   String? _itemType;
   final _description = TextEditingController();
@@ -51,29 +51,95 @@ class _SellCreateScreenState extends State<SellCreateScreen> {
     super.dispose();
   }
 
-  Future<void> _loadSamplePhoto() async {
+  Future<void> _pickPhoto() async {
+    final source = await _chooseSource(photo: true);
+    if (source == null || !mounted) return;
     try {
-      final data = await rootBundle.load(_samplePhotoAsset);
-      if (!mounted) return;
+      final file = await _picker.pickImage(
+        source: source,
+        maxWidth: 1600,
+        maxHeight: 1600,
+        imageQuality: 85,
+      );
+      if (file == null || !mounted) return;
+      final bytes = await file.readAsBytes();
+      if (bytes.length > _maxImageBytes) {
+        if (!mounted) return;
+        setState(() => _error = 'Photo must be under 3 MB. Please pick a smaller image.');
+        return;
+      }
       setState(() {
-        _photoBytes = data.buffer.asUint8List();
-        _photoMime = 'image/jpeg';
+        _photoBytes = bytes;
+        _photoMime = _mimeFor(file.name, isVideo: false);
       });
     } catch (_) {
-      if (mounted) setState(() => _error = 'Could not load the sample photo.');
+      if (mounted) setState(() => _error = 'Could not read the selected photo.');
     }
   }
 
-  Future<void> _loadSampleVideo() async {
+  Future<void> _pickVideo() async {
+    final source = await _chooseSource(photo: false);
+    if (source == null || !mounted) return;
     try {
-      final data = await rootBundle.load(_sampleVideoAsset);
-      if (!mounted) return;
+      final file = await _picker.pickVideo(
+        source: source,
+        maxDuration: const Duration(minutes: 2),
+      );
+      if (file == null || !mounted) return;
+      final bytes = await file.readAsBytes();
+      if (bytes.length > _maxVideoBytes) {
+        if (!mounted) return;
+        setState(() => _error = 'Video must be under 20 MB. Please pick a shorter clip.');
+        return;
+      }
       setState(() {
-        _videoBytes = data.buffer.asUint8List();
-        _videoMime = 'video/mp4';
+        _videoBytes = bytes;
+        _videoMime = _mimeFor(file.name, isVideo: true);
       });
     } catch (_) {
-      if (mounted) setState(() => _error = 'Could not load the sample video.');
+      if (mounted) setState(() => _error = 'Could not read the selected video.');
+    }
+  }
+
+  Future<ImageSource?> _chooseSource({required bool photo}) async {
+    return showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Choose from gallery'),
+              onTap: () => Navigator.of(sheetContext).pop(ImageSource.gallery),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: Text(photo ? 'Take a photo' : 'Record a video'),
+              onTap: () => Navigator.of(sheetContext).pop(ImageSource.camera),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static const int _maxImageBytes = 3 * 1024 * 1024;
+  static const int _maxVideoBytes = 20 * 1024 * 1024;
+
+  static String _mimeFor(String fileName, {required bool isVideo}) {
+    final ext = fileName.split('.').last.toLowerCase();
+    if (isVideo) {
+      return ext == 'webm' ? 'video/webm' : 'video/mp4';
+    }
+    switch (ext) {
+      case 'png':
+        return 'image/png';
+      case 'webp':
+        return 'image/webp';
+      default:
+        return 'image/jpeg';
     }
   }
 
@@ -220,14 +286,14 @@ class _SellCreateScreenState extends State<SellCreateScreen> {
                 icon: _hasPhoto ? Icons.check_circle : Icons.image_outlined,
                 title: _hasPhoto ? 'Photo attached' : 'Photo (optional)',
                 subtitle: _hasPhoto
-                    ? '${_photoBytes!.length ~/ 1024} KB · JPEG'
+                    ? '${_photoBytes!.length ~/ 1024} KB · ${_photoMime?.split('/').last.toUpperCase() ?? 'IMG'}'
                     : 'JPEG/PNG/WebP, up to 3 MB',
                 preview: _hasPhoto ? Image.memory(_photoBytes!, fit: BoxFit.cover) : null,
                 trailing: _hasPhoto
                     ? TextButton(onPressed: _submitting ? null : _clearPhoto, child: const Text('Remove'))
                     : FilledButton.tonal(
-                        onPressed: _submitting ? null : _loadSamplePhoto,
-                        child: const Text('Use sample photo'),
+                        onPressed: _submitting ? null : _pickPhoto,
+                        child: const Text('Add photo'),
                       ),
               ),
               const SizedBox(height: 10),
@@ -235,13 +301,13 @@ class _SellCreateScreenState extends State<SellCreateScreen> {
                 icon: _hasVideo ? Icons.check_circle : Icons.videocam_outlined,
                 title: _hasVideo ? 'Video attached' : 'Short video (required)',
                 subtitle: _hasVideo
-                    ? '${_videoBytes!.length ~/ 1024} KB · MP4'
+                    ? '${_videoBytes!.length ~/ 1024} KB · ${_videoMime?.split('/').last.toUpperCase() ?? 'VID'}'
                     : 'MP4/WebM, up to 20 MB',
                 trailing: _hasVideo
                     ? TextButton(onPressed: _submitting ? null : _clearVideo, child: const Text('Remove'))
                     : FilledButton.tonal(
-                        onPressed: _submitting ? null : _loadSampleVideo,
-                        child: const Text('Use sample clip'),
+                        onPressed: _submitting ? null : _pickVideo,
+                        child: const Text('Add video'),
                       ),
               ),
 
@@ -255,11 +321,6 @@ class _SellCreateScreenState extends State<SellCreateScreen> {
                 child: _submitting
                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                     : const Text('Submit for valuation'),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Key in fewer flows: demo uses a bundled sample clip and photo so the full submission works offline.',
-                style: AppTypography.bodySmall(size: 11, color: AppColors.muted),
               ),
               const SizedBox(height: 20),
             ],

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../data/api_client.dart';
 import '../../data/repositories/catalog_repository.dart';
 import '../../models/product.dart';
 import '../../models/review.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/wishlist_provider.dart';
 import '../../theme/app_colors.dart';
@@ -14,6 +16,7 @@ import '../../widgets/price_text.dart';
 import '../../widgets/product_card.dart';
 import '../../widgets/quantity_stepper.dart';
 import '../../widgets/rating_stars.dart';
+import '../auth/login_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   const ProductDetailScreen({super.key, required this.slug});
@@ -44,6 +47,26 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   void initState() {
     super.initState();
+    _load();
+  }
+
+  Future<void> _openWriteReview() async {
+    final auth = context.read<AuthProvider>();
+    if (!auth.isAuthenticated) {
+      await Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+      return;
+    }
+    final submitted = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => _WriteReviewSheet(slug: widget.slug),
+    );
+    if (submitted != true || !mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Thanks for your review! It will appear once approved.')),
+    );
     _load();
   }
 
@@ -330,19 +353,34 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   ),
 
                   // Reviews
-                  if (_reviews.isNotEmpty) ...[
-                    const Divider(height: 32),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Reviews', style: AppTypography.sectionTitle(size: 17)),
-                        if (_reviewCount > 0)
-                          Text('$_reviewCount', style: AppTypography.bodySmall()),
-                      ],
+                  const Divider(height: 32),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Reviews', style: AppTypography.sectionTitle(size: 17)),
+                      TextButton.icon(
+                        onPressed: _openWriteReview,
+                        icon: const Icon(Icons.rate_review_outlined, size: 18),
+                        label: const Text('Write a review'),
+                      ),
+                    ],
+                  ),
+                  if (_reviewCount > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        '$_reviewCount review${_reviewCount == 1 ? '' : 's'}',
+                        style: AppTypography.bodySmall(),
+                      ),
                     ),
-                    const SizedBox(height: 12),
+                  const SizedBox(height: 12),
+                  if (_reviews.isEmpty)
+                    Text(
+                      'No reviews yet — be the first to write one.',
+                      style: AppTypography.bodySmall(size: 12.5, color: AppColors.muted),
+                    )
+                  else
                     ..._reviews.take(3).map((r) => _ReviewTile(review: r)),
-                  ],
 
                   // Related
                   if (_related.isNotEmpty) ...[
@@ -442,6 +480,141 @@ class _ReviewTile extends StatelessWidget {
           if (review.body != null && review.body!.isNotEmpty)
             Text(review.body!, style: AppTypography.body(size: 13.5, color: AppColors.ink)),
         ],
+      ),
+    );
+  }
+}
+
+/// Bottom-sheet for writing a product review (rating + optional title + body).
+class _WriteReviewSheet extends StatefulWidget {
+  const _WriteReviewSheet({required this.slug});
+  final String slug;
+  @override
+  State<_WriteReviewSheet> createState() => _WriteReviewSheetState();
+}
+
+class _WriteReviewSheetState extends State<_WriteReviewSheet> {
+  final _formKey = GlobalKey<FormState>();
+  final _title = TextEditingController();
+  final _body = TextEditingController();
+  int _rating = 5;
+  bool _submitting = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _title.dispose();
+    _body.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final bodyText = _body.text.trim();
+    if (bodyText.isEmpty) {
+      setState(() => _error = 'Please write a few words about the piece.');
+      return;
+    }
+    setState(() {
+      _submitting = true;
+      _error = null;
+    });
+    try {
+      await CatalogRepository.storeReview(
+        slug: widget.slug,
+        rating: _rating,
+        title: _title.text.trim(),
+        body: bodyText,
+      );
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _submitting = false;
+        _error = e.message;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _submitting = false;
+        _error = 'Could not submit your review.';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Write a review', style: AppTypography.sectionTitle(size: 17)),
+            const SizedBox(height: 14),
+            Text('Your rating', style: AppTypography.label(letterSpacing: 0.8)),
+            const SizedBox(height: 6),
+            Row(
+              children: List.generate(5, (i) {
+                final star = i + 1;
+                return IconButton(
+                  onPressed: _submitting ? null : () => setState(() => _rating = star),
+                  icon: Icon(
+                    star <= _rating ? Icons.star_rounded : Icons.star_border_rounded,
+                    color: AppColors.gold,
+                    size: 30,
+                  ),
+                );
+              }),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _title,
+              enabled: !_submitting,
+              maxLength: 150,
+              decoration: const InputDecoration(
+                labelText: 'Title (optional)',
+                border: OutlineInputBorder(),
+                counterText: '',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _body,
+              enabled: !_submitting,
+              maxLines: 4,
+              maxLength: 3000,
+              decoration: const InputDecoration(
+                labelText: 'Your review',
+                border: OutlineInputBorder(),
+                counterText: '',
+              ),
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 8),
+              Text(_error!, style: AppTypography.bodySmall(size: 12.5, color: AppColors.error)),
+            ],
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: _submitting ? null : _submit,
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(44),
+                backgroundColor: AppColors.deepWine,
+              ),
+              child: _submitting
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Text('Submit review'),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
   }

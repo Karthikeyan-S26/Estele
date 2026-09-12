@@ -1,67 +1,63 @@
-# TCONGS — D2C E-commerce Platform
+# Estele — D2C Jewellery Platform
 
-Custom-coded D2C jewellery/fashion storefront (reference: Estele.co) — Laravel + Filament backend, Blade/Tailwind storefront. Built against a phased developer spec (Foundation → Storefront → Commerce → Content → SEO → QA → Post-launch).
+Single-project D2C jewellery/fashion storefront (reference: Estele.co): one Laravel-13 backend serves a **Blade + Tailwind web storefront**, a **Filament 5 centralized admin dashboard**, and the **Flutter Android mobile app** through one shared **Laravel REST API** — all sharing a single MySQL database.
 
-## Build status by phase
+`AUDIT_REPORT.md` in the repo root contains the full handoff audit (implemented / runtime-verified / partial / blocked, verified test counts, changed files).
 
-### Phase 1 — Foundation ✅
+## Architecture at a glance
 
-- Laravel 13 + Filament 5 admin panel (`/admin`), MySQL, Redis
-- Spatie Permission RBAC — `super_admin` / `marketing` roles, real 403s enforced
-- Spatie Media Library + Intervention Image, polymorphic SEO meta table
-- Category/Product/Setting admin CRUD
+```
+backend/      Laravel 13 + Filament 5 — web storefront, REST API, scheduler, mail
+mobile_app/   Flutter (Android-first) customer app, talks to the same REST API
+AUDIT_REPORT.md  Full implementation & verification audit
+```
 
-### Phase 2 — Storefront Core ✅
-
-- Home, Category, Collection, Product, Search — all DB-driven, zero hardcoded content
-- Guest cart + checkout (COD), stock-safe with row locking
-- Real search: Laravel Scout + MeiliSearch (not raw `LIKE`)
-- Redis full-page/query caching, invalidated on admin save
-- Responsive WebP image pipeline (4 size tiers per §3.1 spec)
-
-### Phase 3 — Commerce Logic ✅
-
-- **Payments:** Razorpay, real API (test mode) — order creation, signature-verified callback, webhook handling
-- **Shipping:** flat-rate (live) + full Shiprocket client (auth/rate/create-shipment/track) behind a config toggle, ready for a real account
-- **Coupons:** flat/% discounts, product/category/sitewide scope, expiry/min-cart/usage-limit rules, re-validated at checkout
-- **Orders:** guarded status pipeline (Placed → Packed → Shipped → Delivered, branching Cancelled/Returned), auto-restock, on-demand PDF invoices, refund bookkeeping
-
-### Phase 4 — Content & Trust ✅ (Store Locator excluded — pending scope confirmation)
-
-- Blog + categories (publishing pipeline), CMS pages, FAQ
-- Reviews & Ratings — customer submission, admin approve/reject
-- Testimonials & USP/trust badges (via block-based Homepage Builder)
-- Popups/announcements, newsletter signup capture
-
-### Phase 5 — SEO & Performance Hardening ✅
-
-- `BreadcrumbList` + `Organization` JSON-LD, auto-regenerating `/sitemap.xml`, hardened `robots.txt`, branded 404 page
-- Admin-editable raw script injection (`tracking_head_scripts` / `tracking_body_scripts` Settings) — the hook point for GA4/GTM/Meta Pixel/Search Console verification, blank until a real snippet is pasted in
-- Product JSON-LD (offers/aggregateRating/review), canonical tags, per-page-type meta, WebP + lazy + srcset images
-
-### Phase 6 — QA & Launch ✅ (staging skipped — cost tradeoff, user's call)
-
-- **Security audit:** dependency vuln patch (0 advisories), security response headers (X-Frame-Options/HSTS/etc.), JSON-LD XSS hardening, rate limiting on checkout/search, capped admin uploads
-- **Load testing:** found the Railway container was running `php artisan serve` (Laravel's single-threaded dev server) in production — 20 concurrent visitors serialized to 7+ seconds. Fixed with a real nginx + php-fpm stack (`backend/docker/`); re-tested live: ~3.4s with genuine parallel handling, not serialized
-- **Cross-browser/device testing:** full search → product → cart → checkout flow verified live. Known gap: true mobile-viewport screenshots aren't obtainable with the current tooling in this dev environment (window/device-emulation resize doesn't take effect) — functional correctness confirmed, visual mobile screenshots aren't
-- **Staging → production cutover:** deliberately skipped — an extra always-on service isn't worth the ongoing cost at this stage; changes are tested locally + verified live via curl/real flows before merging instead
-
-### Phase 7 — Post-launch readiness 🟡 in progress
-
-- **Analytics / Search Console:** infrastructure already existed (Phase 5's script-injection Settings) and is verified working — just needs a real GA4/GTM/Meta Pixel snippet or Search Console verification tag pasted into Settings once those accounts exist
-- **Error tracking:** Sentry SDK installed and wired into `bootstrap/app.php` (`sentry/sentry-laravel`) — inactive by default (no DSN set), becomes live the moment `SENTRY_LARAVEL_DSN` is set
-- **Not done — needs a decision-maker with account access, not more code:**
-  - Uptime monitoring (e.g. UptimeRobot free tier) — pure third-party account setup, no code involved
-  - Actually creating the GA4 / Search Console / Sentry accounts to get real IDs/DSNs
-  - `SESSION_SECURE_COOKIE=true` Railway env var (flagged since the Phase 6 security audit, still not set)
-  - DB backup verification — Railway's backup feature is volume-based and should apply to the MySQL service, but needs checking/enabling in the Railway dashboard's Backups tab directly
-
----
-
-## Verification
-
-All Phase 3/4 business logic has automated test coverage — **179 tests, 452 assertions, all passing** (`php artisan test` from `backend/`; local dev environments without the PHP `gd`/jpeg build will see 8 unrelated media-upload tests fail — not a code defect). Covers coupon validation, order status transitions + refunds, Razorpay callback/webhook, Shiprocket shipment actions, blog publishing, reviews, popups, OTP login, wallet/rewards.
+- **One backend, one database.** The web storefront, admin panel, and mobile API are not separate systems — they read/write the same MySQL database through the same models/services.
+- **Web storefront** (« `routes/web.php`): Blade + Tailwind CSS + Alpine.js, no SPA framework on the public site (SEO/speed first). The existing storefront is kept in full — the mobile app complements it, it does not replace it.
+- **Admin dashboard** (`/admin`): Filament 5 panel with resources for orders, customers, products, categories, collections, banners, coupons, offers, popups, reviews, wallet management, sell/buy-back requests (invitations, bids, audit log, settle/close/cancel/mark-expired actions), reward submissions, settings, homepage blocks, CMS pages, blogs, FAQs, newsletter subscribers, redirects; plus roles/permissions (FilamentShield) and a dashboard store-stats widget.
+- **REST API** (« `routes/api.php` »): custom `api-token` auth guard (opaque bearer tokens), JSON responses; home/catalog/cart/checkout/account endpoints used by the mobile app.
 
 ## Stack
 
-Laravel 13 · Filament 5 · MySQL · Redis · Laravel Scout + MeiliSearch · Spatie Media Library · Razorpay · Shiprocket · Blade + Tailwind CSS + Alpine.js (no SPA framework on the public storefront, by design — SEO/speed first).
+Laravel 13 · Filament 5 · MySQL · Spatie Permission & Media Library · Intervention Image · Redis (optional cache) · Blade + Tailwind + Alpine · Flutter 3.41 / Dart 3.11 (`mobile_app`) · Razorpay SDK and Shiprocket/Twilio/VAS-SMS clients behind config toggles.
+
+## Core modules
+
+- **Catalog & storefront:** home, category, collection, product, search, CMS pages, blog, FAQ, popups, newsletters — all DB-driven.
+- **Cart & checkout:** guest cart, COD (default), stock-safe ordering with row locking, coupon validation re-checked at checkout, guarded order status pipeline (Placed → Packed → Shipped → Delivered, branching Cancelled/Returned), auto-restock, PDF invoices.
+- **OTP login:** mobile-OTP login with abstracted gateway (`LogOtpGateway` default; VAS Multimedia / Twilio behind config). No hardcoded credentials.
+- **Wallet (buy-back credits):** single-writer credit/debit/expire with audit trail; credit valid for a fixed window, then swept.
+- **Old Jewellery — vendor bidding workflow:**
+  1. Customer submits a sell/buy-back request (web or mobile API): item type + description + city + optional image + **required short video**.
+  2. Backend creates the request with a 3-hour bidding window and invites every `vendor` user — each invitation carries a tokenized web link (the token IS the auth; vendors need no account/session).
+  3. Vendors open the link, accept, and place bids (throttled; each vendor sees only their own bid).
+  4. Bids close automatically (`sell:bids-close`), admin selects a result and settles.
+  5. Settlement credits the customer's wallet (90/10 credit/deduction split) and notifies them; credit expires after 10 days (`sell:wallet-expire`), with 3-day/1-day/post-expiry reminders (`sell:send-reminders`).
+  - Scheduler is registered in `bootstrap/app.php`; commands: `sell:bids-close`, `sell:wallet-expire`, `sell:send-reminders`.
+- **WhatsApp notifications:** provider abstraction (`App\Services\WhatsApp\WhatsAppManager` + `LogWhatsAppSender` / `TwilioWhatsAppSender`). Wired into sell-request creation (admin alert), vendor invitations, settlement, wallet-expiry reminders, and order-accepted status. With no provider configured it falls back to a log sender — notifications are never faked or silently dropped. Phone numbers come from `users.phone` / `orders.customer_phone` (database) and the Twilio From number from config/environment; nothing is hardcoded.
+- **Reviews:** customer submission, admin approve/reject.
+- **SEO & analytics hooks:** sitemap, JSON-LD, per-page meta, admin-editable script injection slots (blank until a real GA/GTM/pixel snippet is pasted), Sentry DSN-gated error tracking (inactive by default).
+
+## Verification (current)
+
+- Backend test suite: **185 / 185 passed — 516 assertions** (`php artisan test` from `backend/`).
+- WhatsApp feature coverage: `tests/Feature/VerifyWhatsAppNotificationTest.php` — 6 tests (fallback, twilio-details fallback, twilio `whatsapp:` request shape, sell-workflow vendor + settlement, no-vendor no-crash, order-accept).
+- Flutter: `flutter analyze` → 0 errors, 0 warnings (31 pre-existing info lints); `flutter build apk --debug` succeeds.
+- Live runtime-verified: checkout (COD), orders, sell-request create via mobile API (201) with vendor invitations + admin/vendor WhatsApp log records, settle → wallet credit, missing-phone safe-skip (no exception, notification skipped or logged).
+
+## Honest remaining external blockers
+
+- **Razorpay real delivery E2E — NOT verified.** Integration is code-complete and tested against faked HTTP, but checkout stays COD-only (online-payment radio hidden) until real `RAZORPAY_KEY_ID/KEY_SECRET` are set and `payment_provider` is switched. Success is never faked.
+- **Twilio / VAS-SMS real delivery E2E — NOT verified.** OTP and WhatsApp paths are wired and unit-tested, but real delivery needs live credentials (`TWILIO_*` / `VAS_SMS_*` / `WHATSAPP_DRIVER` + `TWILIO_WHATSAPP_FROM`).
+- **Emulator stability:** the dev emulator frequently dies (ANR dialogs); the app is verified on momentary windows and otherwise covered by feature tests.
+- **Mobile-UI screenshot coverage:** functional flows verified live, but this tooling cannot capture true mobile-viewport screenshots.
+- **Staging:** deliberately skipped (cost tradeoff); changes are tested locally and verified live before release.
+
+## Local setup (quick)
+
+- Database: MySQL on port 3306 (database `estele`).
+- Backend: `cd backend && php artisan serve --host=0.0.0.0 --port=8000` (migrations + seeds apply).
+- Mobile app: `cd mobile_app && flutter run` — API base URL in `lib/config/app_config.dart` (dev default `http://10.0.2.2:8000`). Use a Flutter SDK that satisfies `pubspec.yaml`'s `sdk: ^3.11.0` (Dart 3.11+).
+- Tests: `cd backend && php artisan test` (sqlite in-memory, isolated env — never touches a real gateway or database).
+
+Environment variables with real credentials live **only** in the uncommitted `backend/.env` — `.env.example` ships placeholders. Never commit keys, tokens, passwords, or keystores.

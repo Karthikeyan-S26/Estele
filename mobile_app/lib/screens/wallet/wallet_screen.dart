@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -19,16 +21,37 @@ class WalletScreen extends StatefulWidget {
 
 class _WalletScreenState extends State<WalletScreen> {
   final List<WalletTransaction> _transactions = [];
+  final ScrollController _scroll = ScrollController();
   bool _loading = true;
   bool _failed = false;
   bool _loadingMore = false;
   int _page = 1;
   bool _hasMore = false;
 
+  /// Server-reported balance; falls back to the cached profile balance.
+  double? _balance;
+
   @override
   void initState() {
     super.initState();
+    _scroll.addListener(_onScroll);
     _load();
+  }
+
+  @override
+  void dispose() {
+    _scroll
+      ..removeListener(_onScroll)
+      ..dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scroll.hasClients) return;
+    final position = _scroll.position;
+    if (position.maxScrollExtent - position.pixels < 300) {
+      _loadMore();
+    }
   }
 
   Future<void> _load() async {
@@ -43,10 +66,14 @@ class _WalletScreenState extends State<WalletScreen> {
           _transactions
             ..clear()
             ..addAll(result.items);
+          _balance = result.balance;
           _page = 1;
           _hasMore = result.meta['has_more'] == true;
           _loading = false;
         });
+        // Keep the shared profile (used by the Account tile, checkout etc.)
+        // in sync with the server-reported balance.
+        unawaited(context.read<AuthProvider>().refreshProfile());
       }
     } catch (_) {
       if (mounted) {
@@ -66,6 +93,7 @@ class _WalletScreenState extends State<WalletScreen> {
       if (mounted) {
         setState(() {
           _transactions.addAll(result.items);
+          _balance = result.balance;
           _page += 1;
           _hasMore = result.meta['has_more'] == true;
         });
@@ -80,7 +108,7 @@ class _WalletScreenState extends State<WalletScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
-    final balance = auth.user?.walletBalance ?? 0;
+    final balance = _balance ?? auth.user?.walletBalance ?? 0;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Estele wallet')),
@@ -91,6 +119,7 @@ class _WalletScreenState extends State<WalletScreen> {
               : RefreshIndicator(
                   onRefresh: _load,
                   child: ListView(
+                    controller: _scroll,
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(16),
                     children: [

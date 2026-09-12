@@ -53,15 +53,18 @@ class AccountRepository {
     );
   }
 
-  /// GET /api/account/wallet/transactions — the wallet ledger (credits, debits,
-  /// and validity of expiring credits).
-  static Future<({List<WalletTransaction> items, Map<String, dynamic> meta})> walletTransactions({int page = 1}) async {
+/// GET /api/account/wallet/transactions — the wallet ledger (credits, debits,
+  /// and validity of expiring credits). Also carries the user's current balance
+  /// so the app never renders a stale cached figure.
+  static Future<({List<WalletTransaction> items, Map<String, dynamic> meta, double? balance})> walletTransactions({int page = 1}) async {
     final json = await ApiClient.get('/account/wallet/transactions?page=$page', auth: true);
+    final rawBalance = json['balance'];
     return (
       items: (json['data'] as List<dynamic>? ?? [])
           .map((e) => WalletTransaction.fromJson(e as Map<String, dynamic>))
           .toList(),
       meta: (json['meta'] as Map<String, dynamic>?) ?? const {},
+      balance: rawBalance is num ? rawBalance.toDouble() : null,
     );
   }
 

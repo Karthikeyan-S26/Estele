@@ -71,7 +71,7 @@ class _SellScreenState extends State<SellScreen> {
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(16),
                     children: [
-                      const _IntroCard(),
+                      _IntroCard(onStart: _openCreate),
                       const SizedBox(height: 16),
                       Row(
                         children: [
@@ -99,7 +99,9 @@ class _SellScreenState extends State<SellScreen> {
 }
 
 class _IntroCard extends StatelessWidget {
-  const _IntroCard();
+  const _IntroCard({required this.onStart});
+
+  final VoidCallback onStart;
 
   @override
   Widget build(BuildContext context) {
@@ -120,9 +122,7 @@ class _IntroCard extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           FilledButton(
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const SellCreateScreen()),
-            ),
+            onPressed: onStart,
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.gold,
               foregroundColor: AppColors.deepWine,

@@ -59,6 +59,23 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  /// Replaces the in-memory profile (used after profile edits) and keeps any
+  /// persisted name/email in sync so the restored session stays current.
+  Future<void> updateUser(User user) async {
+    _user = user;
+    final token = await Storage.getToken();
+    if (token != null) {
+      await Storage.saveUser(
+        token: token,
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+      );
+    }
+    notifyListeners();
+  }
+
   Future<String?> login(String email, String password) async {
     try {
       final user = await AuthRepository.login(email, password);

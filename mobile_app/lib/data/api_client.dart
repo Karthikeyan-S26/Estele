@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
@@ -147,6 +148,47 @@ class ApiClient {
     return (
       items: (json['data'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>(),
       meta: (json['meta'] as Map<String, dynamic>?) ?? {},
+    );
+  }
+
+  /// Download raw bytes (e.g. the PDF invoice) with the same auth/CORS setup
+  /// as [request] but without JSON decoding.
+  static Future<Uint8List> download(
+    String path, {
+    bool auth = false,
+    Map<String, String>? extraHeaders,
+  }) async {
+    final headers = <String, String>{
+      'Accept': 'application/json',
+    };
+
+    if (auth) {
+      final token = await Storage.getToken();
+      if (token != null && token.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+    }
+
+    if (extraHeaders != null) {
+      headers.addAll(extraHeaders);
+    }
+
+    final request = http.Request('GET', Uri.parse('${AppConfig.apiBaseUrl}$path'));
+    request.headers.addAll(headers);
+
+    final response = await _client.send(request).timeout(
+          AppConfig.connectTimeout + AppConfig.receiveTimeout,
+        );
+
+    final bytes = await response.stream.toBytes();
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return bytes;
+    }
+
+    throw ApiException(
+      statusCode: response.statusCode,
+      message: 'Download failed (${response.statusCode})',
     );
   }
 }

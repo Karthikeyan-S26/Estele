@@ -10,6 +10,7 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 import '../../widgets/load_state.dart';
 import '../auth/login_screen.dart';
+import 'edit_profile_screen.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -105,6 +106,16 @@ class _AccountScreenState extends State<AccountScreen> {
             ),
 
             _GroupLabel('Account'),
+            _Tile(
+              icon: Icons.person_outline_rounded,
+              title: 'Edit profile',
+              onTap: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+                );
+                if (mounted) _refresh();
+              },
+            ),
             _Tile(icon: Icons.wallet_outlined, title: 'Wallet',
                 trailing: _profile != null
                     ? Text('₹${_profile!.walletBalance.round()}',

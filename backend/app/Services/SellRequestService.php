@@ -9,6 +9,7 @@ use App\Models\SellInvitation;
 use App\Models\SellRequest;
 use App\Models\User;
 use App\Models\WalletTransaction;
+use App\Services\WhatsApp\WhatsAppManager;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
@@ -21,7 +22,10 @@ use Illuminate\Support\Str;
  */
 class SellRequestService
 {
-    public function __construct(private readonly WalletService $wallet) {}
+    public function __construct(
+        private readonly WalletService $wallet,
+        private readonly WhatsAppManager $whatsapp,
+    ) {}
 
     public function createForCustomer(User $user, array $data, ?string $imageBase64, ?string $imageMime, ?string $videoBase64, ?string $videoMime): SellRequest
     {
@@ -58,9 +62,19 @@ class SellRequestService
         $this->inviteAllVendors($request);
 
         // Alert the back-office too — the first bidder typically arrives fast.
-        $admins = User::role(['super_admin', 'marketing'])->whereNotNull('email')->get();
+        // Guard pinned to 'web': under the mobile api-token guard Spatie would
+        // otherwise look up the role on guard 'api-token' and find nothing.
+        $admins = User::role(['super_admin', 'marketing'], 'web')->whereNotNull('email')->get();
         foreach ($admins as $admin) {
             Mail::to($admin->email)->queue(new NewSellRequestAdminNotification($request));
+
+            if (filled($admin->phone)) {
+                $this->whatsapp->send(
+                    $admin->phone,
+                    'New old-jewellery buy-back request '.$request->request_number.' ('.$request->item_type.($request->city ? ', '.$request->city : '').') is open for vendor bids — review and settle it in the admin panel.',
+                    ['sell_request_id' => $request->id, 'request_number' => $request->request_number],
+                );
+            }
         }
 
         return $request->fresh();
@@ -72,7 +86,7 @@ class SellRequestService
      */
     public function inviteAllVendors(SellRequest $sell): void
     {
-        $vendors = User::role('vendor')->get();
+        $vendors = User::role('vendor', 'web')->get();
 
         foreach ($vendors as $vendor) {
             if ($sell->invitations()->where('vendor_id', $vendor->id)->exists()) {
@@ -90,6 +104,14 @@ class SellRequestService
 
             if (filled($vendor->email)) {
                 Mail::to($vendor->email)->queue(new SellInvitationMail($invitation));
+            }
+
+            if (filled($vendor->phone)) {
+                $this->whatsapp->send(
+                    $vendor->phone,
+                    "You're invited to bid on Estele buy-back request {$sell->request_number} ({$sell->item_type}). Bidding closes ".$sell->bids_end_at?->format('d M H:i').'. '.route('sell.vendor.invitation', $invitation->token),
+                    ['sell_request_id' => $sell->id, 'request_number' => $sell->request_number],
+                );
             }
         }
     }
@@ -229,7 +251,7 @@ class SellRequestService
         $deduction = round($valuation * SellRequest::SETTLEMENT_DEDUCTION_RATE, 2);
         $credit = round($valuation * SellRequest::SETTLEMENT_CREDIT_RATE, 2);
 
-        return DB::transaction(function () use ($sell, $valuation, $deduction, $credit) {
+        $settled = DB::transaction(function () use ($sell, $valuation, $deduction, $credit) {
             // Row-lock + re-read: two tabs settling at once must not
             // double-credit, and a stale in-memory instance must not block
             // a valid settlement.
@@ -267,6 +289,20 @@ class SellRequestService
 
             return true;
         });
+
+        if ($settled) {
+            $sell->refresh();
+
+            if (filled($sell->user?->phone)) {
+                $this->whatsapp->send(
+                    $sell->user->phone,
+                    "Your old-jewellery buy-back request {$sell->request_number} was settled — ₹".number_format((float) $sell->wallet_credit, 2).' credited to your Estele wallet (valid '.SellRequest::WALLET_CREDIT_VALID_DAYS.' days from settlement).',
+                    ['sell_request_id' => $sell->id, 'request_number' => $sell->request_number],
+                );
+            }
+        }
+
+        return $settled;
     }
 
     public function customerCancel(SellRequest $sell, User $user, string $reason): bool

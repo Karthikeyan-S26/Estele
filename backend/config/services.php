@@ -81,4 +81,13 @@ return [
         'from' => env('TWILIO_PHONE_NUMBER'),
     ],
 
+    // Business WhatsApp notifications (App\Services\WhatsApp\WhatsAppManager)
+    // — same Twilio account as the phone OTPs. 'from' is the WhatsApp-enabled
+    // Twilio number (e.g. the WhatsApp sandbox +14155238886). Leave driver
+    // unset (or set to '' ) and no number to stay on the log sender.
+    'whatsapp' => [
+        'driver' => env('WHATSAPP_DRIVER'),
+        'from' => env('TWILIO_WHATSAPP_FROM'),
+    ],
+
 ];

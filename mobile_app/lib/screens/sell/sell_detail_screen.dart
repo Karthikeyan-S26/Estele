@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../data/repositories/sell_repository.dart';
 import '../../models/sell_request.dart';
@@ -146,25 +147,7 @@ class _SellDetailScreenState extends State<SellDetailScreen> {
                         const SizedBox(height: 10),
                       ],
                       if (request.videoUrl != null)
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: AppColors.greySoft,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Row(
-                            children: const [
-                              Icon(Icons.videocam_outlined, size: 18, color: AppColors.accentDark),
-                              SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Short video attached — available for buyers to review.',
-                                  style: TextStyle(fontSize: 12.5, color: AppColors.muted),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        SellVideoPlayer(videoUrl: request.videoUrl!),
 
                       const SizedBox(height: 14),
                       if (request.status == 'bidding' && request.biddingOpen) ...[
@@ -470,6 +453,93 @@ class _TimelineRow extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Inline player for the short jewellery video attached to a sell request.
+class SellVideoPlayer extends StatefulWidget {
+  const SellVideoPlayer({super.key, required this.videoUrl});
+
+  final String videoUrl;
+
+  @override
+  State<SellVideoPlayer> createState() => _SellVideoPlayerState();
+}
+
+class _SellVideoPlayerState extends State<SellVideoPlayer> {
+  VideoPlayerController? _controller;
+  bool _failed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _init();
+  }
+
+  Future<void> _init() async {
+    final controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl));
+    _controller = controller;
+    try {
+      await controller.initialize();
+      await controller.setLooping(false);
+      if (!mounted) return;
+      setState(() {});
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _failed = true;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = _controller;
+    final ratio = (controller != null && controller.value.isInitialized && controller.value.aspectRatio > 0)
+        ? controller.value.aspectRatio
+        : 16 / 9;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(4),
+      child: AspectRatio(
+        aspectRatio: ratio,
+        child: Container(
+          color: Colors.black,
+          child: _failed
+              ? const _MediaPlaceholder(icon: Icons.videocam_outlined)
+              : controller == null || !controller.value.isInitialized
+                  ? const Center(
+                      child: SizedBox(
+                        width: 26,
+                        height: 26,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      ),
+                    )
+                  : GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          controller.value.isPlaying ? controller.pause() : controller.play();
+                        });
+                      },
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          VideoPlayer(controller),
+                          if (!controller.value.isPlaying)
+                            const Center(
+                              child: Icon(Icons.play_circle_fill, size: 52, color: Colors.white70),
+                            ),
+                        ],
+                      ),
+                    ),
+        ),
       ),
     );
   }

@@ -93,10 +93,10 @@ class VerifyOtpLoginFlowTest extends TestCase
     {
         $user = User::factory()->create(['phone' => '9876543210']);
 
-        $this->post('/login/mobile', ['phone' => '9876543210'])
-            ->assertRedirect(route('login.mobile.verify'));
+        $this->post('/login', ['phone' => '9876543210'])
+            ->assertRedirect(route('login.verify'));
 
-        $this->post('/login/mobile/verify', ['code' => RecordingOtpGatewayForTests::$lastCode])
+        $this->post('/login/verify', ['code' => RecordingOtpGatewayForTests::$lastCode])
             ->assertRedirect(route('account.index'));
 
         $this->assertAuthenticatedAs($user);
@@ -104,9 +104,9 @@ class VerifyOtpLoginFlowTest extends TestCase
 
     public function test_full_http_flow_redirects_an_unregistered_phone_to_registration_with_prefill(): void
     {
-        $this->post('/login/mobile', ['phone' => '9998887770']);
+        $this->post('/login', ['phone' => '9998887770']);
 
-        $response = $this->post('/login/mobile/verify', ['code' => RecordingOtpGatewayForTests::$lastCode]);
+        $response = $this->post('/login/verify', ['code' => RecordingOtpGatewayForTests::$lastCode]);
 
         $response->assertRedirect(route('register'));
         $this->assertGuest();
@@ -117,12 +117,12 @@ class VerifyOtpLoginFlowTest extends TestCase
 
     private function registerViaOtp(string $phone, array $extra = []): \Illuminate\Testing\TestResponse
     {
-        $this->postJson('/register/send-otp', ['phone' => $phone])->assertOk();
-        $this->postJson('/register/verify-otp', ['code' => RecordingOtpGatewayForTests::$lastCode])->assertOk();
+        $this->post('/login', ['phone' => $phone])->assertRedirect(route('login.verify'));
+        $this->post('/login/verify', ['code' => RecordingOtpGatewayForTests::$lastCode])
+            ->assertRedirect(route('register'));
 
         return $this->post('/register', array_merge([
             'name' => 'Reg User',
-            'email' => "reg{$phone}@example.com",
             'phone' => $phone,
         ], $extra));
     }
@@ -135,23 +135,26 @@ class VerifyOtpLoginFlowTest extends TestCase
         $this->assertNull(User::where('phone', '9990001111')->firstOrFail()->password);
     }
 
-    public function test_registration_with_password_allows_email_login_too(): void
+    public function test_an_otp_only_account_can_log_back_in_with_a_fresh_otp(): void
     {
-        $this->registerViaOtp('9990002222', ['password' => 'secret-pass-123', 'password_confirmation' => 'secret-pass-123'])
-            ->assertRedirect(route('account.index'));
+        $this->registerViaOtp('9990002222')->assertRedirect(route('account.index'));
 
         $this->post('/logout');
         $this->assertGuest();
 
-        $this->post('/login', ['email' => 'reg9990002222@example.com', 'password' => 'secret-pass-123'])
+        $otpOnly = User::where('phone', '9990002222')->firstOrFail();
+        $this->assertNull($otpOnly->password);
+
+        $this->post('/login', ['phone' => '9990002222'])->assertRedirect(route('login.verify'));
+        $this->post('/login/verify', ['code' => RecordingOtpGatewayForTests::$lastCode])
             ->assertRedirect(route('account.index'));
-        $this->assertAuthenticated();
+        $this->assertAuthenticatedAs($otpOnly);
     }
 
-    public function test_registration_rejects_a_mismatched_password_confirmation(): void
+    public function test_registration_requires_a_phone_that_was_verified_by_otp(): void
     {
-        $this->registerViaOtp('9990003333', ['password' => 'secret-pass-123', 'password_confirmation' => 'different'])
-            ->assertSessionHasErrors('password');
+        $this->post('/register', ['name' => 'Skipper', 'phone' => '9990003333'])
+            ->assertSessionHasErrors('phone');
 
         $this->assertGuest();
     }

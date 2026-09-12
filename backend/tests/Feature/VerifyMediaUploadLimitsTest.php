@@ -85,6 +85,8 @@ class VerifyMediaUploadLimitsTest extends TestCase
             ->assertHasFormErrors(['video']);
     }
 
+    private const MP4_SIGNATURE = "\x00\x00\x00\x20ftypmp42\x00\x00\x00\x00mp42isom";
+
     public function test_product_video_within_2mb_is_accepted(): void
     {
         $this->actingAsSuperAdmin();
@@ -97,7 +99,7 @@ class VerifyMediaUploadLimitsTest extends TestCase
                 'price' => 999,
                 'stock_quantity' => 5,
                 'is_active' => true,
-                'video' => [UploadedFile::fake()->create('clip.mp4', 1500, 'video/mp4')],
+                'video' => [UploadedFile::fake()->createWithContent('clip.mp4', self::MP4_SIGNATURE)->mimeType('video/mp4')],
             ])
             ->call('create')
             ->assertHasNoFormErrors();
