@@ -23,19 +23,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # This repo pins php: "^8.3" in backend/composer.json — matched here
-      # exactly rather than "latest" so CI runs the same major.minor as the
-      # Hostinger server. Extension list is every ext-* requirement across
-      # the full composer.lock dependency tree (checked directly, not
-      # guessed) plus pdo_sqlite/sqlite3, since phpunit.xml runs the suite
-      # against an in-memory sqlite database. intl is the one most likely to
-      # be missing on a bare runner and is required by Filament — omitting
-      # it is exactly what breaks composer install locally on this project's
-      # own dev machine (see docs/DEPLOYMENT.md's "known local PHP gotcha").
-      - name: Set up PHP 8.3
+      # backend/composer.json declares php: "^8.3", but composer.lock's
+      # actually-resolved packages (several symfony/* at 8.1.x) require PHP
+      # >=8.4.1 — confirmed by a real CI run failing "Your lock file does
+      # not contain a compatible set of packages" against PHP 8.3.33. The
+      # live Hostinger server itself runs PHP 8.5.5 (confirmed via `php -v`
+      # over SSH), so 8.4 here matches both what the lock file needs and
+      # what's actually deployed to — composer.json's "^8.3" is stale
+      # relative to the lock file, not a real constraint this workflow
+      # should try to satisfy. Extension list is every ext-* requirement
+      # across the full composer.lock dependency tree (checked directly,
+      # not guessed) plus pdo_sqlite/sqlite3, since phpunit.xml runs the
+      # suite against an in-memory sqlite database.
+      - name: Set up PHP 8.4
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: '8.4'
           extensions: ctype, curl, dom, exif, fileinfo, filter, gd, hash, iconv, intl, json, libxml, mbstring, openssl, pcre, pdo, pdo_mysql, pdo_sqlite, phar, session, sqlite3, tokenizer, xml, xmlreader, xmlwriter, zip, zlib
           coverage: none
 

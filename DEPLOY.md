@@ -8,7 +8,7 @@ clients").
 ```
 git push origin main
        ↓
-GitHub Actions: test job (PHP 8.3, Composer, PHPUnit)
+GitHub Actions: test job (PHP 8.4, Composer, PHPUnit)
        ↓ (only if tests pass)
 GitHub Actions: deploy job
        ↓
@@ -33,7 +33,7 @@ This setup was written after reading the actual repo, not assumed:
 
 | Fact | Value | Where confirmed |
 |---|---|---|
-| PHP version | **8.3** | `backend/composer.json` → `"php": "^8.3"` |
+| PHP version | **8.4** in CI/on the server | `composer.json` declares `^8.3`, but `composer.lock`'s resolved packages (several `symfony/*` at 8.1.x) actually require PHP `>=8.4.1` — confirmed by a real CI failure against 8.3. The live Hostinger server runs PHP 8.5.5 (`php -v` over SSH). `composer.json`'s constraint is stale relative to the lock file; CI matches the lock file and the server, not the declared constraint. |
 | Laravel version | 13 | `backend/composer.json` |
 | Production branch | **`main`** | existing branches on both GitHub remotes |
 | Test runner | PHPUnit 12, fully in-memory (sqlite `:memory:`, array cache/session, sync queue) | `backend/phpunit.xml` |
