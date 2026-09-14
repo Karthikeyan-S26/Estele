@@ -26,7 +26,7 @@ php artisan serve
 
 App: `http://127.0.0.1:8000` — Admin: `http://127.0.0.1:8000/admin/login`
 
-Default seeded admin: see `database/seeders/DatabaseSeeder.php` (`lavanyagarg500@gmail.com`) — change the password after first login, this is a dev-seed credential only.
+Seeded admin: set `SEED_ADMIN_EMAIL`/`SEED_ADMIN_PASSWORD` in `.env` before running `db:seed` — `DatabaseSeeder` reads both from the environment and creates nothing if either is unset. No email or password is ever hardcoded in the seeder itself.
 
 ## OTP login
 

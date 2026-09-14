@@ -17,13 +17,25 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([ShieldSeeder::class]);
 
-        // Not User::factory(): fakerphp/faker is a require-dev package, unavailable
-        // in a `composer install --no-dev` production build (e.g. the Railway deploy).
-        $admin = User::firstOrCreate(
-            ['email' => 'lavanyagarg500@gmail.com'],
-            ['name' => 'Admin', 'password' => 'changeme123']
-        );
-        $admin->assignRole('super_admin');
+        // No credential is ever hardcoded here — both come from the
+        // environment (see .env.example: SEED_ADMIN_EMAIL/SEED_ADMIN_PASSWORD),
+        // so a seed never creates a login with a password already sitting in
+        // git history. Skipped entirely if unset, rather than falling back to
+        // any built-in default.
+        $adminEmail = env('SEED_ADMIN_EMAIL');
+        $adminPassword = env('SEED_ADMIN_PASSWORD');
+
+        if ($adminEmail && $adminPassword) {
+            // Not User::factory(): fakerphp/faker is a require-dev package,
+            // unavailable in a `composer install --no-dev` production build.
+            $admin = User::firstOrCreate(
+                ['email' => $adminEmail],
+                ['name' => 'Admin', 'password' => $adminPassword]
+            );
+            $admin->assignRole('super_admin');
+        } else {
+            $this->command?->warn('SEED_ADMIN_EMAIL/SEED_ADMIN_PASSWORD not set — skipping admin user creation.');
+        }
 
         $this->call([
             CategorySeeder::class,
