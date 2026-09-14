@@ -64,4 +64,58 @@
     </details>
   </div>
 
+  @push('scripts')
+    <script>
+      (function () {
+        // Delegated: this page can render several address forms at once
+        // (one per saved address, plus "Add New"), so inputs aren't unique
+        // by id — listen on document and scope lookups to the closest form.
+        var lastLookedUp = {};
+
+        function setStatus(form, text) {
+          var el = form.querySelector('[data-pincode-lookup-status]');
+          if (el) el.textContent = text;
+        }
+
+        function lookup(form, pincode) {
+          if (lastLookedUp[pincode] === form) return;
+          lastLookedUp[pincode] = form;
+          setStatus(form, 'Looking up city/state…');
+
+          fetch('{{ url('/checkout/pincode') }}/' + pincode, { headers: { 'Accept': 'application/json' } })
+            .then(function (res) {
+              if (!res.ok) throw new Error('not found');
+              return res.json();
+            })
+            .then(function (data) {
+              var cityInput = form.querySelector('[data-pincode-city]');
+              var stateInput = form.querySelector('[data-pincode-state]');
+              if (data.city && cityInput) cityInput.value = data.city;
+              if (data.state && stateInput) stateInput.value = data.state;
+              setStatus(form, 'City/state auto-filled from PIN code.');
+            })
+            .catch(function () {
+              setStatus(form, 'Could not find city/state for this PIN code — please fill manually.');
+            });
+        }
+
+        document.addEventListener('input', function (event) {
+          var input = event.target;
+          if (!input.matches || !input.matches('[data-pincode-lookup]')) return;
+
+          var pincode = input.value.trim();
+          var form = input.closest('form');
+          if (!form) return;
+
+          if (!/^[0-9]{6}$/.test(pincode)) {
+            setStatus(form, '');
+            return;
+          }
+
+          lookup(form, pincode);
+        });
+      })();
+    </script>
+  @endpush
+
 @endsection

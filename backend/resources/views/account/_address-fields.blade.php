@@ -19,15 +19,16 @@
   </div>
   <div>
     <label class="mb-1.5 block text-[13px] font-medium text-heading">City</label>
-    <input class="w-full border border-line-strong bg-white px-4 py-2.5 text-[14px] outline-none transition-colors focus:border-heading" name="city" type="text" value="{{ old('city', $address?->city) }}" required maxlength="100">
+    <input class="w-full border border-line-strong bg-white px-4 py-2.5 text-[14px] outline-none transition-colors focus:border-heading" name="city" type="text" value="{{ old('city', $address?->city) }}" required maxlength="100" data-pincode-city>
   </div>
   <div>
     <label class="mb-1.5 block text-[13px] font-medium text-heading">State</label>
-    <input class="w-full border border-line-strong bg-white px-4 py-2.5 text-[14px] outline-none transition-colors focus:border-heading" name="state" type="text" value="{{ old('state', $address?->state) }}" required maxlength="100">
+    <input class="w-full border border-line-strong bg-white px-4 py-2.5 text-[14px] outline-none transition-colors focus:border-heading" name="state" type="text" value="{{ old('state', $address?->state) }}" required maxlength="100" data-pincode-state>
   </div>
   <div>
     <label class="mb-1.5 block text-[13px] font-medium text-heading">Postal Code</label>
-    <input class="w-full border border-line-strong bg-white px-4 py-2.5 text-[14px] outline-none transition-colors focus:border-heading" name="postal_code" type="text" value="{{ old('postal_code', $address?->postal_code) }}" required pattern="[0-9]{6}" maxlength="6">
+    <input class="w-full border border-line-strong bg-white px-4 py-2.5 text-[14px] outline-none transition-colors focus:border-heading" name="postal_code" type="text" value="{{ old('postal_code', $address?->postal_code) }}" required pattern="[0-9]{6}" maxlength="6" data-pincode-lookup>
+    <p class="mt-1 text-[11.5px] text-muted" data-pincode-lookup-status></p>
   </div>
   <div>
     <label class="mb-1.5 block text-[13px] font-medium text-heading">Country</label>
