@@ -25,51 +25,101 @@
           @error('customer_phone') <p class="mb-3.5 -mt-2 text-[12px] text-salebadge">{{ $message }}</p> @enderror
         </fieldset>
 
-        <fieldset class="field-set">
+        <fieldset class="field-set" data-address-section>
           <legend class="mb-3.5 text-[14px] font-medium uppercase tracking-[0.5px]">Shipping Address</legend>
-          <div class="mb-3.5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
-              <label class="mb-1.5 block text-[13px] font-medium text-heading" for="customer_first_name">First name</label>
-              <input class="w-full border border-line-strong bg-white px-4 py-3 text-base outline-none transition-colors placeholder:text-muted focus:border-heading" id="customer_first_name" name="customer_first_name" type="text" value="{{ old('customer_first_name') }}" autocomplete="given-name" required>
-              @error('customer_first_name') <p class="mt-1 text-[12px] text-salebadge">{{ $message }}</p> @enderror
+
+          @php
+            // Manual entry is the form of last resort: shown right away for a
+            // guest or a user with no saved address, otherwise only after
+            // "Add another address" or a failed validation round-trip that
+            // didn't carry an address_id (means the shopper was already
+            // mid-manual-entry when it failed).
+            $showManualByDefault = $addresses->isEmpty() || (old('shipping_address_line1') && ! old('address_id'));
+          @endphp
+
+          @if($addresses->isNotEmpty())
+            <div data-address-picker {{ $showManualByDefault ? 'hidden' : '' }}>
+              @foreach($addresses as $address)
+                <div class="mb-3 border border-line-strong p-3.5 text-[13px]" data-address-card data-address-id="{{ $address->id }}" {{ ! $loop->first ? 'hidden' : '' }}>
+                  <p class="mb-0.5 font-medium uppercase tracking-[0.3px] text-heading">{{ $address->label }}</p>
+                  <p class="text-muted">
+                    {{ $address->line1 }}{{ $address->line2 ? ', '.$address->line2 : '' }},
+                    {{ $address->city }}, {{ $address->state }} {{ $address->postal_code }}
+                    @if($address->phone) <br>Phone: {{ $address->phone }} @endif
+                  </p>
+                </div>
+              @endforeach
+
+              <input type="hidden" name="address_id" value="{{ old('address_id', $addresses->first()->id) }}" data-address-id-input>
+
+              <div class="flex flex-wrap gap-x-4 gap-y-1.5">
+                @if($addresses->count() > 1)
+                  <button class="text-[12px] font-medium text-heading underline hover:text-accent" type="button" data-address-change>Change address</button>
+                @endif
+                <button class="text-[12px] font-medium text-heading underline hover:text-accent" type="button" data-address-add-new>Add another address</button>
+              </div>
+
+              <ul class="mt-3 hidden divide-y divide-line-strong/60 border border-line-strong" data-address-list>
+                @foreach($addresses as $address)
+                  <li>
+                    <button class="block w-full px-3.5 py-2.5 text-left text-[13px] hover:bg-pinksoft" type="button" data-address-pick="{{ $address->id }}">
+                      <span class="font-medium uppercase tracking-[0.3px] text-heading">{{ $address->label }}</span>
+                      <span class="block text-muted">{{ $address->line1 }}, {{ $address->city }} {{ $address->postal_code }}</span>
+                    </button>
+                  </li>
+                @endforeach
+              </ul>
             </div>
-            <div>
-              <label class="mb-1.5 block text-[13px] font-medium text-heading" for="customer_last_name">Last name</label>
-              <input class="w-full border border-line-strong bg-white px-4 py-3 text-base outline-none transition-colors placeholder:text-muted focus:border-heading" id="customer_last_name" name="customer_last_name" type="text" value="{{ old('customer_last_name') }}" autocomplete="family-name" required>
-              @error('customer_last_name') <p class="mt-1 text-[12px] text-salebadge">{{ $message }}</p> @enderror
+          @endif
+
+          <div data-address-manual {{ $showManualByDefault ? '' : 'hidden' }}>
+            @if($addresses->isNotEmpty())
+              <button class="mb-3.5 text-[12px] font-medium text-heading underline hover:text-accent" type="button" data-address-use-saved">&larr; Use a saved address</button>
+            @endif
+            <div class="mb-3.5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <label class="mb-1.5 block text-[13px] font-medium text-heading" for="customer_first_name">First name</label>
+                <input class="w-full border border-line-strong bg-white px-4 py-3 text-base outline-none transition-colors placeholder:text-muted focus:border-heading" id="customer_first_name" name="customer_first_name" type="text" value="{{ old('customer_first_name') }}" autocomplete="given-name">
+                @error('customer_first_name') <p class="mt-1 text-[12px] text-salebadge">{{ $message }}</p> @enderror
+              </div>
+              <div>
+                <label class="mb-1.5 block text-[13px] font-medium text-heading" for="customer_last_name">Last name</label>
+                <input class="w-full border border-line-strong bg-white px-4 py-3 text-base outline-none transition-colors placeholder:text-muted focus:border-heading" id="customer_last_name" name="customer_last_name" type="text" value="{{ old('customer_last_name') }}" autocomplete="family-name">
+                @error('customer_last_name') <p class="mt-1 text-[12px] text-salebadge">{{ $message }}</p> @enderror
+              </div>
             </div>
+            <label class="mb-1.5 block text-[13px] font-medium text-heading" for="shipping_address_line1">Address</label>
+            <input class="w-full border border-line-strong bg-white px-4 py-3 text-base outline-none transition-colors placeholder:text-muted focus:border-heading mb-3.5" id="shipping_address_line1" name="shipping_address_line1" type="text" value="{{ old('shipping_address_line1') }}" autocomplete="address-line1">
+            @error('shipping_address_line1') <p class="mb-3.5 -mt-2 text-[12px] text-salebadge">{{ $message }}</p> @enderror
+            <div class="mb-3.5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <label class="mb-1.5 block text-[13px] font-medium text-heading" for="shipping_city">City</label>
+                <input class="w-full border border-line-strong bg-white px-4 py-3 text-base outline-none transition-colors placeholder:text-muted focus:border-heading" id="shipping_city" name="shipping_city" type="text" value="{{ old('shipping_city') }}" autocomplete="address-level2">
+                @error('shipping_city') <p class="mt-1 text-[12px] text-salebadge">{{ $message }}</p> @enderror
+              </div>
+              <div>
+                <label class="mb-1.5 block text-[13px] font-medium text-heading" for="shipping_postal_code">PIN code</label>
+                <input class="w-full border border-line-strong bg-white px-4 py-3 text-base outline-none transition-colors placeholder:text-muted focus:border-heading" id="shipping_postal_code" name="shipping_postal_code" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" value="{{ old('shipping_postal_code') }}" autocomplete="postal-code">
+                @error('shipping_postal_code') <p class="mt-1 text-[12px] text-salebadge">{{ $message }}</p> @enderror
+                <p id="shipping_postal_code_status" class="mt-1 text-[12px] text-muted"></p>
+              </div>
+            </div>
+            <label class="mb-1.5 block text-[13px] font-medium text-heading" for="shipping_state">State</label>
+            <select class="w-full border border-line-strong bg-white px-4 py-3 text-base outline-none transition-colors placeholder:text-muted focus:border-heading" id="shipping_state" name="shipping_state">
+              <option value="" disabled {{ old('shipping_state') ? '' : 'selected' }}>Select state</option>
+              @foreach([
+                'Andaman and Nicobar Islands', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar',
+                'Chandigarh', 'Chhattisgarh', 'Dadra and Nagar Haveli and Daman and Diu', 'Delhi', 'Goa',
+                'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jammu and Kashmir', 'Jharkhand', 'Karnataka',
+                'Kerala', 'Ladakh', 'Lakshadweep', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya',
+                'Mizoram', 'Nagaland', 'Odisha', 'Puducherry', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu',
+                'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
+              ] as $state)
+                <option value="{{ $state }}" {{ old('shipping_state') === $state ? 'selected' : '' }}>{{ $state }}</option>
+              @endforeach
+            </select>
+            @error('shipping_state') <p class="mt-1 text-[12px] text-salebadge">{{ $message }}</p> @enderror
           </div>
-          <label class="mb-1.5 block text-[13px] font-medium text-heading" for="shipping_address_line1">Address</label>
-          <input class="w-full border border-line-strong bg-white px-4 py-3 text-base outline-none transition-colors placeholder:text-muted focus:border-heading mb-3.5" id="shipping_address_line1" name="shipping_address_line1" type="text" value="{{ old('shipping_address_line1') }}" autocomplete="address-line1" required>
-          @error('shipping_address_line1') <p class="mb-3.5 -mt-2 text-[12px] text-salebadge">{{ $message }}</p> @enderror
-          <div class="mb-3.5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
-              <label class="mb-1.5 block text-[13px] font-medium text-heading" for="shipping_city">City</label>
-              <input class="w-full border border-line-strong bg-white px-4 py-3 text-base outline-none transition-colors placeholder:text-muted focus:border-heading" id="shipping_city" name="shipping_city" type="text" value="{{ old('shipping_city') }}" autocomplete="address-level2" required>
-              @error('shipping_city') <p class="mt-1 text-[12px] text-salebadge">{{ $message }}</p> @enderror
-            </div>
-            <div>
-              <label class="mb-1.5 block text-[13px] font-medium text-heading" for="shipping_postal_code">PIN code</label>
-              <input class="w-full border border-line-strong bg-white px-4 py-3 text-base outline-none transition-colors placeholder:text-muted focus:border-heading" id="shipping_postal_code" name="shipping_postal_code" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" value="{{ old('shipping_postal_code') }}" autocomplete="postal-code" required>
-              @error('shipping_postal_code') <p class="mt-1 text-[12px] text-salebadge">{{ $message }}</p> @enderror
-              <p id="shipping_postal_code_status" class="mt-1 text-[12px] text-muted"></p>
-            </div>
-          </div>
-          <label class="mb-1.5 block text-[13px] font-medium text-heading" for="shipping_state">State</label>
-          <select class="w-full border border-line-strong bg-white px-4 py-3 text-base outline-none transition-colors placeholder:text-muted focus:border-heading" id="shipping_state" name="shipping_state" required>
-            <option value="" disabled {{ old('shipping_state') ? '' : 'selected' }}>Select state</option>
-            @foreach([
-              'Andaman and Nicobar Islands', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar',
-              'Chandigarh', 'Chhattisgarh', 'Dadra and Nagar Haveli and Daman and Diu', 'Delhi', 'Goa',
-              'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jammu and Kashmir', 'Jharkhand', 'Karnataka',
-              'Kerala', 'Ladakh', 'Lakshadweep', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya',
-              'Mizoram', 'Nagaland', 'Odisha', 'Puducherry', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu',
-              'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
-            ] as $state)
-              <option value="{{ $state }}" {{ old('shipping_state') === $state ? 'selected' : '' }}>{{ $state }}</option>
-            @endforeach
-          </select>
-          @error('shipping_state') <p class="mt-1 text-[12px] text-salebadge">{{ $message }}</p> @enderror
         </fieldset>
 
         <fieldset class="field-set">
@@ -162,6 +212,79 @@
   </div>
 
   @push('scripts')
+    <script>
+      // Toggles between "use a saved address" and "type a new one". The
+      // manual fields are only actually required when they're the ones in
+      // play — server-side Rule::requiredIf is the real gate (this can't be
+      // trusted alone), this just keeps native HTML5 validation honest so a
+      // hidden, unfilled field never blocks submit.
+      (function () {
+        var section = document.querySelector('[data-address-section]');
+        if (! section) return;
+
+        var picker = section.querySelector('[data-address-picker]');
+        var manual = section.querySelector('[data-address-manual]');
+        var addressIdInput = section.querySelector('[data-address-id-input]');
+        var list = section.querySelector('[data-address-list]');
+        var manualFieldIds = ['shipping_address_line1', 'shipping_city', 'shipping_postal_code', 'shipping_state'];
+
+        function setManualRequired(required) {
+          manualFieldIds.forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) el.required = required;
+          });
+        }
+
+        function showManual() {
+          if (picker) picker.hidden = true;
+          if (manual) manual.hidden = false;
+          if (addressIdInput) addressIdInput.value = '';
+          setManualRequired(true);
+        }
+
+        function showPicker() {
+          if (picker) picker.hidden = false;
+          if (manual) manual.hidden = true;
+          setManualRequired(false);
+        }
+
+        function selectAddress(id) {
+          section.querySelectorAll('[data-address-card]').forEach(function (card) {
+            card.hidden = card.getAttribute('data-address-id') !== String(id);
+          });
+          if (addressIdInput) addressIdInput.value = id;
+          if (list) list.classList.add('hidden');
+        }
+
+        if (picker && ! picker.hidden) setManualRequired(false);
+
+        var addNewBtn = section.querySelector('[data-address-add-new]');
+        if (addNewBtn) addNewBtn.addEventListener('click', showManual);
+
+        var useSavedBtn = section.querySelector('[data-address-use-saved]');
+        if (useSavedBtn) {
+          useSavedBtn.addEventListener('click', function () {
+            var firstCard = section.querySelector('[data-address-card]');
+            if (firstCard) selectAddress(firstCard.getAttribute('data-address-id'));
+            showPicker();
+          });
+        }
+
+        var changeBtn = section.querySelector('[data-address-change]');
+        if (changeBtn && list) {
+          changeBtn.addEventListener('click', function () {
+            list.classList.toggle('hidden');
+          });
+        }
+
+        section.querySelectorAll('[data-address-pick]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            selectAddress(btn.getAttribute('data-address-pick'));
+          });
+        });
+      })();
+    </script>
+
     <script>
       (function () {
         var postalInput = document.getElementById('shipping_postal_code');

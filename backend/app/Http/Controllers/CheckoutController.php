@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class CheckoutController extends Controller
 {
@@ -48,12 +49,17 @@ class CheckoutController extends Controller
         // re-quotes with the submitted pincode for the amount actually charged.
         $shipping = $this->shipping->quote($subtotal, (int) $items->sum('quantity'));
 
+        $addresses = auth()->check()
+            ? auth()->user()->addresses()->orderByDesc('is_default')->orderByDesc('id')->get()
+            : collect();
+
         return view('checkout.index', [
             'items' => $items,
             'subtotal' => $subtotal,
             'discount' => $discount,
             'shipping' => $shipping,
             'couponCode' => $cart->coupon?->code,
+            'addresses' => $addresses,
             // Passed explicitly rather than via SiteDataComposer: that composer
             // is bound to the 'layouts.app' view, which @extends only renders
             // at the very end of the compiled child template — its data is
@@ -104,16 +110,25 @@ class CheckoutController extends Controller
 
     public function store(Request $request)
     {
+        // A saved address picked on the checkout page skips the manual
+        // fields entirely (they're not even rendered) — so those fields are
+        // only required when no address_id came through. Ownership is
+        // enforced by scoping the query to the logged-in user, not just by
+        // the exists:addresses rule, so one shopper can never place an
+        // order against another shopper's saved address by guessing an id.
+        $usingSavedAddress = $request->filled('address_id');
+
         $validated = $request->validate([
-            'customer_first_name' => ['required', 'string', 'max:255'],
-            'customer_last_name' => ['required', 'string', 'max:255'],
+            'address_id' => ['nullable', 'integer'],
+            'customer_first_name' => [Rule::requiredIf(! $usingSavedAddress), 'string', 'max:255'],
+            'customer_last_name' => [Rule::requiredIf(! $usingSavedAddress), 'string', 'max:255'],
             'customer_email' => ['required', 'email', 'max:255'],
-            'customer_phone' => ['required', 'string', 'max:20'],
-            'shipping_address_line1' => ['required', 'string', 'max:255'],
+            'customer_phone' => [Rule::requiredIf(! $usingSavedAddress), 'string', 'max:20'],
+            'shipping_address_line1' => [Rule::requiredIf(! $usingSavedAddress), 'string', 'max:255'],
             'shipping_address_line2' => ['nullable', 'string', 'max:255'],
-            'shipping_city' => ['required', 'string', 'max:120'],
-            'shipping_state' => ['required', 'string', 'max:120'],
-            'shipping_postal_code' => ['required', 'string', 'max:20'],
+            'shipping_city' => [Rule::requiredIf(! $usingSavedAddress), 'string', 'max:120'],
+            'shipping_state' => [Rule::requiredIf(! $usingSavedAddress), 'string', 'max:120'],
+            'shipping_postal_code' => [Rule::requiredIf(! $usingSavedAddress), 'string', 'max:20'],
             'order_note' => ['nullable', 'string', 'max:1000'],
             'payment_method' => ['required', 'in:cod,razorpay'],
             'wallet_amount' => ['nullable', 'numeric', 'min:0'],
@@ -129,8 +144,33 @@ class CheckoutController extends Controller
             'shipping_postal_code' => 'PIN code',
         ]);
 
-        $validated['customer_name'] = trim($validated['customer_first_name'].' '.$validated['customer_last_name']);
-        unset($validated['customer_first_name'], $validated['customer_last_name']);
+        if ($usingSavedAddress) {
+            $address = auth()->check()
+                ? auth()->user()->addresses()->find($validated['address_id'])
+                : null;
+
+            if (! $address) {
+                return redirect()->route('checkout.index')->withInput()
+                    ->with('error', 'That saved address could not be found. Please choose another or add a new one.');
+            }
+
+            $validated['customer_name'] = trim(auth()->user()->name ?: $address->label ?: 'Customer');
+            $validated['customer_phone'] = $address->phone ?: $validated['customer_phone'] ?? '';
+            $validated['shipping_address_line1'] = $address->line1;
+            $validated['shipping_address_line2'] = $address->line2;
+            $validated['shipping_city'] = $address->city;
+            $validated['shipping_state'] = $address->state;
+            $validated['shipping_postal_code'] = $address->postal_code;
+        } else {
+            $validated['customer_name'] = trim($validated['customer_first_name'].' '.$validated['customer_last_name']);
+        }
+
+        unset($validated['customer_first_name'], $validated['customer_last_name'], $validated['address_id']);
+
+        if (empty($validated['customer_phone'])) {
+            return redirect()->route('checkout.index')->withInput()
+                ->with('error', 'That saved address has no phone number. Please add one to your address book or enter one below.');
+        }
 
         // Defends a stale page (online payment was enabled when the checkout
         // form loaded, then disabled) or a crafted POST — never silently fall
