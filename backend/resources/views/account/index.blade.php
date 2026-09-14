@@ -43,26 +43,6 @@
       </div>
     </section>
 
-    {{-- Order status tiles. Two-up on phones (matches the reference), four-up
-         from sm so they never stretch into letterboxed cards on a desktop. --}}
-    <section class="mb-8" aria-label="Order summary">
-      <div class="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-        @foreach([
-          ['label' => 'Placed', 'status' => 'placed'],
-          ['label' => 'Packed', 'status' => 'packed'],
-          ['label' => 'Shipped', 'status' => 'shipped'],
-          ['label' => 'Delivered', 'status' => 'delivered'],
-        ] as $tile)
-          @php($count = (int) ($statusCounts[$tile['status']] ?? 0))
-          <div class="flex flex-col items-center justify-center rounded-lg border border-line px-3 py-4 text-center">
-            <span class="text-[22px] font-medium leading-none text-price">{{ $count }}</span>
-            <span class="mt-1.5 text-[12px] font-medium uppercase tracking-[0.3px] text-heading">{{ $tile['label'] }}</span>
-            <span class="mt-0.5 text-[11px] text-muted">{{ $count === 1 ? '1 order' : $count.' orders' }}</span>
-          </div>
-        @endforeach
-      </div>
-    </section>
-
     {{-- md:grid-cols-[1fr_340px] is an arbitrary value with no live Tailwind
          build to compile it here (this backend has no build of its own — see the
          "no live Tailwind build" note in home/index.blade.php); inline style
@@ -175,6 +155,24 @@
     </div>
 
     <section id="order-history">
+      {{-- Order status tiles. Two-up on phones (matches the reference), four-up
+           from sm so they never stretch into letterboxed cards on a desktop. --}}
+      <div class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4" aria-label="Order summary">
+        @foreach([
+          ['label' => 'Placed', 'status' => 'placed'],
+          ['label' => 'Packed', 'status' => 'packed'],
+          ['label' => 'Shipped', 'status' => 'shipped'],
+          ['label' => 'Delivered', 'status' => 'delivered'],
+        ] as $tile)
+          @php($count = (int) ($statusCounts[$tile['status']] ?? 0))
+          <div class="flex flex-col items-center justify-center rounded-lg border border-line px-3 py-4 text-center">
+            <span class="text-[22px] font-medium leading-none text-price">{{ $count }}</span>
+            <span class="mt-1.5 text-[12px] font-medium uppercase tracking-[0.3px] text-heading">{{ $tile['label'] }}</span>
+            <span class="mt-0.5 text-[11px] text-muted">{{ $count === 1 ? '1 order' : $count.' orders' }}</span>
+          </div>
+        @endforeach
+      </div>
+
       <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 class="text-[14px] font-medium uppercase tracking-[0.4px]">Order History</h2>
       </div>
