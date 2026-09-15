@@ -54,6 +54,20 @@
       </div>
     @endif
 
+    @if(! ($couponCode ?? null) && ($publicCoupons ?? []) !== [])
+      @php $featuredCoupon = $publicCoupons[0] @endphp
+      <div class="mb-3 flex items-center justify-between gap-3 rounded border border-dashed border-line-strong bg-pinksoft/40 px-3 py-2.5">
+        <div class="min-w-0">
+          <p class="truncate text-[12px] font-medium tracking-[0.3px] text-heading">{{ $featuredCoupon['summary'] }}</p>
+          <p class="text-[11px] text-muted">Code: <span class="font-medium text-heading">{{ $featuredCoupon['code'] }}</span></p>
+        </div>
+        <button class="shrink-0 border border-accent bg-accent px-3.5 py-2 text-[11px] font-medium uppercase tracking-[0.5px] text-white transition-colors hover:border-accent-dark hover:bg-accent-dark disabled:opacity-50" type="button" data-featured-coupon-apply="{{ $featuredCoupon['code'] }}">Apply</button>
+      </div>
+      @if(count($publicCoupons) > 1)
+        <button class="mb-3 block text-[11px] text-muted underline transition-colors hover:text-accent" type="button" data-coupons-modal-open>View all coupons &rarr;</button>
+      @endif
+    @endif
+
     <div class="mb-3" data-cart-coupon-box>
       <div class="mb-1 flex items-center justify-between">
         <span class="text-[11.5px] font-medium text-heading">Coupon code</span>

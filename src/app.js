@@ -693,6 +693,27 @@ import './app.css';
 
         var couponApply  = e.target.closest('[data-coupon-apply]');
         var couponRemove = e.target.closest('[data-coupon-remove]');
+        var featuredApply = e.target.closest('[data-featured-coupon-apply]');
+
+        if (featuredApply) {
+          var code = featuredApply.getAttribute('data-featured-coupon-apply');
+          var original = featuredApply.textContent;
+          featuredApply.disabled = true;
+          featuredApply.textContent = 'Applying...';
+
+          request('/cart/coupon', {
+            method: 'POST',
+            body: new URLSearchParams({ code: code }),
+          }).then(function (data) {
+            if (data.success === false) {
+              featuredApply.disabled = false;
+              featuredApply.textContent = original;
+              alert(data.message || 'Could not apply this coupon.');
+              return;
+            }
+            render(data.html, data.cartCount);
+          });
+        }
 
         if (couponApply) {
           var box   = e.target.closest('[data-cart-coupon-box]');
