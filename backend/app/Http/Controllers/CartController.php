@@ -184,8 +184,26 @@ class CartController extends Controller
                 'discount' => $this->currentDiscount($cart),
                 'couponCode' => $cart->coupon?->code,
                 'activeOffers' => $this->cachedActiveOffers(),
+                'publicCoupons' => $this->cachedPublicCoupons(),
+                'freeShippingThreshold' => $this->shipping->freeShippingThreshold(),
             ])->render(),
         ]);
+    }
+
+    // Same cache key as SiteDataComposer — see that class for why the TTL
+    // is short (Coupon::booted() forgets this on every save, but a
+    // scheduled starts_at/expires_at crossing "now" isn't a write).
+    private function cachedPublicCoupons(): array
+    {
+        return Cache::remember(
+            'site.public_coupons',
+            300,
+            fn () => Coupon::listable()
+                ->orderByDesc('created_at')
+                ->get()
+                ->map(fn (Coupon $coupon) => ['code' => $coupon->code, 'summary' => $coupon->summary()])
+                ->toArray()
+        );
     }
 
     // Same cache keys as SiteDataComposer — this partial is rendered

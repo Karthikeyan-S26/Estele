@@ -586,9 +586,31 @@ import './app.css';
       });
     }
 
+    // Free-shipping progress bar: capture how full it was before the swap
+    // so the fill visibly animates from old -> new width instead of just
+    // popping to the final value (the CSS transition on width only plays
+    // when the property actually changes after paint, not on first set).
+    function animateFreeShippingBar() {
+      var fill = body && $('[data-free-shipping-fill]', body);
+      if (!fill) return;
+      var target = fill.style.width;
+      var previousFill = drawer.dataset.prevShippingFill;
+      fill.style.transition = 'none';
+      fill.style.width = previousFill || '0%';
+      // Force layout so the browser commits that starting width before the
+      // transition is re-enabled and the target width is applied.
+      void fill.offsetWidth;
+      requestAnimationFrame(function () {
+        fill.style.transition = '';
+        fill.style.width = target;
+      });
+      drawer.dataset.prevShippingFill = target;
+    }
+
     function render(html, count) {
       if (body) body.innerHTML = html;
       if (typeof count === 'number') updateCount(count);
+      animateFreeShippingBar();
     }
 
     // Lets other modules (the available-coupons modal, which lives in its

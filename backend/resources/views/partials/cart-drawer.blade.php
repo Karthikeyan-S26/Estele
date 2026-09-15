@@ -6,7 +6,7 @@
       <button class="text-[26px] leading-none text-heading" type="button" data-cart-close aria-label="Close cart">&times;</button>
     </div>
     <div class="grid flex-1 grid-rows-[minmax(0,1fr)_auto] overflow-hidden" data-cart-body>
-      @include('partials.cart-drawer-items', ['items' => $cartItems, 'subtotal' => $cartSubtotal, 'discount' => $cartDiscount, 'couponCode' => $cartCouponCode])
+      @include('partials.cart-drawer-items', ['items' => $cartItems, 'subtotal' => $cartSubtotal, 'discount' => $cartDiscount, 'couponCode' => $cartCouponCode, 'freeShippingThreshold' => $cartFreeShippingThreshold])
     </div>
   </aside>
 </div>

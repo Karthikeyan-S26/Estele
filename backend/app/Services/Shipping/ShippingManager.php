@@ -56,6 +56,18 @@ class ShippingManager
         return $quote;
     }
 
+    /**
+     * The flat-rate free-shipping threshold, when that's the active
+     * provider — used for a "you're ₹X away from free shipping" progress
+     * bar. Null when Shiprocket is active (no single fixed number to bar
+     * against) or no threshold is configured, so the bar has nothing
+     * meaningful to render and callers should simply not show one.
+     */
+    public function freeShippingThreshold(): ?float
+    {
+        return $this->activeProvider() === 'flat' ? $this->flatRate->freeShippingThreshold() : null;
+    }
+
     private function activeProvider(): string
     {
         return $this->settings()['shipping_provider'] ?? 'flat';

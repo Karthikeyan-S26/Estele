@@ -9,12 +9,15 @@ use App\Models\Coupon;
 use App\Models\Offer;
 use App\Models\Popup;
 use App\Models\Setting;
+use App\Services\Shipping\ShippingManager;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\View\View;
 
 class SiteDataComposer
 {
+    public function __construct(private readonly ShippingManager $shipping) {}
+
     public function compose(View $view): void
     {
         $cart = Cart::with('coupon')->where('session_id', session()->getId())->first();
@@ -31,6 +34,7 @@ class SiteDataComposer
         $view->with('cartSubtotal', $cartItems->sum(fn ($item) => $item->unitPrice() * $item->quantity));
         $view->with('cartDiscount', $cartDiscount);
         $view->with('cartCouponCode', $cart?->coupon?->code);
+        $view->with('cartFreeShippingThreshold', $this->shipping->freeShippingThreshold());
 
         // Laravel's database/file cache stores refuse to unserialize objects by default
         // (config('cache.serializable_classes') === false) — cache plain arrays, not

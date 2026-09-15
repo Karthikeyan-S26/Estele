@@ -6,6 +6,32 @@
     </a>
   </div>
 @else
+  @php
+    $netSubtotal = max(0, $subtotal - ($discount ?? 0));
+    $threshold = $freeShippingThreshold ?? null;
+    $unlocked = $threshold !== null && $netSubtotal >= $threshold;
+    $progressPercent = $threshold !== null && $threshold > 0 ? min(100, ($netSubtotal / $threshold) * 100) : 0;
+    $remaining = $threshold !== null ? max(0, $threshold - $netSubtotal) : 0;
+  @endphp
+
+  @if($threshold !== null)
+    <div class="px-5 pb-3 pt-4" data-free-shipping-bar data-threshold="{{ $threshold }}" data-net-subtotal="{{ $netSubtotal }}">
+      <div class="mb-2 flex items-center gap-2 text-[12px] font-medium text-heading">
+        <svg class="h-4 w-4 shrink-0 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <span data-free-shipping-message>
+          @if($unlocked)
+            You've unlocked <strong>free shipping</strong>! 🎉
+          @else
+            Add <strong>₹{{ number_format($remaining, 0) }}</strong> more for free shipping
+          @endif
+        </span>
+      </div>
+      <div class="h-1.5 w-full overflow-hidden rounded-full bg-line">
+        <div class="h-full rounded-full bg-accent transition-[width] duration-700 ease-out" data-free-shipping-fill style="width: {{ $progressPercent }}%"></div>
+      </div>
+    </div>
+  @endif
+
   <div class="divide-y divide-line overflow-y-auto px-5">
     @foreach($items as $item)
       <div class="flex gap-3 py-4" data-cart-drawer-item="{{ $item->id }}">

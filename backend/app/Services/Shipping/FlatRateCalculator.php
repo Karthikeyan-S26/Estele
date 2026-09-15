@@ -40,4 +40,18 @@ class FlatRateCalculator implements ShippingRateCalculator
     {
         return Cache::remember('site.settings', 3600, fn () => Setting::pluck('value', 'key')->toArray());
     }
+
+    /**
+     * The raw threshold amount, for a "you're ₹X away from free shipping"
+     * progress bar — quote() intentionally only exposes the pass/fail
+     * result, not the number itself, since that's all checkout/cart pricing
+     * ever needed until now. Null means no threshold is configured (the bar
+     * has nothing meaningful to show).
+     */
+    public function freeShippingThreshold(): ?float
+    {
+        $raw = $this->settings()['shipping_free_threshold'] ?? null;
+
+        return ($raw === null || $raw === '') ? null : (float) $raw;
+    }
 }
