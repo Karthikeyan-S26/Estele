@@ -148,6 +148,7 @@ class _ProductStripState extends State<ProductStrip> {
                       style: AppTypography.button(
                         size: 12,
                         color: AppColors.heading,
+                        weight: FontWeight.w500,
                         letterSpacing: 12 * 0.14,
                       ),
                     ),

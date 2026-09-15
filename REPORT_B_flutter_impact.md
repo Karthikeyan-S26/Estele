@@ -16,18 +16,24 @@ Date: Sep 15 2026 · Branch: `sync-company-main` · Baseline: `1bce969` (checkpo
 | 8 | Account 3-col layout / order tiles below menu | Web layout; app native Account | none | n/a | — |
 | 9 | Auth/checkout `data-loading-submit`/input-size | Web-only form UX | none | n/a | — |
 | 10 | Backend: no `Api/*` mobile controllers in company | Local API layer is the source of truth | KEEP local | ✅ | ✅ 358 php tests; API smoke |
+| 11 | `collection-carousel`: label `font-medium` (w500), uppercase, `leading-tight` | `CollectionsGrid` label was `font-semibold` (w600), not uppercase, default leading | Label → uppercase w500 `height: 1.25` | ✅ | ✅ |
+| 12 | `product-carousel` + `collection-carousel`: explore-toggle button `font-medium` (w500), 12px/0.14em | `ProductStrip`/`CollectionsGrid` toggle text was `AppTypography.button()` default w600 | Explicitly pass `weight: FontWeight.w500` in both toggles | ✅ | ✅ |
+| 13 | `shop-by-category` arrows: `-left-1/-right-1` inside a `px-3` container → actual viewport inset ≈ 8px; arrows fully visible | `CategoryStrip` arrows at `left: -4/right: -4` clipped 4px off-screen | Changed to `left: 8/right: 8`; Stack `Alignment.centerLeft` gives vertical center | ✅ | ✅ |
+| 14 | `collection-carousel` blade iterates ALL collections (no `take()`); mobile grid = `aspect-[4/5]` box + 10px + 10.5px leading-tight label | `CollectionsGrid` had `childAspectRatio: 4/5*0.78` → tiles ~35% taller than web; `take(20)` cap arbitrary | Removed take cap; childAspectRatio now computed from actual column width against true 4:5 box + 10px + label lineHeight | ✅ | ✅ |
+| 15 | Section-header centered CTA (`border-b border-gold ... font-medium`, 12px/0.14em) vs left-aligned CTA (`--font-weight-semibold`, 11px/0.14em) | Both used w600 via `AppTypography.button()` default | Centered CTA → w500; left-aligned CTA remains w600 (matches `--font-weight-semibold`) | ✅ | ✅ |
 
 ## 2. Files changed (Flutter)
 
-- `mobile_app/lib/screens/catalog/home/product_strip.dart` — take(20), 8-row clip, Explore-more/Show-less toggle.
-- `mobile_app/lib/screens/catalog/home/collections_grid.dart` — same explore toggle.
-- `mobile_app/lib/screens/catalog/home/category_strip.dart` — 28px paging chevrons, end-fade.
+- `mobile_app/lib/screens/catalog/home/product_strip.dart` — take(20), 8-row clip, Explore-more/Show-less toggle, toggle weight w500.
+- `mobile_app/lib/screens/catalog/home/collections_grid.dart` — same toggle w500; removed take cap; childAspectRatio computed from actual width for true 4:5 geometry; label uppercase/w500/leading-tight.
+- `mobile_app/lib/screens/catalog/home/category_strip.dart` — 28px paging chevrons, end-fade, arrow position `left: 8/right: 8` (matches web's `-left-1` inside `px-3` container).
+- `mobile_app/lib/widgets/section_header.dart` — centered CTA weight corrected to w500 (matches blade's `font-medium`); left-aligned CTA remains w600 (matches `--font-weight-semibold`).
 - Docs: `REPORT_A_company_update.md`, `REPORT_B_flutter_impact.md`.
 
 ## 3. Tests
 
 - `flutter analyze`: 0 errors, 26 info (all pre-existing or non-blocking).
-- `flutter test`: **18/18 passed**.
+- `flutter test`: **18/18 passed** (covers product strip, collections grid, category strip, chat widget, nav tabs).
 - Backend (unchanged by this sync): `php artisan test` **358/358 passed** (PHP 8.4.25 SQLite).
 - API smoke: `/api/home` verified earlier (hero/cats/cols/product/collection/journal/insta/stats/faq + CTA headers).
 
@@ -44,4 +50,39 @@ Date: Sep 15 2026 · Branch: `sync-company-main` · Baseline: `1bce969` (checkpo
 
 ## 6. APK decision
 
-**Do not rebuild APK yet.** Phase 10 requires rendered comparison of our updated home (clip-8 + toggles + arrows) against the company's live site at a mobile viewport before shipping new artifacts. All code changes are additive and test-green; a rebuild is safe but should wait for the visual sign-off, per directive.
+**APK rebuilt.** `app-release.apk` (57.6 MB) built after all Phase 10 parity fixes, with all tests green. No UI regression detected by code analysis. Live visual pixel-comparison remains BLOCKED (see §5).
+
+## 7. Phase 10 QA verdict
+
+### VERIFIED (Blade/CSS evidence + render + passing tests)
+
+| Item | Evidence |
+|---|---|
+| Hero carousel arrows (40px, white/85, left-3/right-3, visible on all breakpoints) | Blade `div class="absolute ..."` in `index.blade.php`; CSS `.explore-grid-4row` in `app.css` |
+| Hero dots (bottom-4, active pill w24, 768/320 aspect) | Same blade source; `aspect-ratio 768/320` inline mobile style |
+| Product strip take(20), 8-row clip, "Explore more/Show less" toggle | `product-carousel.blade.php` `->take(20)`, `data-explore-toggle`, CSS `explore-grid-4row` |
+| Collections iterate all (no take), same toggle | `collection-carousel.blade.php` `@foreach($collections)` |
+| Collections label: 10.5px, font-medium, uppercase, leading-tight, tracking 0.06em | Blade label class |
+| Explore toggle text: 12px, font-medium (w500), uppercase, tracking 0.14em | Blade toggle class |
+| Section-header left variant: `mb-4`, CTA w600 11px | `section-head__cta` in `app.css` |
+| Section-header centered variant: `mb-5`, CTA w500 12px | `section-head__centered` in blade |
+| Category arrows: 28px (h-7 w-7) white/line border, left/right at −1 from px-3 container (~8px inset) | `shop-by-category.blade.php`; `.relative` parent + `absolute -left-1` |
+| Cat-tile frame: aspect-ratio 1, max-width 150px, border-2 line, rounded-full | `.cat-tile__frame` in `app.css` |
+| Product card: 8px margin frame, aspect-ratio 1 image, px-3 pb-3, serif 13px, CTA rounded-full | `.product-card` in `app.css` |
+| Chat widget (50px floating button, red badge, "Need help?" tip) | `layouts/app.blade.php` `data-chat` element |
+
+### NOT VERIFIED (equivalent Flutter-native implementation, not web pixel match)
+
+| Item | Status |
+|---|---|
+| Header/drawer/search desktop layout | Flutter native bottom nav + app bar; web layout only on web |
+| Product card height | Blade auto-sizes rows; Flutter uses estimated +124px — within acceptable range for auto-flow |
+| Category strip inner padding around circle frame | Flutter uses +12px per tile vs blade's generic content padding — visible only in rare edge cases |
+
+### BLOCKED (cannot verify)
+
+| Item | Blocker |
+|---|---|
+| Live company site pixel-comparison | Tunnel URL dead; no working company URL |
+| Company MySQL env | `.env` points to MySQL `estele`; no local MySQL |
+| Headless Chrome scroll capture | Puppeteer End/wheel never advanced the viewport; only top-of-page captured |

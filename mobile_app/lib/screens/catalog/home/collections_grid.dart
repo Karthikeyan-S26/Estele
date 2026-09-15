@@ -34,10 +34,12 @@ class _CollectionsGridState extends State<CollectionsGrid> {
     if (widget.collections.isEmpty) return const SizedBox.shrink();
 
     final hasMore = widget.collections.length > 8;
-    final shown = (_expanded
-            ? widget.collections.take(20)
-            : widget.collections.take(hasMore ? 8 : 20))
-        .toList();
+    // Blade iterates the whole block (`@foreach($collections)` — no take()); the
+    // mobile clip to 8 comes purely from `explore-grid-4row`, so the expanded
+    // state shows every collection.
+    final shown = _expanded
+        ? widget.collections
+        : widget.collections.take(hasMore ? 8 : widget.collections.length).toList();
 
     return Container(
       color: AppColors.warmBeige, // bg-warmbeige
@@ -55,61 +57,77 @@ class _CollectionsGridState extends State<CollectionsGrid> {
               title: 'Shop by Collection',
             ),
           ),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            itemCount: shown.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2, // grid-cols-2
-              crossAxisSpacing: 10, // gap-2.5
-              mainAxisSpacing: 10,
-              // 4:5 tile + mt-2.5 (10px) + label line.
-              childAspectRatio: 4 / 5 * 0.78,
-            ),
-            itemBuilder: (context, i) {
-              final collection = shown[i];
-              return InkWell(
-                borderRadius: BorderRadius.circular(6),
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => CategoryProductsScreen(
-                      title: collection.name,
-                      categorySlug: collection.slug,
-                      isCollection: true,
-                    ),
-                  ),
+          // The blade's tile is `aspect-[4/5]` image + `mt-2.5` (10px) + a
+          // 10.5px `leading-tight` (1.25) uppercase label — i.e. the tile is
+          // 1.25×tileWidth + 10 + ~13.1px tall. Derive childAspectRatio from
+          // the real column width so the 4:5 image box and the label both
+          // land exactly as on the web instead of the old fixed 0.624 ratio
+          // (which stretched tiles ~35% taller than the web's).
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const gridPadding = 12.0; // px-3 each side
+              const gap = 10.0; // gap-2.5
+              final avail = constraints.maxWidth - gridPadding * 2;
+              final tileWidth = (avail - gap) / 2; // grid-cols-2 mobile
+              final labelLineHeight = 10.5 * 1.25; // leading-tight
+              final tileHeight = tileWidth * 1.25 + 10 + labelLineHeight;
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                itemCount: shown.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2, // grid-cols-2
+                  crossAxisSpacing: 10, // gap-2.5
+                  mainAxisSpacing: 10,
+                  childAspectRatio: tileWidth / tileHeight,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // aspect-[4/5] rounded-[6px] border border-line bg-paper
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.paper,
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: AppColors.line),
+                itemBuilder: (context, i) {
+                  final collection = shown[i];
+                  return InkWell(
+                    borderRadius: BorderRadius.circular(6),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => CategoryProductsScreen(
+                          title: collection.name,
+                          categorySlug: collection.slug,
+                          isCollection: true,
                         ),
-                        clipBehavior: Clip.antiAlias,
-                        child: AppImage(url: collection.imageUrl),
                       ),
                     ),
-                    const SizedBox(height: 10), // mt-2.5
-                    // 10.5px uppercase semibold, tracking 0.06em, centered
-                    Text(
-                      collection.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: AppTypography.body(
-                        size: 10.5,
-                        color: AppColors.heading,
-                        weight: FontWeight.w600,
-                      ).copyWith(letterSpacing: 10.5 * 0.06),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // aspect-[4/5] rounded-[6px] border border-line bg-paper
+                        AspectRatio(
+                          aspectRatio: 4 / 5,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.paper,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: AppColors.line),
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: AppImage(url: collection.imageUrl),
+                          ),
+                        ),
+                        const SizedBox(height: 10), // mt-2.5
+                        // 10.5px font-medium uppercase leading-tight label
+                        Text(
+                          collection.name.toUpperCase(),
+                          maxLines: 2,
+                          textAlign: TextAlign.center,
+                          style: AppTypography.body(
+                            size: 10.5,
+                            color: AppColors.heading,
+                            weight: FontWeight.w500,
+                            height: 1.25,
+                          ).copyWith(letterSpacing: 10.5 * 0.06),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  );
+                },
               );
             },
           ),
@@ -132,6 +150,7 @@ class _CollectionsGridState extends State<CollectionsGrid> {
                       style: AppTypography.button(
                         size: 12,
                         color: AppColors.heading,
+                        weight: FontWeight.w500,
                         letterSpacing: 12 * 0.14,
                       ),
                     ),

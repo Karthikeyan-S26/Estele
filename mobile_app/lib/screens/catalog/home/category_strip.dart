@@ -157,10 +157,15 @@ class _CategoryStripState extends State<CategoryStrip> {
                         },
                       ),
                     ),
-                    // prev — absolute -left-1 grid h-7 w-7 md:h-10 md:w-10,
-                    // invisible when scrolled to the start (disabled:opacity-0).
+                    // prev — absolute -left-1 top-1/2 grid h-7 w-7 md:h-10 md:w-10.
+                    // On the web the arrows are positioned against the `.relative
+                    // data-carousel` div, which sits inside the px-3 (12px) inset —
+                    // so `-left-1` (−4px) actually lands 8px from the viewport edge,
+                    // not off-screen. The 28px circle then overlaps the first tile
+                    // (~24px in) while staying fully visible; `disabled:opacity-0`
+                    // hides it when scrolled to the start.
                     Positioned(
-                      left: -4,
+                      left: 8,
                       child: IgnorePointer(
                         ignoring: !prevVisible,
                         child: _TrackArrow(
@@ -171,7 +176,7 @@ class _CategoryStripState extends State<CategoryStrip> {
                       ),
                     ),
                     Positioned(
-                      right: -4,
+                      right: 8,
                       child: IgnorePointer(
                         ignoring: !nextVisible,
                         child: _TrackArrow(
