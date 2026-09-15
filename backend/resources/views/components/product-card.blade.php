@@ -41,12 +41,15 @@
         <span class="text-[11px] text-muted line-through md:text-[12.5px]">₹{{ number_format($product->compare_at_price, 0) }}</span>
       @endif
     </div>
-    <form class="mt-auto" action="{{ route('cart.store', $product) }}" method="post" data-cart-form data-checkout-url="{{ route('checkout.index') }}">
+    <form class="mt-auto flex gap-1.5" action="{{ route('cart.store', $product) }}" method="post" data-cart-form data-checkout-url="{{ route('checkout.index') }}">
       @csrf
       <input type="hidden" name="quantity" value="1">
-      <button class="flex w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-md bg-heading px-2 py-2 text-[10px] font-semibold uppercase tracking-[0.06em] text-white transition-colors hover:bg-rose md:px-3 md:py-2.5 md:text-[11px] md:tracking-[0.12em]" type="submit">
+      <button class="flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md bg-heading px-2 py-2 text-[10px] font-semibold uppercase tracking-[0.06em] text-white transition-colors hover:bg-rose md:px-3 md:py-2.5 md:text-[11px] md:tracking-[0.12em]" type="submit">
         <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 7h15l-1.5 8h-12z"/><path d="M6 7 5 3H2"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>
         Add to cart
+      </button>
+      <button class="flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md bg-accent px-2 py-2 text-[10px] font-semibold uppercase tracking-[0.06em] text-white transition-colors hover:bg-accent-dark md:px-3 md:py-2.5 md:text-[11px] md:tracking-[0.12em]" type="submit" name="express" value="1" formaction="{{ route('checkout.express.start', $product) }}" data-express-submit>
+        Buy now
       </button>
     </form>
   </div>
