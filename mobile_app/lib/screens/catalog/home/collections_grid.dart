@@ -13,22 +13,38 @@ import '../category_products_screen.dart';
 ///  - centered section-head (eyebrow → title → gold rule → subtitle);
 ///  - `grid grid-cols-2 gap-2.5` of collection tiles;
 ///  - 4:5 box, `rounded-[6px] border-line`, paper bg; artwork `object-cover`;
-///  - centered 10.5px uppercase semibold label, tracking 0.06em.
-class CollectionsGrid extends StatelessWidget {
+///  - centered 10.5px uppercase semibold label, tracking 0.06em;
+///  - when the block has more than 8 collections the grid gets
+///    `explore-grid-4row` (4 rows × 2 cols = 8 tiles on mobile) and a
+///    mobile-only "Explore more"/"Show less" toggle.
+class CollectionsGrid extends StatefulWidget {
   const CollectionsGrid({super.key, required this.collections});
 
   final List<Collection> collections;
 
   @override
+  State<CollectionsGrid> createState() => _CollectionsGridState();
+}
+
+class _CollectionsGridState extends State<CollectionsGrid> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
-    if (collections.isEmpty) return const SizedBox.shrink();
+    if (widget.collections.isEmpty) return const SizedBox.shrink();
+
+    final hasMore = widget.collections.length > 8;
+    final shown = (_expanded
+            ? widget.collections.take(20)
+            : widget.collections.take(hasMore ? 8 : 20))
+        .toList();
 
     return Container(
       color: AppColors.warmBeige, // bg-warmbeige
       padding: const EdgeInsets.symmetric(vertical: 24), // py-6
       width: double.infinity,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // .section-head mb-5 = 20px below the header block.
           const Padding(
@@ -43,7 +59,7 @@ class CollectionsGrid extends StatelessWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            itemCount: collections.length,
+            itemCount: shown.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2, // grid-cols-2
               crossAxisSpacing: 10, // gap-2.5
@@ -52,7 +68,7 @@ class CollectionsGrid extends StatelessWidget {
               childAspectRatio: 4 / 5 * 0.78,
             ),
             itemBuilder: (context, i) {
-              final collection = collections[i];
+              final collection = shown[i];
               return InkWell(
                 borderRadius: BorderRadius.circular(6),
                 onTap: () => Navigator.of(context).push(
@@ -97,6 +113,32 @@ class CollectionsGrid extends StatelessWidget {
               );
             },
           ),
+          if (hasMore)
+            // mt-5 text-center, `sm:hidden` on the web — our app is mobile.
+            Padding(
+              padding: const EdgeInsets.only(top: 20),
+              child: Center(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => setState(() => _expanded = !_expanded),
+                  child: Container(
+                    padding: const EdgeInsets.only(bottom: 4), // pb-1
+                    decoration: const BoxDecoration(
+                      // border-b border-gold
+                      border: Border(bottom: BorderSide(color: AppColors.gold)),
+                    ),
+                    child: Text(
+                      _expanded ? 'Show less' : 'Explore more',
+                      style: AppTypography.button(
+                        size: 12,
+                        color: AppColors.heading,
+                        letterSpacing: 12 * 0.14,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );

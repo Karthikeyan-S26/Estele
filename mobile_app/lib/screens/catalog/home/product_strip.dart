@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../../../models/product.dart';
 import '../../../providers/cart_provider.dart';
 import '../../../providers/wishlist_provider.dart';
+import '../../../theme/app_colors.dart';
+import '../../../theme/app_typography.dart';
 import '../../../widgets/product_card.dart';
 import '../../../widgets/section_header.dart';
 
@@ -11,9 +13,12 @@ import '../../../widgets/section_header.dart';
 ///  - `section py-6 md:py-9`, content `px-3 md:px-4`;
 ///  - `align="left"` section-head (eyebrow → title + "View all" CTA);
 ///  - `grid grid-cols-2 gap-2.5` of full web-style cards — two per mobile
-///    viewport (3 at sm, 4 at md), capped at 10 cards like the blade's
-///    `->take(10)`.
-class ProductStrip extends StatelessWidget {
+///    viewport (3 at sm, 4 at md), capped at 20 cards like the blade's
+///    `->take(20)`;
+///  - when the block has more than 8 products the grid gets `explore-grid-4row`
+///    (4 rows × 2 cols = 8 cards visible on mobile) and a mobile-only
+///    "Explore more"/"Show less" toggle (`data-explore-toggle`).
+class ProductStrip extends StatefulWidget {
   const ProductStrip({
     super.key,
     required this.products,
@@ -30,11 +35,25 @@ class ProductStrip extends StatelessWidget {
   final String viewAllLabel;
 
   @override
+  State<ProductStrip> createState() => _ProductStripState();
+}
+
+class _ProductStripState extends State<ProductStrip> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
-    if (products.isEmpty) return const SizedBox.shrink();
+    if (widget.products.isEmpty) return const SizedBox.shrink();
 
     final wishlist = context.watch<WishlistProvider>();
     final cart = context.read<CartProvider>();
+    final hasMore = widget.products.length > 8;
+    // Blade's `->take(20)`, with `explore-grid-4row` hiding rows beyond the
+    // 4th on mobile until the toggle opens it (`is-expanded`).
+    final shown = (_expanded
+            ? widget.products.take(20)
+            : widget.products.take(hasMore ? 8 : 20))
+        .toList();
 
     return Container(
       // section py-6 = 24px, content px-3 = 12px
@@ -45,10 +64,10 @@ class ProductStrip extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
             child: SectionHeader(
-              scriptWord: scriptWord,
-              title: title,
-              onViewAll: onViewAll,
-              viewAllLabel: viewAllLabel,
+              scriptWord: widget.scriptWord,
+              title: widget.title,
+              onViewAll: widget.onViewAll,
+              viewAllLabel: widget.viewAllLabel,
             ),
           ),
           LayoutBuilder(
@@ -70,9 +89,9 @@ class ProductStrip extends StatelessWidget {
                   mainAxisSpacing: 10,
                   mainAxisExtent: cardHeight,
                 ),
-                itemCount: products.take(10).length, // ->take(10)
+                itemCount: shown.length,
                 itemBuilder: (context, i) {
-                  final product = products[i];
+                  final product = shown[i];
                   return ProductCard(
                     product: product,
                     isWishlisted: wishlist.isWishlisted(product.id),
@@ -109,6 +128,33 @@ class ProductStrip extends StatelessWidget {
               );
             },
           ),
+          if (hasMore)
+            // mt-5 text-center, `sm:hidden` on the web — our app is mobile.
+            Padding(
+              padding: const EdgeInsets.only(top: 20),
+              child: Center(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => setState(() => _expanded = !_expanded),
+                  child: Container(
+                    padding: const EdgeInsets.only(bottom: 4), // pb-1
+                    decoration: const BoxDecoration(
+                      // border-b border-gold
+                      border: Border(bottom: BorderSide(color: AppColors.gold)),
+                    ),
+                    child: Text(
+                      // data-more-label / data-less-label
+                      _expanded ? 'Show less' : 'Explore more',
+                      style: AppTypography.button(
+                        size: 12,
+                        color: AppColors.heading,
+                        letterSpacing: 12 * 0.14,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
