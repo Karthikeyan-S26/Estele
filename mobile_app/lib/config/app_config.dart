@@ -1,21 +1,32 @@
+import 'package:flutter/foundation.dart';
+
 /// App-wide configuration.
 ///
-/// Point this at your Laravel backend. The API base URL is intentionally the
-/// only thing you change to switch between staging and production:
+/// Point this at your Laravel backend. The API base URL defaults per runtime
+/// so a local dev server "just works" everywhere — an Android emulator
+/// reaches the host through the `10.0.2.2` loopback alias, every other local
+/// target (Windows/macOS/Linux desktop, web, iOS simulator) through
+/// `127.0.0.1`. Pin a specific host with a build-time override:
 ///
-///   staging:    `http://10.0.2.2:8000/api` (Android emulator → host machine)
-///   production: `https://api.estele.in/api`
-///
-/// For a physical device, replace the host with your computer's LAN IP, e.g.
-/// `http://192.168.1.20:8000/api`.
+///   `--dart-define=API_BASE_URL=http://192.168.1.20:8000/api` (physical device)
+///   `--dart-define=API_BASE_URL=https://api.estele.in/api` (production)
 class AppConfig {
   AppConfig._();
 
-  /// Base URL of the Estele REST API (no trailing slash).
-  static const String apiBaseUrl = String.fromEnvironment(
+  static const String _apiBaseUrlOverride = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:8000/api',
   );
+
+  /// Base URL of the Estele REST API (no trailing slash).
+  static String get apiBaseUrl {
+    if (_apiBaseUrlOverride.isNotEmpty) {
+      return _apiBaseUrlOverride;
+    }
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:8000/api';
+    }
+    return 'http://127.0.0.1:8000/api';
+  }
 
   /// Free-shipping threshold used to display shipping estimates offline.
   static const double freeShippingThreshold = 999;
@@ -36,7 +47,9 @@ class AppConfig {
     if (url == null || url.isEmpty) {
       return null;
     }
-    final origin = Uri.parse(apiBaseUrl).replace(path: '', query: '', fragment: '');
+    final origin = Uri.parse(
+      apiBaseUrl,
+    ).replace(path: '', query: '', fragment: '');
     final parsed = Uri.tryParse(url);
     if (parsed == null) {
       return url;
@@ -49,12 +62,14 @@ class AppConfig {
         parsed.port == origin.port) {
       return url;
     }
-    return parsed.replace(
-      scheme: origin.scheme,
-      host: origin.host,
-      port: origin.port,
-      userInfo: '',
-    ).toString();
+    return parsed
+        .replace(
+          scheme: origin.scheme,
+          host: origin.host,
+          port: origin.port,
+          userInfo: '',
+        )
+        .toString();
   }
 
   /// Connection timeout for every HTTP call.

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../config/app_config.dart';
 import '../../data/repositories/sell_repository.dart';
 import '../../models/sell_request.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 import '../../utils/formatters.dart';
+import '../../widgets/app_image.dart';
 import '../../widgets/load_state.dart';
 
 class SellDetailScreen extends StatefulWidget {
@@ -92,7 +94,11 @@ class _SellDetailScreenState extends State<SellDetailScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not cancel: ${e.toString().replaceAll('ApiException', '').trim()}')),
+        SnackBar(
+          content: Text(
+            'Could not cancel: ${e.toString().replaceAll('ApiException', '').trim()}',
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => _cancelling = false);
@@ -107,126 +113,153 @@ class _SellDetailScreenState extends State<SellDetailScreen> {
       body: _loading
           ? const LoadState.loading()
           : _failed || request == null
-              ? LoadState.error(message: 'Could not load this sell request.', onRetry: _load)
-              : RefreshIndicator(
-                  onRefresh: _load,
-                  child: ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(16),
+          ? LoadState.error(
+              message: 'Could not load this sell request.',
+              onRetry: _load,
+            )
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                children: [
+                  Row(
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(request.requestNumber, style: AppTypography.sectionTitle(size: 17)),
-                                Text(
-                                  '${_itemTypeLabel(request.itemType)}${request.city != null ? ' · ${request.city}' : ''}',
-                                  style: AppTypography.bodySmall(color: AppColors.muted),
-                                ),
-                              ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              request.requestNumber,
+                              style: AppTypography.sectionTitle(size: 17),
                             ),
-                          ),
-                          _StatusChip(status: request.status),
-                        ],
+                            Text(
+                              '${_itemTypeLabel(request.itemType)}${request.city != null ? ' · ${request.city}' : ''}',
+                              style: AppTypography.bodySmall(
+                                color: AppColors.muted,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 14),
-
-                      if (request.imageUrl != null) ...[
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: Image.network(
-                            request.imageUrl!,
-                            height: 180,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => const _MediaPlaceholder(icon: Icons.image_outlined),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                      ],
-                      if (request.videoUrl != null)
-                        SellVideoPlayer(videoUrl: request.videoUrl!),
-
-                      const SizedBox(height: 14),
-                      if (request.status == 'bidding' && request.biddingOpen) ...[
-                        _HighlightCard(
-                          title: 'BIDDING IS OPEN',
-                          subtitle: _closesLabel(request.bidsEndAt),
-                          leading: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                request.highestBidAmount != null
-                                    ? formatINR(request.highestBidAmount!)
-                                    : 'No offers yet',
-                                style: AppTypography.sectionTitle(size: 26, color: AppColors.deepWine),
-                              ),
-                              Text(
-                                'Highest offer · ${request.bidCount} bid${request.bidCount == 1 ? '' : 's'}',
-                                style: AppTypography.bodySmall(size: 11.5),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ] else if (request.highestBidAmount != null && request.status != 'cancelled') ...[
-                        _HighlightCard(
-                          title: 'OFFERS RECEIVED',
-                          leading: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(formatINR(request.highestBidAmount!), style: AppTypography.sectionTitle(size: 26, color: AppColors.deepWine)),
-                              Text('${request.bidCount} bid${request.bidCount == 1 ? '' : 's'}',
-                                  style: AppTypography.bodySmall(size: 11.5)),
-                            ],
-                          ),
-                        ),
-                      ],
-
-                      if (request.status == 'completed') ...[
-                        const SizedBox(height: 12),
-                        _SettlementCard(request: request),
-                      ],
-
-                      if (request.cancelReason != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 12),
-                          child: Text(
-                            'Cancelled: ${request.cancelReason}',
-                            style: AppTypography.bodySmall(color: AppColors.soldOut),
-                          ),
-                        ),
-
-                      if (request.description != null && request.description!.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 14),
-                          child: Text(request.description!, style: AppTypography.body(size: 13.5)),
-                        ),
-
-                      if (request.canCancel)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 16),
-                          child: OutlinedButton.icon(
-                            onPressed: _cancelling ? null : _confirmCancel,
-                            icon: const Icon(Icons.close_rounded, size: 18),
-                            label: const Text('Cancel this request'),
-                            style: OutlinedButton.styleFrom(foregroundColor: AppColors.error),
-                          ),
-                        ),
-
-                      const SizedBox(height: 20),
-                      Text('Activity', style: AppTypography.label(letterSpacing: 1.2)),
-                      const SizedBox(height: 8),
-                      if (request.timeline.isEmpty)
-                        const LoadState.empty(message: 'No activity yet.')
-                      else
-                        ...request.timeline.map(_TimelineRow.new).toList(),
-
-                      const SizedBox(height: 20),
+                      _StatusChip(status: request.status),
                     ],
                   ),
-                ),
+                  const SizedBox(height: 14),
+
+                  if (request.imageUrl != null) ...[
+                    AppImage(
+                      url: request.imageUrl,
+                      height: 180,
+                      fit: BoxFit.cover,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                  if (request.videoUrl != null)
+                    SellVideoPlayer(videoUrl: request.videoUrl!),
+
+                  const SizedBox(height: 14),
+                  if (request.status == 'bidding' && request.biddingOpen) ...[
+                    _HighlightCard(
+                      title: 'BIDDING IS OPEN',
+                      subtitle: _closesLabel(request.bidsEndAt),
+                      leading: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            request.highestBidAmount != null
+                                ? formatINR(request.highestBidAmount!)
+                                : 'No offers yet',
+                            style: AppTypography.sectionTitle(
+                              size: 26,
+                              color: AppColors.deepWine,
+                            ),
+                          ),
+                          Text(
+                            'Highest offer · ${request.bidCount} bid${request.bidCount == 1 ? '' : 's'}',
+                            style: AppTypography.bodySmall(size: 11.5),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ] else if (request.highestBidAmount != null &&
+                      request.status != 'cancelled') ...[
+                    _HighlightCard(
+                      title: 'OFFERS RECEIVED',
+                      leading: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            formatINR(request.highestBidAmount!),
+                            style: AppTypography.sectionTitle(
+                              size: 26,
+                              color: AppColors.deepWine,
+                            ),
+                          ),
+                          Text(
+                            '${request.bidCount} bid${request.bidCount == 1 ? '' : 's'}',
+                            style: AppTypography.bodySmall(size: 11.5),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  if (request.status == 'completed') ...[
+                    const SizedBox(height: 12),
+                    _SettlementCard(request: request),
+                  ],
+
+                  if (request.cancelReason != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Text(
+                        'Cancelled: ${request.cancelReason}',
+                        style: AppTypography.bodySmall(
+                          color: AppColors.soldOut,
+                        ),
+                      ),
+                    ),
+
+                  if (request.description != null &&
+                      request.description!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 14),
+                      child: Text(
+                        request.description!,
+                        style: AppTypography.body(size: 13.5),
+                      ),
+                    ),
+
+                  if (request.canCancel)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: OutlinedButton.icon(
+                        onPressed: _cancelling ? null : _confirmCancel,
+                        icon: const Icon(Icons.close_rounded, size: 18),
+                        label: const Text('Cancel this request'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.error,
+                        ),
+                      ),
+                    ),
+
+                  const SizedBox(height: 20),
+                  Text(
+                    'Activity',
+                    style: AppTypography.label(letterSpacing: 1.2),
+                  ),
+                  const SizedBox(height: 8),
+                  if (request.timeline.isEmpty)
+                    const LoadState.empty(message: 'No activity yet.')
+                  else
+                    ...request.timeline.map(_TimelineRow.new).toList(),
+
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
     );
   }
 
@@ -236,7 +269,9 @@ class _SellDetailScreenState extends State<SellDetailScreen> {
     if (remaining.isNegative) return 'Bidding window ended';
     final h = remaining.inHours;
     final m = remaining.inMinutes.remainder(60);
-    return h > 0 ? 'Closes in ${h}h ${m}m' : 'Closes in ${remaining.inMinutes.remainder(60)}m';
+    return h > 0
+        ? 'Closes in ${h}h ${m}m'
+        : 'Closes in ${remaining.inMinutes.remainder(60)}m';
   }
 
   String _itemTypeLabel(String itemType) {
@@ -253,7 +288,11 @@ class _SellDetailScreenState extends State<SellDetailScreen> {
 }
 
 class _HighlightCard extends StatelessWidget {
-  const _HighlightCard({required this.title, required this.leading, this.subtitle});
+  const _HighlightCard({
+    required this.title,
+    required this.leading,
+    this.subtitle,
+  });
 
   final String title;
   final Widget leading;
@@ -271,12 +310,22 @@ class _HighlightCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTypography.label(size: 10, color: AppColors.goldLight, letterSpacing: 1.4)),
+          Text(
+            title,
+            style: AppTypography.label(
+              size: 10,
+              color: AppColors.goldLight,
+              letterSpacing: 1.4,
+            ),
+          ),
           const SizedBox(height: 8),
           leading,
           if (subtitle != null) ...[
             const SizedBox(height: 4),
-            Text(subtitle!, style: AppTypography.bodySmall(size: 11.5, color: Colors.white70)),
+            Text(
+              subtitle!,
+              style: AppTypography.bodySmall(size: 11.5, color: Colors.white70),
+            ),
           ],
         ],
       ),
@@ -302,12 +351,35 @@ class _SettlementCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('SETTLEMENT COMPLETED', style: AppTypography.label(size: 10, color: AppColors.success, letterSpacing: 1.2)),
+          Text(
+            'SETTLEMENT COMPLETED',
+            style: AppTypography.label(
+              size: 10,
+              color: AppColors.success,
+              letterSpacing: 1.2,
+            ),
+          ),
           const SizedBox(height: 10),
-          _row('Valuation', request.adminValuation != null ? formatINR(request.adminValuation!) : '—'),
-          _row('Service deduction', request.deductionAmount != null ? '− ${formatINR(request.deductionAmount!)}' : '—'),
+          _row(
+            'Valuation',
+            request.adminValuation != null
+                ? formatINR(request.adminValuation!)
+                : '—',
+          ),
+          _row(
+            'Service deduction',
+            request.deductionAmount != null
+                ? '− ${formatINR(request.deductionAmount!)}'
+                : '—',
+          ),
           const Divider(height: 18, color: AppColors.success),
-          _row('Credited to your wallet', request.walletCredit != null ? formatINR(request.walletCredit!) : '—', bold: true),
+          _row(
+            'Credited to your wallet',
+            request.walletCredit != null
+                ? formatINR(request.walletCredit!)
+                : '—',
+            bold: true,
+          ),
         ],
       ),
     );
@@ -369,7 +441,11 @@ class _StatusChip extends StatelessWidget {
       ),
       child: Text(
         labels[status] ?? status.toUpperCase(),
-        style: AppTypography.bodySmall(size: 10, color: color, weight: FontWeight.w700),
+        style: AppTypography.bodySmall(
+          size: 10,
+          color: color,
+          weight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -406,7 +482,10 @@ class _TimelineRow extends StatelessWidget {
       'bid_submitted' => (Icons.currency_rupee_rounded, 'Bid received'),
       'bid_updated' => (Icons.currency_rupee_rounded, 'Bid updated'),
       'bids_closed' => (Icons.lock_clock_outlined, 'Bidding closed'),
-      'settlement_completed' => (Icons.verified_rounded, 'Settlement completed'),
+      'settlement_completed' => (
+        Icons.verified_rounded,
+        'Settlement completed',
+      ),
       'cancelled_by_customer' => (Icons.close_rounded, 'Cancelled — you'),
       'cancelled_by_admin' => (Icons.close_rounded, 'Cancelled by Estele'),
       _ => (Icons.circle_outlined, event.event.replaceAll('_', ' ')),
@@ -415,7 +494,10 @@ class _TimelineRow extends StatelessWidget {
     String? amount;
     if (event.event == 'bid_submitted' || event.event == 'bid_updated') {
       final raw = event.metadata['amount'];
-      if (raw != null) amount = formatINR(raw is num ? raw.toDouble() : double.tryParse(raw.toString()) ?? 0);
+      if (raw != null)
+        amount = formatINR(
+          raw is num ? raw.toDouble() : double.tryParse(raw.toString()) ?? 0,
+        );
     }
 
     final at = event.at?.toLocal();
@@ -440,14 +522,34 @@ class _TimelineRow extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Expanded(child: Text(label, style: AppTypography.bodyMedium(size: 13, weight: FontWeight.w600))),
+                    Expanded(
+                      child: Text(
+                        label,
+                        style: AppTypography.bodyMedium(
+                          size: 13,
+                          weight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                     if (amount != null)
-                      Text(amount, style: AppTypography.bodyMedium(size: 13, weight: FontWeight.w700, color: AppColors.success)),
+                      Text(
+                        amount,
+                        style: AppTypography.bodyMedium(
+                          size: 13,
+                          weight: FontWeight.w700,
+                          color: AppColors.success,
+                        ),
+                      ),
                   ],
                 ),
                 Text(
-                  at == null ? '' : '${at.day}/${at.month}/${at.year} · ${at.hour.toString().padLeft(2, '0')}:${at.minute.toString().padLeft(2, '0')}',
-                  style: AppTypography.bodySmall(size: 11, color: AppColors.muted),
+                  at == null
+                      ? ''
+                      : '${at.day}/${at.month}/${at.year} · ${at.hour.toString().padLeft(2, '0')}:${at.minute.toString().padLeft(2, '0')}',
+                  style: AppTypography.bodySmall(
+                    size: 11,
+                    color: AppColors.muted,
+                  ),
                 ),
               ],
             ),
@@ -479,7 +581,12 @@ class _SellVideoPlayerState extends State<SellVideoPlayer> {
   }
 
   Future<void> _init() async {
-    final controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl));
+    // Normalize the URL like every other media surface (AppImage) so a
+    // relative/localhost media path still resolves against the live API
+    // origin instead of failing on the real device.
+    final resolved =
+        AppConfig.resolveMediaUrl(widget.videoUrl) ?? widget.videoUrl;
+    final controller = VideoPlayerController.networkUrl(Uri.parse(resolved));
     _controller = controller;
     try {
       await controller.initialize();
@@ -503,7 +610,10 @@ class _SellVideoPlayerState extends State<SellVideoPlayer> {
   @override
   Widget build(BuildContext context) {
     final controller = _controller;
-    final ratio = (controller != null && controller.value.isInitialized && controller.value.aspectRatio > 0)
+    final ratio =
+        (controller != null &&
+            controller.value.isInitialized &&
+            controller.value.aspectRatio > 0)
         ? controller.value.aspectRatio
         : 16 / 9;
     return ClipRRect(
@@ -515,30 +625,39 @@ class _SellVideoPlayerState extends State<SellVideoPlayer> {
           child: _failed
               ? const _MediaPlaceholder(icon: Icons.videocam_outlined)
               : controller == null || !controller.value.isInitialized
-                  ? const Center(
-                      child: SizedBox(
-                        width: 26,
-                        height: 26,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      ),
-                    )
-                  : GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          controller.value.isPlaying ? controller.pause() : controller.play();
-                        });
-                      },
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          VideoPlayer(controller),
-                          if (!controller.value.isPlaying)
-                            const Center(
-                              child: Icon(Icons.play_circle_fill, size: 52, color: Colors.white70),
-                            ),
-                        ],
-                      ),
+              ? const Center(
+                  child: SizedBox(
+                    width: 26,
+                    height: 26,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
                     ),
+                  ),
+                )
+              : GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      controller.value.isPlaying
+                          ? controller.pause()
+                          : controller.play();
+                    });
+                  },
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      VideoPlayer(controller),
+                      if (!controller.value.isPlaying)
+                        const Center(
+                          child: Icon(
+                            Icons.play_circle_fill,
+                            size: 52,
+                            color: Colors.white70,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
         ),
       ),
     );

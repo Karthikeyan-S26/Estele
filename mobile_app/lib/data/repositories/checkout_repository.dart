@@ -104,7 +104,10 @@ class CheckoutRepository {
   }) async {
     final json = await ApiClient.post(
       '/checkout',
-      body: details.toBody(paymentMethod: 'cod', walletAmountUsed: walletAmountUsed),
+      body: details.toBody(
+        paymentMethod: 'cod',
+        walletAmountUsed: walletAmountUsed,
+      ),
       auth: true,
     );
     final data = json['data'] as Map<String, dynamic>? ?? json;
@@ -120,7 +123,10 @@ class CheckoutRepository {
   }) async {
     final json = await ApiClient.post(
       '/checkout',
-      body: details.toBody(paymentMethod: 'razorpay', walletAmountUsed: walletAmountUsed),
+      body: details.toBody(
+        paymentMethod: 'razorpay',
+        walletAmountUsed: walletAmountUsed,
+      ),
       auth: true,
     );
     return RazorpayHandoff.fromJson(json);
@@ -128,8 +134,13 @@ class CheckoutRepository {
 
   /// Re-attempt Razorpay order creation for an order whose gateway call failed
   /// at checkout (or whose payment failed) — lets the app finish in place.
-  static Future<RazorpayHandoff> retryPayment({required String orderNumber}) async {
-    final json = await ApiClient.post('/payment/$orderNumber/retry', auth: true);
+  static Future<RazorpayHandoff> retryPayment({
+    required String orderNumber,
+  }) async {
+    final json = await ApiClient.post(
+      '/payment/$orderNumber/retry',
+      auth: true,
+    );
     return RazorpayHandoff.fromJson(json);
   }
 
@@ -161,12 +172,18 @@ class CheckoutRepository {
 
   /// Fetch a single order by its human order number.
   static Future<Order> orderByNumber(String orderNumber) async {
-    final json = await ApiClient.get('/account/orders/$orderNumber', auth: true);
+    final json = await ApiClient.get(
+      '/account/orders/$orderNumber',
+      auth: true,
+    );
     return Order.fromJson(json['data'] as Map<String, dynamic>);
   }
 
   /// Download the order invoice as raw PDF bytes.
   static Future<Uint8List> orderInvoice(String orderNumber) async {
-    return ApiClient.download('/account/orders/$orderNumber/invoice', auth: true);
+    return ApiClient.download(
+      '/account/orders/$orderNumber/invoice',
+      auth: true,
+    );
   }
 }

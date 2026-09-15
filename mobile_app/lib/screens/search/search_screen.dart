@@ -9,6 +9,7 @@ import '../../models/product.dart';
 import '../../providers/wishlist_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
+import '../../widgets/app_image.dart';
 import '../../widgets/load_state.dart';
 import '../catalog/product_grid_screen.dart';
 
@@ -88,17 +89,24 @@ class _SearchScreenState extends State<SearchScreen> {
           title: 'Results for "$query"',
           autoLoad: true,
           loader:
-              ({required String sort, String? minPrice, String? maxPrice, required bool inStock, required int page, required int perPage}) {
-            return CatalogRepository.search(
-              query,
-              sort: sort,
-              minPrice: minPrice,
-              maxPrice: maxPrice,
-              inStock: inStock,
-              page: page,
-              perPage: perPage,
-            );
-          },
+              ({
+                required String sort,
+                String? minPrice,
+                String? maxPrice,
+                required bool inStock,
+                required int page,
+                required int perPage,
+              }) {
+                return CatalogRepository.search(
+                  query,
+                  sort: sort,
+                  minPrice: minPrice,
+                  maxPrice: maxPrice,
+                  inStock: inStock,
+                  page: page,
+                  perPage: perPage,
+                );
+              },
         ),
       ),
     );
@@ -138,47 +146,64 @@ class _SearchScreenState extends State<SearchScreen> {
       body: _queryEmpty
           ? _IdleView(onSearch: (q) => _openResults(q))
           : _searching
-              ? const LoadState.loading()
-              : _error != null && _suggestions.isEmpty
-                  ? LoadState.empty(message: 'No results for that search.')
-                  : _suggestions.isEmpty
-                      ? const LoadState.loading()
-                      : ListView(
-                          padding: const EdgeInsets.all(16),
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text('Suggestions', style: AppTypography.label(letterSpacing: 1.2)),
-                                Text('${_suggestions.length} found', style: AppTypography.bodySmall(size: 12)),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            for (final product in _suggestions)
-                              ListTile(
-                                contentPadding: EdgeInsets.zero,
-                                leading: SizedBox(
-                                  width: 44,
-                                  height: 56,
-                                  child: _SuggestionImage(url: product.imageUrl),
-                                ),
-                                title: Text(product.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-                                subtitle: Text(product.sku, style: AppTypography.bodySmall(size: 11)),
-                                trailing: IconButton(
-                                  icon: Icon(
-                                    wishlist.isWishlisted(product.id)
-                                        ? Icons.favorite_rounded
-                                        : Icons.favorite_outline_rounded,
-                                    color: wishlist.isWishlisted(product.id) ? AppColors.accent : AppColors.muted,
-                                    size: 20,
-                                  ),
-                                  onPressed: () => wishlist.toggle(product.id, product: product),
-                                ),
-                                onTap: () =>
-                                    Navigator.of(context).pushNamed('/product/${product.slug}'),
-                              ),
-                          ],
-                        ),
+          ? const LoadState.loading()
+          : _error != null && _suggestions.isEmpty
+          ? LoadState.empty(message: 'No results for that search.')
+          : _suggestions.isEmpty
+          ? const LoadState.loading()
+          : ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Suggestions',
+                      style: AppTypography.label(letterSpacing: 1.2),
+                    ),
+                    Text(
+                      '${_suggestions.length} found',
+                      style: AppTypography.bodySmall(size: 12),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                for (final product in _suggestions)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: SizedBox(
+                      width: 44,
+                      height: 56,
+                      child: _SuggestionImage(url: product.imageUrl),
+                    ),
+                    title: Text(
+                      product.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: Text(
+                      product.sku,
+                      style: AppTypography.bodySmall(size: 11),
+                    ),
+                    trailing: IconButton(
+                      icon: Icon(
+                        wishlist.isWishlisted(product.id)
+                            ? Icons.favorite_rounded
+                            : Icons.favorite_outline_rounded,
+                        color: wishlist.isWishlisted(product.id)
+                            ? AppColors.accent
+                            : AppColors.muted,
+                        size: 20,
+                      ),
+                      onPressed: () =>
+                          wishlist.toggle(product.id, product: product),
+                    ),
+                    onTap: () => Navigator.of(
+                      context,
+                    ).pushNamed('/product/${product.slug}'),
+                  ),
+              ],
+            ),
     );
   }
 }
@@ -190,23 +215,33 @@ class _IdleView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const popular = ['Kundan', 'Gold necklace', 'Jhumka', 'Earrings', 'Bridal', 'Ring'];
+    const popular = [
+      'Kundan',
+      'Gold necklace',
+      'Jhumka',
+      'Earrings',
+      'Bridal',
+      'Ring',
+    ];
 
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Popular searches', style: AppTypography.label(letterSpacing: 1.2)),
+          Text(
+            'Popular searches',
+            style: AppTypography.label(letterSpacing: 1.2),
+          ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: popular
-                .map((q) => ActionChip(
-                      label: Text(q),
-                      onPressed: () => onSearch(q),
-                    ))
+                .map(
+                  (q) =>
+                      ActionChip(label: Text(q), onPressed: () => onSearch(q)),
+                )
                 .toList(),
           ),
         ],
@@ -226,16 +261,16 @@ class _SuggestionImage extends StatelessWidget {
     if (urlValue == null || urlValue.isEmpty) {
       return Container(
         color: AppColors.warmBeige,
-        child: const Icon(Icons.image_outlined, color: AppColors.lineStrong, size: 20),
+        child: const Icon(
+          Icons.image_outlined,
+          color: AppColors.lineStrong,
+          size: 20,
+        ),
       );
     }
-    return Image.network(
-      urlValue,
-      fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => Container(
-        color: AppColors.warmBeige,
-        child: const Icon(Icons.image_outlined, color: AppColors.lineStrong, size: 20),
-      ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(4),
+      child: AppImage(url: urlValue, width: 44, height: 56, fit: BoxFit.cover),
     );
   }
 }

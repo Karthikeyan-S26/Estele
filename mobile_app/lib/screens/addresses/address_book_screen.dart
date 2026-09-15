@@ -17,6 +17,7 @@ class AddressBookScreen extends StatefulWidget {
 class _AddressBookScreenState extends State<AddressBookScreen> {
   List<Address>? _addresses;
   bool _loading = true;
+  bool _failed = false;
 
   @override
   void initState() {
@@ -25,7 +26,10 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _failed = false;
+    });
     try {
       final result = await AccountRepository.addresses();
       if (mounted) {
@@ -35,7 +39,12 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
         });
       }
     } catch (_) {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() {
+          _failed = true;
+          _loading = false;
+        });
+      }
     }
   }
 
@@ -47,8 +56,27 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
   }
 
   Future<void> _delete(Address address) async {
-    await AccountRepository.deleteAddress(address.id);
-    if (mounted) _load();
+    try {
+      await AccountRepository.deleteAddress(address.id);
+      if (!mounted) return;
+      if (_addresses != null) {
+        setState(
+          () => _addresses = _addresses!
+              .where((a) => a.id != address.id)
+              .toList(),
+        );
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Address removed')));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not remove the address. Try again.'),
+        ),
+      );
+    }
   }
 
   @override
@@ -60,72 +88,98 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
         icon: const Icon(Icons.add_rounded),
         label: const Text('New address'),
       ),
-      body: _loading
+      body: _loading && _addresses == null
           ? const LoadState.loading()
+          : _failed && _addresses == null
+          ? LoadState.error(
+              message: 'Could not load your addresses.',
+              onRetry: _load,
+            )
           : _addresses == null || _addresses!.isEmpty
-              ? LoadState.empty(message: 'No saved addresses yet. Add one to speed up checkout.')
-              : RefreshIndicator(
-                  onRefresh: _load,
-                  child: ListView.builder(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _addresses!.length,
-                    itemBuilder: (context, i) {
-                      final address = _addresses![i];
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: AppColors.paper,
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(
-                            color: address.isDefault ? AppColors.accent : AppColors.line,
-                            width: address.isDefault ? 1.2 : 1,
+          ? LoadState.empty(
+              message: 'No saved addresses yet. Add one to speed up checkout.',
+            )
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: ListView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                itemCount: _addresses!.length,
+                itemBuilder: (context, i) {
+                  final address = _addresses![i];
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.paper,
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(
+                        color: address.isDefault
+                            ? AppColors.accent
+                            : AppColors.line,
+                        width: address.isDefault ? 1.2 : 1,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                address.label.isEmpty
+                                    ? 'Address ${i + 1}'
+                                    : address.label,
+                                style: AppTypography.bodyMedium(
+                                  weight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            if (address.isDefault) const _DefaultTag(),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          address.summary,
+                          style: AppTypography.body(
+                            size: 13.5,
+                            color: AppColors.ink,
                           ),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        if (address.phone != null &&
+                            address.phone!.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            address.phone!,
+                            style: AppTypography.bodySmall(size: 12.5),
+                          ),
+                        ],
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    address.label.isEmpty ? 'Address ${i + 1}' : address.label,
-                                    style: AppTypography.bodyMedium(weight: FontWeight.w700),
-                                  ),
-                                ),
-                                if (address.isDefault)
-                                  const _DefaultTag(),
-                              ],
+                            TextButton.icon(
+                              onPressed: () => _openEditor(address),
+                              icon: const Icon(Icons.edit_outlined, size: 16),
+                              label: const Text('Edit'),
                             ),
-                            const SizedBox(height: 6),
-                            Text(address.summary, style: AppTypography.body(size: 13.5, color: AppColors.ink)),
-                            if (address.phone != null && address.phone!.isNotEmpty) ...[
-                              const SizedBox(height: 4),
-                              Text(address.phone!, style: AppTypography.bodySmall(size: 12.5)),
-                            ],
-                            const SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                TextButton.icon(
-                                  onPressed: () => _openEditor(address),
-                                  icon: const Icon(Icons.edit_outlined, size: 16),
-                                  label: const Text('Edit'),
-                                ),
-                                const SizedBox(width: 8),
-                                IconButton(
-                                  onPressed: () => _delete(address),
-                                  icon: const Icon(Icons.delete_outline_rounded, size: 20, color: AppColors.muted),
-                                ),
-                              ],
+                            const SizedBox(width: 8),
+                            IconButton(
+                              onPressed: () => _delete(address),
+                              icon: const Icon(
+                                Icons.delete_outline_rounded,
+                                size: 20,
+                                color: AppColors.muted,
+                              ),
                             ),
                           ],
                         ),
-                      );
-                    },
-                  ),
-                ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
     );
   }
 }
@@ -143,7 +197,11 @@ class _DefaultTag extends StatelessWidget {
       ),
       child: Text(
         'DEFAULT',
-        style: AppTypography.bodySmall(size: 9.5, color: AppColors.accentDark, weight: FontWeight.w700),
+        style: AppTypography.bodySmall(
+          size: 9.5,
+          color: AppColors.accentDark,
+          weight: FontWeight.w700,
+        ),
       ),
     );
   }

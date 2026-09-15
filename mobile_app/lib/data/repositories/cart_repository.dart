@@ -15,16 +15,16 @@ class CartRepository {
   }) async {
     final json = await ApiClient.post(
       '/cart/$productSlug',
-      body: {
-        'product_variant_id': ?variantId,
-        'quantity': quantity,
-      },
+      body: {'product_variant_id': ?variantId, 'quantity': quantity},
       requireCartToken: true,
     );
     return Cart.fromJson(json['data'] as Map<String, dynamic>);
   }
 
-  static Future<Cart> updateItem({required int cartItemId, required int quantity}) async {
+  static Future<Cart> updateItem({
+    required int cartItemId,
+    required int quantity,
+  }) async {
     final json = await ApiClient.patch(
       '/cart/items/$cartItemId',
       body: {'quantity': quantity},
@@ -34,12 +34,19 @@ class CartRepository {
   }
 
   static Future<Cart> removeItem(int cartItemId) async {
-    final json = await ApiClient.delete('/cart/items/$cartItemId', requireCartToken: true);
+    final json = await ApiClient.delete(
+      '/cart/items/$cartItemId',
+      requireCartToken: true,
+    );
     return Cart.fromJson(json['data'] as Map<String, dynamic>);
   }
 
   static Future<Cart> applyCoupon(String code) async {
-    final json = await ApiClient.post('/cart/coupon', body: {'code': code}, requireCartToken: true);
+    final json = await ApiClient.post(
+      '/cart/coupon',
+      body: {'code': code},
+      requireCartToken: true,
+    );
     return Cart.fromJson(json['data'] as Map<String, dynamic>);
   }
 

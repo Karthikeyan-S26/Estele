@@ -8,7 +8,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 class Storage {
   Storage._();
 
-  static const _secureStorage = FlutterSecureStorage(aOptions: AndroidOptions(encryptedSharedPreferences: true));
+  static const _secureStorage = FlutterSecureStorage(
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+  );
 
   static SharedPreferences? _prefs;
 
@@ -26,7 +28,8 @@ class Storage {
   static const _userPhoneKey = 'user_phone';
 
   static Future<String?> getToken() => _secureStorage.read(key: _tokenKey);
-  static Future<void> saveToken(String token) => _secureStorage.write(key: _tokenKey, value: token);
+  static Future<void> saveToken(String token) =>
+      _secureStorage.write(key: _tokenKey, value: token);
   static Future<void> clearToken() => _secureStorage.delete(key: _tokenKey);
 
   static Future<void> saveUser({
@@ -79,7 +82,11 @@ class Storage {
   static List<int> getWishlistIds() {
     final raw = _prefs?.getString(_wishlistKey) ?? '';
     if (raw.isEmpty) return [];
-    return raw.split(',').map((s) => int.tryParse(s) ?? 0).where((id) => id > 0).toList();
+    return raw
+        .split(',')
+        .map((s) => int.tryParse(s) ?? 0)
+        .where((id) => id > 0)
+        .toList();
   }
 
   static Future<void> saveWishlistIds(List<int> ids) async {

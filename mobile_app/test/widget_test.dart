@@ -59,7 +59,13 @@ void main() {
       final cart = Cart.fromJson(const {
         'items': [],
         'coupon': null,
-        'totals': {'subtotal': 0, 'discount': 0, 'shipping': 0, 'total': 0, 'shipping_is_free': false},
+        'totals': {
+          'subtotal': 0,
+          'discount': 0,
+          'shipping': 0,
+          'total': 0,
+          'shipping_is_free': false,
+        },
         'cart_count': 0,
       });
       expect(cart.isEmpty, isTrue);
@@ -86,7 +92,13 @@ void main() {
           },
         ],
         'coupon': {'code': 'ELIVE10', 'summary': '10% off'},
-        'totals': {'subtotal': 2598, 'discount': 259.8, 'shipping': 0, 'total': 2338.2, 'shipping_is_free': true},
+        'totals': {
+          'subtotal': 2598,
+          'discount': 259.8,
+          'shipping': 0,
+          'total': 2338.2,
+          'shipping_is_free': true,
+        },
         'cart_count': 2,
       });
 

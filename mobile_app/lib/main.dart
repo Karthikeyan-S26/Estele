@@ -7,7 +7,6 @@ import 'providers/auth_provider.dart';
 import 'providers/cart_provider.dart';
 import 'providers/wishlist_provider.dart';
 import 'screens/addresses/address_book_screen.dart';
-import 'screens/auth/forgot_password_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/blog/blog_post_screen.dart';
@@ -23,6 +22,8 @@ import 'screens/root_screen.dart';
 import 'screens/search/search_screen.dart';
 import 'screens/sell/sell_create_screen.dart';
 import 'screens/sell/sell_screen.dart';
+import 'screens/stores/stores_screen.dart';
+import 'screens/trending/trending_screen.dart';
 import 'screens/wallet/wallet_screen.dart';
 import 'screens/wishlist/wishlist_screen.dart';
 import 'theme/app_theme.dart';
@@ -76,9 +77,7 @@ class EsteleApp extends StatelessWidget {
       case '/login':
         screen = const LoginScreen();
       case '/register':
-        screen = const RegisterScreen();
-      case '/forgot-password':
-        screen = const ForgotPasswordScreen();
+        screen = RegisterScreen(prefillPhone: settings.arguments as String?);
       case '/orders':
         screen = const OrdersScreen();
       case '/addresses':
@@ -89,6 +88,10 @@ class EsteleApp extends StatelessWidget {
         screen = const SellScreen();
       case '/sell/create':
         screen = const SellCreateScreen();
+      case '/trending':
+        screen = const TrendingScreen();
+      case '/stores':
+        screen = const StoresScreen();
       case '/faq':
         screen = const FaqScreen();
       case '/blog':
@@ -102,7 +105,9 @@ class EsteleApp extends StatelessWidget {
         screen = ProductDetailScreen(slug: slug);
       } else if (name.startsWith('/orders/')) {
         final orderNumber = name.substring('/orders/'.length);
-        screen = orderNumber.isNotEmpty ? OrderDetailScreen(orderNumber: orderNumber) : null;
+        screen = orderNumber.isNotEmpty
+            ? OrderDetailScreen(orderNumber: orderNumber)
+            : null;
       } else if (name.startsWith('/cms/')) {
         final slug = name.substring('/cms/'.length);
         screen = CmsPageScreen(slug: slug);
@@ -114,9 +119,6 @@ class EsteleApp extends StatelessWidget {
 
     if (screen == null) return null;
 
-    return MaterialPageRoute(
-      settings: settings,
-      builder: (_) => screen!,
-    );
+    return MaterialPageRoute(settings: settings, builder: (_) => screen!);
   }
 }

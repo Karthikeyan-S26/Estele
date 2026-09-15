@@ -24,7 +24,8 @@ class Address {
   final String? phone;
   final bool isDefault;
 
-  String get summary => '$line1, ${line2 != null && line2!.isNotEmpty ? '$line2, ' : ''}$city, $state $postalCode';
+  String get summary =>
+      '$line1, ${line2 != null && line2!.isNotEmpty ? '$line2, ' : ''}$city, $state $postalCode';
 
   Address copyWith({
     String? label,

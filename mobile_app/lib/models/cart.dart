@@ -63,7 +63,13 @@ class CartTotals {
     );
   }
 
-  CartTotals copyWith({double? subtotal, double? discount, double? shipping, double? total, bool? shippingIsFree}) {
+  CartTotals copyWith({
+    double? subtotal,
+    double? discount,
+    double? shipping,
+    double? total,
+    bool? shippingIsFree,
+  }) {
     return CartTotals(
       subtotal: subtotal ?? this.subtotal,
       discount: discount ?? this.discount,
@@ -94,13 +100,16 @@ class Cart {
     final coupon = json['coupon'] as Map<String, dynamic>?;
 
     return Cart(
-      items: (json['items'] as List<dynamic>?)
+      items:
+          (json['items'] as List<dynamic>?)
               ?.map((e) => CartItem.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
       couponCode: coupon?['code'] as String?,
       couponSummary: coupon?['summary'] as String?,
-      totals: CartTotals.fromJson((json['totals'] as Map<String, dynamic>?) ?? const {}),
+      totals: CartTotals.fromJson(
+        (json['totals'] as Map<String, dynamic>?) ?? const {},
+      ),
       cartCount: (json['cart_count'] as num?)?.toInt() ?? 0,
     );
   }

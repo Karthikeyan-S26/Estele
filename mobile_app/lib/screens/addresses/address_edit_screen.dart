@@ -14,19 +14,31 @@ class AddressEditScreen extends StatefulWidget {
 
 class _AddressEditScreenState extends State<AddressEditScreen> {
   final _formKey = GlobalKey<FormState>();
-  late final _label = TextEditingController(text: widget.address?.label ?? 'Home');
+  late final _label = TextEditingController(
+    text: widget.address?.label ?? 'Home',
+  );
   late final _line1 = TextEditingController(text: widget.address?.line1 ?? '');
   late final _line2 = TextEditingController(text: widget.address?.line2 ?? '');
   late final _city = TextEditingController(text: widget.address?.city ?? '');
   late final _state = TextEditingController(text: widget.address?.state ?? '');
-  late final _postalCode = TextEditingController(text: widget.address?.postalCode ?? '');
+  late final _postalCode = TextEditingController(
+    text: widget.address?.postalCode ?? '',
+  );
   late final _phone = TextEditingController(text: widget.address?.phone ?? '');
   late bool _isDefault = widget.address?.isDefault ?? false;
   bool _saving = false;
 
   @override
   void dispose() {
-    for (final c in [_label, _line1, _line2, _city, _state, _postalCode, _phone]) {
+    for (final c in [
+      _label,
+      _line1,
+      _line2,
+      _city,
+      _state,
+      _postalCode,
+      _phone,
+    ]) {
       c.dispose();
     }
     super.dispose();
@@ -58,9 +70,9 @@ class _AddressEditScreenState extends State<AddressEditScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _saving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.toString())));
       }
     }
   }
@@ -68,7 +80,9 @@ class _AddressEditScreenState extends State<AddressEditScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.address == null ? 'New address' : 'Edit address')),
+      appBar: AppBar(
+        title: Text(widget.address == null ? 'New address' : 'Edit address'),
+      ),
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -77,18 +91,25 @@ class _AddressEditScreenState extends State<AddressEditScreen> {
             children: [
               TextFormField(
                 controller: _label,
-                decoration: const InputDecoration(labelText: 'Label (Home / Office)'),
+                decoration: const InputDecoration(
+                  labelText: 'Label (Home / Office)',
+                ),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _line1,
-                decoration: const InputDecoration(labelText: 'Address line 1 *'),
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                decoration: const InputDecoration(
+                  labelText: 'Address line 1 *',
+                ),
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Required' : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _line2,
-                decoration: const InputDecoration(labelText: 'Address line 2 (optional)'),
+                decoration: const InputDecoration(
+                  labelText: 'Address line 2 (optional)',
+                ),
               ),
               const SizedBox(height: 12),
               Row(
@@ -97,7 +118,8 @@ class _AddressEditScreenState extends State<AddressEditScreen> {
                     child: TextFormField(
                       controller: _city,
                       decoration: const InputDecoration(labelText: 'City *'),
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                      validator: (v) =>
+                          (v == null || v.trim().isEmpty) ? 'Required' : null,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -105,7 +127,8 @@ class _AddressEditScreenState extends State<AddressEditScreen> {
                     child: TextFormField(
                       controller: _state,
                       decoration: const InputDecoration(labelText: 'State *'),
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                      validator: (v) =>
+                          (v == null || v.trim().isEmpty) ? 'Required' : null,
                     ),
                   ),
                 ],
@@ -118,8 +141,14 @@ class _AddressEditScreenState extends State<AddressEditScreen> {
                       controller: _postalCode,
                       keyboardType: TextInputType.number,
                       maxLength: 6,
-                      decoration: const InputDecoration(labelText: 'PIN code *', counterText: ''),
-                      validator: (v) => (v == null || v.length != 6 || !RegExp(r'^\d{6}$').hasMatch(v))
+                      decoration: const InputDecoration(
+                        labelText: 'PIN code *',
+                        counterText: '',
+                      ),
+                      validator: (v) =>
+                          (v == null ||
+                              v.length != 6 ||
+                              !RegExp(r'^\d{6}$').hasMatch(v))
                           ? 'Valid 6-digit PIN required'
                           : null,
                     ),
@@ -130,7 +159,9 @@ class _AddressEditScreenState extends State<AddressEditScreen> {
                       controller: _phone,
                       keyboardType: TextInputType.phone,
                       decoration: const InputDecoration(labelText: 'Phone *'),
-                      validator: (v) => (v == null || v.length < 10) ? 'Valid phone required' : null,
+                      validator: (v) => (v == null || v.length < 10)
+                          ? 'Valid phone required'
+                          : null,
                     ),
                   ),
                 ],
@@ -146,7 +177,11 @@ class _AddressEditScreenState extends State<AddressEditScreen> {
               FilledButton(
                 onPressed: _saving ? null : _save,
                 child: _saving
-                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
                     : const Text('Save address'),
               ),
             ],

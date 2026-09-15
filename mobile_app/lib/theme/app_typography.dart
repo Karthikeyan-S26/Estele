@@ -3,29 +3,53 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
 
-/// Typography helpers for the four Estele typefaces.
+/// Estele type-face helpers.
 ///
-/// Font rules from the design system:
-///  - [wordmark]     — Cinzel, gold-leaf gradient, ONLY for "ESTELE" logotype
-///  - [sectionTitle] — Cinzel, section headings / engraved-capital feel
-///  - [editorial]    — Playfair Display, editorial headings
-///  - [scriptAccent] — Allura, one scripted accent word only
-///  - everything else — Plus Jakarta Sans
+/// Font system (matches web `app.blade.php` line 39-42):
+///  - **Cinzel** (w500-w700) — wordmark + section headings
+///  - **Playfair Display** (w400-w600) — editorial / product titles
+///  - **Allura** — one-script accent word only
+///  - **Plus Jakarta Sans** (w300-w700) — everything else
+///
+/// Tracking conventions (em values from web, converted to logical px):
+///  - wordmark:  `0.08em` (header: 0.08 × 20 = 1.6)
+///  - eyebrow:   `0.22em`
+///  - nav label: `0.3px` (absolute, not em)
+///  - announcement: `0.12em`
 abstract final class AppTypography {
-  // ---------------------------------------------------------------------
-  // Brand wordmark — Cinzel + gold-leaf gradient. Never use for body copy.
-  // ---------------------------------------------------------------------
-  static TextStyle wordmark({double size = 28, FontWeight weight = FontWeight.w600}) {
+  // ─────────────────────────────────────────────────────────────────────
+  // Wordmark — Cinzel, dark by default, NO gradient (gradient is footer/
+  // brand-story only).
+  // ─────────────────────────────────────────────────────────────────────
+
+  /// Dark wordmark TextStyle (Cinzel w600, heading colour, 0.08em tracking).
+  static TextStyle wordmark({
+    double size = 20,
+    Color color = AppColors.heading,
+    FontWeight weight = FontWeight.w600,
+  }) {
     return GoogleFonts.cinzel(
       fontSize: size,
       fontWeight: weight,
-      letterSpacing: 3.5,
-      color: Colors.white,
+      letterSpacing: size * 0.08,
+      color: color,
     );
   }
 
-  /// The `#BF953F → #FCF6BA → #B38728 → #FBF5B7` gold-leaf gradient used for
-  /// the "ESTELE" wordmark. Kept private so callers go through [logo].
+  /// Renders the brand name ("Estele") in dark Cinzel 600 with 0.08em
+  /// tracking — the exact header wordmark (NOT the gold-leaf footer/brand
+  /// story variant).
+  static Widget logo({double fontSize = 20, Color? color}) {
+    return Text(
+      'Estele',
+      style: wordmark(size: fontSize, color: color ?? AppColors.heading),
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────
+  // Gold-leaf gradient — reserved for the brand-story / footer logotype.
+  // ─────────────────────────────────────────────────────────────────────
+
   static final LinearGradient _goldLeafGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
@@ -38,36 +62,51 @@ abstract final class AppTypography {
     stops: const [0.0, 0.3, 0.62, 1.0],
   );
 
-  /// Renders the "ESTELE" logotype with the gold-leaf gradient fill.
-  static Widget logo({double fontSize = 28, bool light = false}) {
+  /// Gold-leaf gradient "Estele" (brand-story / footer lockup).
+  static Widget goldLeafLogo({double fontSize = 28}) {
     return ShaderMask(
       shaderCallback: (bounds) => _goldLeafGradient.createShader(bounds),
       child: Text(
-        'ESTELE',
-        style: wordmark(size: fontSize).copyWith(color: Colors.white),
+        'Estele',
+        style: wordmark(size: fontSize, color: Colors.white),
       ),
     );
   }
 
-  // ---------------------------------------------------------------------
-  // Section titles — Cinzel (engraved-capital feel)
-  // ---------------------------------------------------------------------
+  // ─────────────────────────────────────────────────────────────────────
+  // Section titles — Cinzel
+  // ─────────────────────────────────────────────────────────────────────
   static TextStyle sectionTitle({
-    double size = 20,
+    double size = 17,
     Color color = AppColors.heading,
     FontWeight weight = FontWeight.w600,
   }) {
     return GoogleFonts.cinzel(
       fontSize: size,
       fontWeight: weight,
-      letterSpacing: 2.0,
+      letterSpacing: size * 0.08,
       color: color,
     );
   }
 
-  // ---------------------------------------------------------------------
+  // ─────────────────────────────────────────────────────────────────────
+  // Eyebrow — PJS 600, 10.5, uppercase, 0.22em, accent
+  // ─────────────────────────────────────────────────────────────────────
+  static TextStyle eyebrow({
+    double size = 10.5,
+    Color color = AppColors.accent,
+  }) {
+    return GoogleFonts.plusJakartaSans(
+      fontSize: size,
+      fontWeight: FontWeight.w600,
+      letterSpacing: size * 0.22,
+      color: color,
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────
   // Editorial headings — Playfair Display
-  // ---------------------------------------------------------------------
+  // ─────────────────────────────────────────────────────────────────────
   static TextStyle editorial({
     double size = 26,
     Color color = AppColors.heading,
@@ -82,19 +121,19 @@ abstract final class AppTypography {
     );
   }
 
-  // ---------------------------------------------------------------------
-  // Scripted accent — Allura (ONE word per screen, never body copy)
-  // ---------------------------------------------------------------------
-  static TextStyle scriptAccent({double size = 34, Color color = AppColors.accent}) {
-    return GoogleFonts.allura(
-      fontSize: size,
-      color: color,
-    );
+  // ─────────────────────────────────────────────────────────────────────
+  // Script accent — Allura (ONE word per screen, never body copy)
+  // ─────────────────────────────────────────────────────────────────────
+  static TextStyle scriptAccent({
+    double size = 34,
+    Color color = AppColors.accent,
+  }) {
+    return GoogleFonts.allura(fontSize: size, color: color);
   }
 
-  // ---------------------------------------------------------------------
+  // ─────────────────────────────────────────────────────────────────────
   // Body + UI — Plus Jakarta Sans
-  // ---------------------------------------------------------------------
+  // ─────────────────────────────────────────────────────────────────────
   static TextStyle body({
     double size = 14,
     Color color = AppColors.ink,
@@ -114,7 +153,11 @@ abstract final class AppTypography {
     Color color = AppColors.ink,
     FontWeight weight = FontWeight.w500,
   }) {
-    return GoogleFonts.plusJakartaSans(fontSize: size, fontWeight: weight, color: color);
+    return GoogleFonts.plusJakartaSans(
+      fontSize: size,
+      fontWeight: weight,
+      color: color,
+    );
   }
 
   static TextStyle bodySmall({
@@ -122,7 +165,11 @@ abstract final class AppTypography {
     Color color = AppColors.muted,
     FontWeight weight = FontWeight.w400,
   }) {
-    return GoogleFonts.plusJakartaSans(fontSize: size, fontWeight: weight, color: color);
+    return GoogleFonts.plusJakartaSans(
+      fontSize: size,
+      fontWeight: weight,
+      color: color,
+    );
   }
 
   static TextStyle button({
@@ -158,7 +205,11 @@ abstract final class AppTypography {
     Color color = AppColors.price,
     FontWeight weight = FontWeight.w700,
   }) {
-    return GoogleFonts.plusJakartaSans(fontSize: size, fontWeight: weight, color: color);
+    return GoogleFonts.plusJakartaSans(
+      fontSize: size,
+      fontWeight: weight,
+      color: color,
+    );
   }
 
   static TextStyle salePrice({
@@ -166,6 +217,10 @@ abstract final class AppTypography {
     Color color = AppColors.sale,
     FontWeight weight = FontWeight.w700,
   }) {
-    return GoogleFonts.plusJakartaSans(fontSize: size, fontWeight: weight, color: color);
+    return GoogleFonts.plusJakartaSans(
+      fontSize: size,
+      fontWeight: weight,
+      color: color,
+    );
   }
 }

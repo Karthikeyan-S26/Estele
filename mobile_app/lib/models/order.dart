@@ -40,7 +40,8 @@ class Order {
   final double walletAmountUsed;
   final String paymentMethod; // COD | RAZORPAY
   final String paymentStatus;
-  final String status; // placed | accepted | packed | shipped | delivered | cancelled | returned
+  final String
+  status; // placed | accepted | packed | shipped | delivered | cancelled | returned
   final String? trackingNumber;
   final String? carrier;
   final bool cancellationRequested;
@@ -51,7 +52,8 @@ class Order {
   bool get canRequestCancellation {
     const cancellable = {'placed', 'accepted', 'packed'};
     const returnable = {'delivered'};
-    return !cancellationRequested && (cancellable.contains(status) || returnable.contains(status));
+    return !cancellationRequested &&
+        (cancellable.contains(status) || returnable.contains(status));
   }
 
   /// Human-readable status for chips/banners.
@@ -66,7 +68,8 @@ class Order {
       'returned': 'Returned',
       'processing': 'Processing',
     };
-    return map[status] ?? status.replaceFirst(status[0], status[0].toUpperCase());
+    return map[status] ??
+        status.replaceFirst(status[0], status[0].toUpperCase());
   }
 
   factory Order.fromJson(Map<String, dynamic> json) {
@@ -77,7 +80,9 @@ class Order {
       customerEmail: json['customer_email'] as String?,
       customerPhone: json['customer_phone'] as String?,
       shippingAddress: json['shipping_address'] != null
-          ? ShippingAddress.fromJson(json['shipping_address'] as Map<String, dynamic>)
+          ? ShippingAddress.fromJson(
+              json['shipping_address'] as Map<String, dynamic>,
+            )
           : null,
       orderNote: json['order_note'] as String?,
       subtotal: (json['subtotal'] as num?)?.toDouble() ?? 0,
@@ -93,8 +98,11 @@ class Order {
       carrier: json['carrier'] as String?,
       cancellationRequested: json['cancellation_requested'] as bool? ?? false,
       cancellationReason: json['cancellation_reason'] as String?,
-      placedAt: json['placed_at'] != null ? DateTime.tryParse(json['placed_at'] as String) : null,
-      items: (json['items'] as List<dynamic>?)
+      placedAt: json['placed_at'] != null
+          ? DateTime.tryParse(json['placed_at'] as String)
+          : null,
+      items:
+          (json['items'] as List<dynamic>?)
               ?.map((e) => OrderItem.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
@@ -119,7 +127,8 @@ class ShippingAddress {
   final String? postalCode;
   final String? country;
 
-  String get singleLine => [line1, line2, city, state, postalCode].whereType<String>().join(', ');
+  String get singleLine =>
+      [line1, line2, city, state, postalCode].whereType<String>().join(', ');
 
   factory ShippingAddress.fromJson(Map<String, dynamic> json) {
     return ShippingAddress(

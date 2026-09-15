@@ -222,7 +222,19 @@ class AccountController
         $address = Address::findOrFail($id);
         $this->authorizeOwnAddress($request, $address);
 
+        $wasDefault = (bool) $address->is_default;
         $address->delete();
+
+        // Keep the address book coherent: if the deleted address was the
+        // default, promote the next most recent address so checkout always has
+        // a default to pre-fill (previously the user could end up with zero
+        // defaults and the app silently picked nothing).
+        if ($wasDefault) {
+            $next = $request->user()->addresses()->orderBy('id')->first();
+            if ($next) {
+                $next->forceFill(['is_default' => true])->save();
+            }
+        }
 
         return $this->message('Address removed.');
     }

@@ -38,10 +38,11 @@ class _FaqScreenState extends State<FaqScreen> {
         });
       }
     } catch (_) {
-      if (mounted) setState(() {
-        _failed = true;
-        _loading = false;
-      });
+      if (mounted)
+        setState(() {
+          _failed = true;
+          _loading = false;
+        });
     }
   }
 
@@ -52,17 +53,17 @@ class _FaqScreenState extends State<FaqScreen> {
       body: _loading
           ? const LoadState.loading()
           : _failed && _categories == null
-              ? LoadState.error(message: 'Could not load FAQ.', onRetry: _load)
-              : _categories!.isEmpty
-                  ? LoadState.empty(message: 'No FAQs published yet.')
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _categories!.length,
-                      itemBuilder: (context, i) {
-                        final category = _categories![i];
-                        return _CategorySection(category: category);
-                      },
-                    ),
+          ? LoadState.error(message: 'Could not load FAQ.', onRetry: _load)
+          : _categories!.isEmpty
+          ? LoadState.empty(message: 'No FAQs published yet.')
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: _categories!.length,
+              itemBuilder: (context, i) {
+                final category = _categories![i];
+                return _CategorySection(category: category);
+              },
+            ),
     );
   }
 }
@@ -79,10 +80,12 @@ class _CategorySection extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 8, bottom: 6),
-          child: Text(category.name, style: AppTypography.sectionTitle(size: 16)),
+          child: Text(
+            category.name,
+            style: AppTypography.sectionTitle(size: 16),
+          ),
         ),
-        for (final faq in category.faqs)
-          _FaqTile(faq: faq),
+        for (final faq in category.faqs) _FaqTile(faq: faq),
         const SizedBox(height: 12),
       ],
     );
@@ -106,13 +109,22 @@ class _FaqTile extends StatelessWidget {
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
-          title: Text(faq.question, style: AppTypography.bodyMedium(weight: FontWeight.w600, size: 13.5)),
+          title: Text(
+            faq.question,
+            style: AppTypography.bodyMedium(
+              weight: FontWeight.w600,
+              size: 13.5,
+            ),
+          ),
           childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
           tilePadding: const EdgeInsets.symmetric(horizontal: 16),
           children: [
             Align(
               alignment: Alignment.centerLeft,
-              child: Text(faq.answer, style: AppTypography.body(size: 13.5, color: AppColors.ink)),
+              child: Text(
+                faq.answer,
+                style: AppTypography.body(size: 13.5, color: AppColors.ink),
+              ),
             ),
           ],
         ),

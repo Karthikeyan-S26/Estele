@@ -49,6 +49,10 @@ Route::prefix('register')->group(function () {
         ->middleware('throttle:5,1');
     Route::post('/verify-otp', [AuthController::class, 'verifyRegisterOtp'])
         ->middleware('throttle:10,1');
+    Route::post('/email/send-otp', [AuthController::class, 'sendRegisterEmailOtp'])
+        ->middleware('throttle:5,1');
+    Route::post('/email/verify-otp', [AuthController::class, 'verifyRegisterEmailOtp'])
+        ->middleware('throttle:10,1');
     Route::post('/', [AuthController::class, 'register'])
         ->middleware('throttle:10,1');
 });
@@ -60,6 +64,23 @@ Route::prefix('login/mobile')->group(function () {
     Route::post('/send-otp', [AuthController::class, 'sendLoginOtp'])
         ->middleware('throttle:5,1');
     Route::post('/verify-otp', [AuthController::class, 'verifyLoginOtp'])
+        ->middleware('throttle:10,1');
+});
+
+Route::prefix('login/email')->group(function () {
+    Route::post('/send-otp', [AuthController::class, 'sendLoginEmailOtp'])
+        ->middleware('throttle:5,1');
+    Route::post('/verify-otp', [AuthController::class, 'verifyLoginEmailOtp'])
+        ->middleware('throttle:10,1');
+});
+
+// Website-parity mobile auth: ONE OTP round serves both login and registration,
+// exactly like the website's OtpAuthController (issue for any phone, then branch
+// on verify — existing number logs in, new number gets a registration nonce).
+Route::prefix('auth/mobile')->group(function () {
+    Route::post('/send-otp', [AuthController::class, 'sendMobileAuthOtp'])
+        ->middleware('throttle:5,1');
+    Route::post('/verify-otp', [AuthController::class, 'verifyMobileAuthOtp'])
         ->middleware('throttle:10,1');
 });
 
@@ -75,11 +96,11 @@ Route::post('/reset-password', [AuthController::class, 'resetPassword'])
 */
 Route::get('/cart', [CartController::class, 'index']);
 Route::delete('/cart', [CartController::class, 'clear']);
+Route::post('/cart/coupon', [CartController::class, 'applyCoupon']);
+Route::delete('/cart/coupon', [CartController::class, 'removeCoupon']);
 Route::post('/cart/{product:slug}', [CartController::class, 'store']);
 Route::patch('/cart/items/{cartItem}', [CartController::class, 'update']);
 Route::delete('/cart/items/{cartItem}', [CartController::class, 'destroy']);
-Route::post('/cart/coupon', [CartController::class, 'applyCoupon']);
-Route::delete('/cart/coupon', [CartController::class, 'removeCoupon']);
 
 /*
 |--------------------------------------------------------------------------
@@ -93,8 +114,6 @@ Route::get('/pages/{slug}', [ContentController::class, 'page']);
 Route::get('/stores', [ContentController::class, 'stores']);
 Route::post('/newsletter/subscribe', [ContentController::class, 'newsletterSubscribe'])
     ->middleware('throttle:10,60');
-Route::post('/products/{product:slug}/reviews', [ContentController::class, 'storeReview'])
-    ->middleware('throttle:5,60');
 
 /*
 |--------------------------------------------------------------------------
@@ -144,6 +163,13 @@ Route::middleware('auth:api-token')->group(function () {
         Route::delete('/addresses/{id}', [AccountController::class, 'addressDestroy']);
     });
 
-    Route::post('/checkout', [CheckoutController::class, 'store']);
-    Route::post('/payment/{orderNumber}/retry', [CheckoutController::class, 'retry']);
+    // Reviews require a verified user (bearer token). This was previously in the
+    // public block, causing mobile review submissions to always 401.
+    Route::post('/products/{product:slug}/reviews', [ContentController::class, 'storeReview'])
+        ->middleware('throttle:5,60');
+
+    Route::post('/checkout', [CheckoutController::class, 'store'])
+        ->middleware('throttle:10,1');
+    Route::post('/payment/{orderNumber}/retry', [CheckoutController::class, 'retry'])
+        ->middleware('throttle:20,1');
 });

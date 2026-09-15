@@ -6,13 +6,18 @@ import '../data/repositories/cart_repository.dart';
 import '../models/cart.dart';
 
 class CartProvider extends ChangeNotifier {
-  Cart cart = Cart(items: const [], couponCode: null, totals: CartTotals(
-    subtotal: 0,
-    discount: 0,
-    shipping: 0,
-    total: 0,
-    shippingIsFree: false,
-  ), cartCount: 0);
+  Cart cart = Cart(
+    items: const [],
+    couponCode: null,
+    totals: CartTotals(
+      subtotal: 0,
+      discount: 0,
+      shipping: 0,
+      total: 0,
+      shippingIsFree: false,
+    ),
+    cartCount: 0,
+  );
 
   bool initialLoading = false;
   bool busy = false;
@@ -43,7 +48,11 @@ class CartProvider extends ChangeNotifier {
     lastError = null;
     _optimisticAdd(productId, variantId, quantity);
     try {
-      cart = await CartRepository.addItem(productSlug: productSlug, variantId: variantId, quantity: quantity);
+      cart = await CartRepository.addItem(
+        productSlug: productSlug,
+        variantId: variantId,
+        quantity: quantity,
+      );
     } on ApiException catch (e) {
       lastError = e.message;
       return e.message;
@@ -84,14 +93,20 @@ class CartProvider extends ChangeNotifier {
     );
   }
 
-  Future<String?> updateItem({required int cartItemId, required int quantity}) async {
+  Future<String?> updateItem({
+    required int cartItemId,
+    required int quantity,
+  }) async {
     if (quantity < 1) {
       return removeItem(cartItemId);
     }
     lastError = null;
     _optimisticQty(cartItemId, quantity);
     try {
-      cart = await CartRepository.updateItem(cartItemId: cartItemId, quantity: quantity);
+      cart = await CartRepository.updateItem(
+        cartItemId: cartItemId,
+        quantity: quantity,
+      );
     } on ApiException catch (e) {
       lastError = e.message;
       return e.message;
@@ -191,9 +206,18 @@ class CartProvider extends ChangeNotifier {
   }
 
   Future<void> clear() async {
-    cart = Cart(items: const [], couponCode: null, totals: CartTotals(
-      subtotal: 0, discount: 0, shipping: 0, total: 0, shippingIsFree: false,
-    ), cartCount: 0);
+    cart = Cart(
+      items: const [],
+      couponCode: null,
+      totals: CartTotals(
+        subtotal: 0,
+        discount: 0,
+        shipping: 0,
+        total: 0,
+        shippingIsFree: false,
+      ),
+      cartCount: 0,
+    );
     _persistBadge();
     notifyListeners();
     try {
@@ -205,18 +229,27 @@ class CartProvider extends ChangeNotifier {
   /// re-fetch so the merged cart (incl. coupon) is reflected.
   Future<void> mergeAfterAuth() => load();
 
-  CartTotals _recompute(List<CartItem> items, String? __) {
+  /// Optimistic totals while awaiting the server. Discount/shipping are kept
+  /// from the last server response (never zeroed) so changing a quantity
+  /// doesn't flash a stripped-down total — the server recomputes the real
+  /// values milliseconds later.
+  CartTotals _recompute(List<CartItem> items, String? _) {
+    final previous = cart.totals;
     final subtotal = items.fold<double>(0, (sum, i) => sum + i.lineTotal);
+    final discount = previous.discount;
+    final shipping = previous.shipping;
+    final total = (subtotal - discount) + shipping;
     return CartTotals(
       subtotal: subtotal,
-      discount: 0,
-      shipping: 0,
-      total: subtotal,
-      shippingIsFree: false,
+      discount: discount,
+      shipping: shipping,
+      total: total >= 0 ? total : 0,
+      shippingIsFree: previous.shippingIsFree,
     );
   }
 
-  int _totalQty(List<CartItem> items) => items.fold<int>(0, (sum, i) => sum + i.quantity);
+  int _totalQty(List<CartItem> items) =>
+      items.fold<int>(0, (sum, i) => sum + i.quantity);
 
   Future<void> _persistBadge() async {
     final prefs = await SharedPreferences.getInstance();

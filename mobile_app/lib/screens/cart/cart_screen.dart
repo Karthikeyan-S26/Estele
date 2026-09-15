@@ -48,9 +48,9 @@ class _CartScreenState extends State<CartScreen> {
     final err = await provider.applyCoupon(_couponCtrl.text);
     if (!mounted) return;
     setState(() => _busy = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(err ?? 'Coupon applied')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(err ?? 'Coupon applied')));
   }
 
   @override
@@ -62,10 +62,10 @@ class _CartScreenState extends State<CartScreen> {
       body: provider.initialLoading && provider.cart.items.isEmpty
           ? const LoadState.loading()
           : provider.cart.isEmpty
-              ? LoadState.empty(
-                  message: 'Your bag is empty.\nAdd something gorgeous to begin.',
-                )
-              : _buildCart(context, provider),
+          ? LoadState.empty(
+              message: 'Your bag is empty.\nAdd something gorgeous to begin.',
+            )
+          : _buildCart(context, provider),
     );
   }
 
@@ -86,7 +86,8 @@ class _CartScreenState extends State<CartScreen> {
               for (final item in cart.items)
                 _CartItemTile(
                   item: item,
-                  onQty: (q) => provider.updateItem(cartItemId: item.id, quantity: q),
+                  onQty: (q) =>
+                      provider.updateItem(cartItemId: item.id, quantity: q),
                   onRemove: () => provider.removeItem(item.id),
                 ),
 
@@ -102,12 +103,19 @@ class _CartScreenState extends State<CartScreen> {
                 child: Row(
                   children: [
                     if (cart.couponCode != null) ...[
-                      const Icon(Icons.local_offer_rounded, size: 18, color: AppColors.sale),
+                      const Icon(
+                        Icons.local_offer_rounded,
+                        size: 18,
+                        color: AppColors.sale,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           cart.couponCode!,
-                          style: AppTypography.bodyMedium(weight: FontWeight.w700, color: AppColors.sale),
+                          style: AppTypography.bodyMedium(
+                            weight: FontWeight.w700,
+                            color: AppColors.sale,
+                          ),
                         ),
                       ),
                       IconButton(
@@ -135,7 +143,13 @@ class _CartScreenState extends State<CartScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                         ),
                         child: _busy
-                            ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                            ? const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
                             : const Text('Apply'),
                       ),
                     ],
@@ -156,10 +170,23 @@ class _CartScreenState extends State<CartScreen> {
                   children: [
                     _SummaryRow(label: 'Subtotal', value: cart.totals.subtotal),
                     if (cart.totals.discount > 0)
-                      _SummaryRow(label: 'Discount', value: -cart.totals.discount, emphasized: true),
-                    _SummaryRow(label: 'Shipping', value: cart.totals.shipping > 0 ? cart.totals.shipping : 0),
+                      _SummaryRow(
+                        label: 'Discount',
+                        value: -cart.totals.discount,
+                        emphasized: true,
+                      ),
+                    _SummaryRow(
+                      label: 'Shipping',
+                      value: cart.totals.shipping > 0
+                          ? cart.totals.shipping
+                          : 0,
+                    ),
                     const Divider(height: 20),
-                    _SummaryRow(label: 'Total', value: cart.totals.total, bold: true),
+                    _SummaryRow(
+                      label: 'Total',
+                      value: cart.totals.total,
+                      bold: true,
+                    ),
                   ],
                 ),
               ),
@@ -185,14 +212,18 @@ class _CartScreenState extends State<CartScreen> {
                       Text('Total', style: AppTypography.bodySmall()),
                       Text(
                         formatINR(cart.totals.total),
-                        style: AppTypography.price(size: 19, color: AppColors.heading),
+                        style: AppTypography.price(
+                          size: 19,
+                          color: AppColors.heading,
+                        ),
                       ),
                     ],
                   ),
                 ),
                 Expanded(
                   child: FilledButton(
-                    onPressed: () => Navigator.of(context).pushNamed('/checkout'),
+                    onPressed: () =>
+                        Navigator.of(context).pushNamed('/checkout'),
                     child: const Text('Checkout'),
                   ),
                 ),
@@ -223,7 +254,7 @@ class _ShippingProgress extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-Text(
+          Text(
             remaining > 0
                 ? 'Add ${formatINR(remaining)} more to get FREE shipping'
                 : 'You have FREE shipping on this order',
@@ -233,7 +264,8 @@ Text(
           ClipRRect(
             borderRadius: BorderRadius.circular(2),
             child: LinearProgressIndicator(
-              value: (cart.totals.subtotal / AppConfig.freeShippingThreshold).clamp(0.0, 1.0),
+              value: (cart.totals.subtotal / AppConfig.freeShippingThreshold)
+                  .clamp(0.0, 1.0),
               minHeight: 5,
               color: AppColors.gold,
               backgroundColor: AppColors.lineStrong,
@@ -246,7 +278,11 @@ Text(
 }
 
 class _CartItemTile extends StatelessWidget {
-  const _CartItemTile({required this.item, required this.onQty, required this.onRemove});
+  const _CartItemTile({
+    required this.item,
+    required this.onQty,
+    required this.onRemove,
+  });
 
   final CartItem item;
   final ValueChanged<int> onQty;
@@ -268,7 +304,10 @@ class _CartItemTile extends StatelessWidget {
           SizedBox(
             width: 82,
             height: 106,
-            child: AppImage(url: item.product.imageUrl, borderRadius: BorderRadius.circular(3)),
+            child: AppImage(
+              url: item.product.imageUrl,
+              borderRadius: BorderRadius.circular(3),
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -283,25 +322,44 @@ class _CartItemTile extends StatelessWidget {
                         item.product.title,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTypography.body(size: 13.5, color: AppColors.heading),
+                        style: AppTypography.body(
+                          size: 13.5,
+                          color: AppColors.heading,
+                        ),
                       ),
                     ),
                     IconButton(
                       onPressed: onRemove,
-                      icon: const Icon(Icons.close_rounded, size: 18, color: AppColors.muted),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        size: 18,
+                        color: AppColors.muted,
+                      ),
                       visualDensity: VisualDensity.compact,
                     ),
                   ],
                 ),
                 if (item.variant != null)
-                  Text(item.variant!.label, style: AppTypography.bodySmall(size: 11.5, color: AppColors.muted)),
+                  Text(
+                    item.variant!.label,
+                    style: AppTypography.bodySmall(
+                      size: 11.5,
+                      color: AppColors.muted,
+                    ),
+                  ),
                 const SizedBox(height: 6),
-                PriceText(price: item.unitPrice, size: 14, small: true, showDiscountBadge: false),
+                PriceText(
+                  price: item.unitPrice,
+                  size: 14,
+                  small: true,
+                  showDiscountBadge: false,
+                ),
                 const SizedBox(height: 8),
                 QuantityStepper(
                   quantity: item.quantity,
                   onChanged: onQty,
-                  max: (item.availableStock > 0 ? item.availableStock : 10).clamp(1, 10),
+                  max: (item.availableStock > 0 ? item.availableStock : 10)
+                      .clamp(1, 10),
                   size: 30,
                 ),
               ],
@@ -314,7 +372,12 @@ class _CartItemTile extends StatelessWidget {
 }
 
 class _SummaryRow extends StatelessWidget {
-  const _SummaryRow({required this.label, required this.value, this.emphasized = false, this.bold = false});
+  const _SummaryRow({
+    required this.label,
+    required this.value,
+    this.emphasized = false,
+    this.bold = false,
+  });
 
   final String label;
   final double value;
@@ -337,8 +400,16 @@ class _SummaryRow extends StatelessWidget {
           ),
           Text(
             formatINR(value),
-            style: (bold ? AppTypography.price(size: 15) : AppTypography.body(size: 13.5, weight: FontWeight.w600))
-                .copyWith(color: emphasized ? AppColors.sale : AppColors.heading),
+            style:
+                (bold
+                        ? AppTypography.price(size: 15)
+                        : AppTypography.body(
+                            size: 13.5,
+                            weight: FontWeight.w600,
+                          ))
+                    .copyWith(
+                      color: emphasized ? AppColors.sale : AppColors.heading,
+                    ),
           ),
         ],
       ),

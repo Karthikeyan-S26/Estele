@@ -45,9 +45,16 @@ class CatalogController
 
         $offers = \App\Models\Offer::active()->ordered()->pluck('text')->values();
 
-        $promo = $offers->isNotEmpty()
-            ? $offers->all()
-            : (((array) json_decode((string) \App\Models\Setting::where('key', 'announcement_messages')->value('value'), true)) ?: []);
+        // The web layout's announcement strip above the header always renders
+        // `announcement_messages` (the individual offers strip is desktop-only,
+        // `hidden md:block`). Mirror that exactly: the mobile promo bar must show
+        // the same three CMS messages as the live site.
+        $announcements = (array) json_decode(
+            (string) \App\Models\Setting::where('key', 'announcement_messages')->value('value'),
+            true
+        );
+
+        $promo = $announcements ?: [];
 
         $heroBanners = $banners->map(fn ($banner) => [
             'id' => $banner->id,
@@ -55,7 +62,7 @@ class CatalogController
             'subtitle' => null,
             'image' => $banner->getFirstMediaUrl('image', 'desktop') ?: null,
             'mobile_image' => $banner->getMobileImageUrl(),
-            'link_url' => $banner->link_url,
+            'link_url' => $this->bannerLink($banner),
             'cta' => null,
         ])->values();
 
@@ -106,12 +113,19 @@ class CatalogController
         $collections = Collection::active()->ordered()->with('media')->withCount('products')->get();
 
         $priceTiers = ($byType->get('price_tiers')->first() ?? null)
-            ? $byType->get('price_tiers')->first()->items->map(fn ($item) => [
-                'id' => $item->id,
-                'label' => $item->title,
-                'amount' => $item->body,
-                'image' => $item->getFirstMediaUrl('image', 'card') ?: null,
-            ])->values()
+            ? $byType->get('price_tiers')->first()->items->map(function ($item) {
+                $row = [
+                    'id' => $item->id,
+                    'label' => $item->title,
+                    'amount' => $item->body,
+                    'image' => $item->getFirstMediaUrl('image', 'card') ?: null,
+                ];
+
+                // Budget tiles drive a real price-filtered search — the range
+                // is parsed from the CMS label + amount ("Under ₹499" → max
+                // 499, "₹500–₹1,500" → both, "Premium ₹2,000+" → min 2000).
+                return array_merge($row, $this->parsePriceTierRange((string) $item->title, (string) $item->body));
+            })->values()
             : collect();
 
         $celebrities = ($byType->get('celebrities')->first() ?? null)
@@ -260,11 +274,17 @@ class CatalogController
             'collection_banners' => $collectionBanners->values(),
             'trending_products' => $this->productCards($trending?->items ?? collect()),
             'trending_cta' => $trending?->cta_url ? $this->linkPath($trending->cta_url) : null,
+            'trending_eyebrow' => $trending?->subtitle ?: 'Handpicked for you',
+            'trending_title' => $trending?->title ?: 'Bestsellers',
             'collections' => $collections->map(fn ($collection) => $this->collectionRow($collection))->values(),
             'new_arrivals' => $this->productCards($newArrivals?->items ?? collect()),
             'new_arrivals_cta' => $newArrivals?->cta_url ? $this->linkPath($newArrivals->cta_url) : '/collections/new-arrivals',
+            'new_arrivals_eyebrow' => $newArrivals?->subtitle ?: 'Handpicked for you',
+            'new_arrivals_title' => $newArrivals?->title ?: 'New Arrivals',
             'bestsellers' => $this->productCards($bestsellers?->items ?? collect()),
             'bestsellers_cta' => $bestsellers?->cta_url ? $this->linkPath($bestsellers->cta_url) : '/collections/best-seller',
+            'bestsellers_eyebrow' => $bestsellers?->subtitle ?: 'Handpicked for you',
+            'bestsellers_title' => $bestsellers?->title ?: 'Bestsellers',
             'price_tiers' => $priceTiers->values(),
             'celebrities' => $celebrities->values(),
             'benefits' => $benefits->values(),
@@ -310,6 +330,64 @@ class CatalogController
         }
 
         return '/' . ltrim(parse_url($url, PHP_URL_PATH) ?: $url, '/');
+    }
+
+    /**
+     * Home hero banners are navigation — a dead or host-only link (e.g. a stale
+     * seed value like "http://10.0.140.206:8000") produces a no-op tap in the
+     * app. Normalize to an internal path; if the row has no usable link,
+     * guess the collection from the banner title, else fall back to the
+     * best-seller collection so the tap always lands somewhere real.
+     */
+    private function bannerLink(\App\Models\Banner $banner): ?string
+    {
+        $link = trim((string) $banner->link_url);
+
+        if ($link !== '') {
+            $path = '/' . ltrim((string) parse_url($link, PHP_URL_PATH), '/');
+            if ($path !== '/') {
+                return $path;
+            }
+        }
+
+        $slug = \Illuminate\Support\Str::slug(strip_tags((string) $banner->title));
+        $guessed = '/collections/'.$slug;
+
+        return \App\Models\Collection::where('slug', $slug)->exists()
+            ? $guessed
+            : '/collections/best-seller';
+    }
+
+    /**
+     * Best-effort extraction of a price range from a budget-tier label +
+     * amount (e.g. "Under ₹499" → max 499, "₹500–₹1,500" → min 500 max 1500,
+     * "Premium ₹2,000+" → min 2000). The "Under"/"above" wording lives in the
+     * CMS label column, the numbers in the amount. A lone number with no
+     * direction word is treated as a cap (max) so a filtered search never
+     * over-constrains to an exact match. Nulls mean "open-ended / unknown".
+     */
+    private function parsePriceTierRange(string $label, string $amount): array
+    {
+        $text = $label.' '.$amount;
+
+        preg_match_all('/\d[\d,]*(?:\.\d+)?/', $amount, $matches);
+        $numbers = array_map(fn ($n) => (float) str_replace(',', '', $n), $matches[0] ?? []);
+
+        $min = null;
+        $max = null;
+
+        if (preg_match('/\bunder\b/i', $text) && isset($numbers[0])) {
+            $max = $numbers[0];
+        } elseif ((preg_match('/(above|over|\+)/i', $text) || str_contains($amount, '+')) && isset($numbers[0])) {
+            $min = $numbers[0];
+        } elseif (isset($numbers[0], $numbers[1])) {
+            $min = $numbers[0];
+            $max = max($numbers[0], $numbers[1]);
+        } elseif (isset($numbers[0])) {
+            $max = $numbers[0];
+        }
+
+        return ['min_price' => $min, 'max_price' => $max];
     }
 
     /**
@@ -454,7 +532,17 @@ class CatalogController
     {
         $query = $this->buildSearchQuery($request);
 
-        if (trim((string) $request->query('q', '')) === '') {
+        // An empty search is only "no results" when there are no filters at
+        // all — price-range browsing (budget tiles) sends min_price/max_price
+        // without a keyword and must return real products.
+        $hasQuery = trim((string) $request->query('q', '')) !== '';
+        $hasFilters = $hasQuery
+            || (string) $request->query('min_price', '') !== ''
+            || (string) $request->query('max_price', '') !== ''
+            || $request->boolean('in_stock')
+            || array_filter((array) $request->query('category', [])) !== [];
+
+        if (! $hasFilters) {
             return $this->paginated(new \Illuminate\Pagination\LengthAwarePaginator([], 0, 24), fn (Product $p) => $p);
         }
 
@@ -519,8 +607,11 @@ class CatalogController
         $builder = Product::where('is_active', true)
             ->with('media', 'variants')
             ->withCount('approvedReviews')
-            ->withAvg('approvedReviews', 'rating')
-            ->where(fn ($q) => $q->where('title', 'like', "%{$query}%")->orWhere('sku', 'like', "%{$query}%"));
+            ->withAvg('approvedReviews', 'rating');
+
+        if ($query !== '') {
+            $builder->where(fn ($q) => $q->where('title', 'like', "%{$query}%")->orWhere('sku', 'like', "%{$query}%"));
+        }
 
         if ($minPrice !== null && $minPrice !== '') {
             $builder->where('price', '>=', (float) $minPrice);

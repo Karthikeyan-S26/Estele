@@ -2,22 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/product.dart';
+import '../../providers/cart_provider.dart';
 import '../../providers/wishlist_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 import '../../widgets/load_state.dart';
 import '../../widgets/product_card.dart';
+import '../../widgets/product_grid_ratio.dart';
 
 /// Signature for a page-loader used by [ProductGridScreen].
 typedef ProductPageLoader =
     Future<({List<Product> items, Map<String, dynamic> meta})> Function({
-  required String sort,
-  String? minPrice,
-  String? maxPrice,
-  required bool inStock,
-  required int page,
-  required int perPage,
-});
+      required String sort,
+      String? minPrice,
+      String? maxPrice,
+      required bool inStock,
+      required int page,
+      required int perPage,
+    });
 
 const _sortOptions = <String, String>{
   'relevance': 'Relevance',
@@ -31,7 +33,12 @@ const _sortOptions = <String, String>{
 /// price/in-stock filters, and infinite scroll — used for categories,
 /// collections, trending and search results.
 class ProductGridScreen extends StatefulWidget {
-  const ProductGridScreen({super.key, required this.title, required this.loader, this.autoLoad = true});
+  const ProductGridScreen({
+    super.key,
+    required this.title,
+    required this.loader,
+    this.autoLoad = true,
+  });
 
   final String title;
   final ProductPageLoader loader;
@@ -61,7 +68,8 @@ class _ProductGridScreenState extends State<ProductGridScreen> {
     super.initState();
     if (widget.autoLoad) _reload();
     _scrollController.addListener(() {
-      if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 400) {
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 400) {
         _loadMore();
       }
     });
@@ -95,7 +103,8 @@ class _ProductGridScreenState extends State<ProductGridScreen> {
           ..clear()
           ..addAll(result.items);
         _page = 1;
-        _hasMore = ((result.meta['total'] as num?)?.toInt() ?? 0) > _products.length;
+        _hasMore =
+            ((result.meta['total'] as num?)?.toInt() ?? 0) > _products.length;
         _initialLoading = false;
       });
     } catch (e) {
@@ -124,7 +133,8 @@ class _ProductGridScreenState extends State<ProductGridScreen> {
       setState(() {
         _products.addAll(result.items);
         _page += 1;
-        _hasMore = ((result.meta['total'] as num?)?.toInt() ?? 0) > _products.length;
+        _hasMore =
+            ((result.meta['total'] as num?)?.toInt() ?? 0) > _products.length;
         _loadingMore = false;
       });
     } catch (_) {
@@ -160,73 +170,117 @@ class _ProductGridScreenState extends State<ProductGridScreen> {
     final wishlist = context.watch<WishlistProvider>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
+      appBar: AppBar(title: Text(widget.title)),
       body: _initialLoading && _products.isEmpty
           ? const LoadState.loading()
           : _failed && _products.isEmpty
-              ? LoadState.error(message: _error ?? '', onRetry: _reload)
-              : Column(
-                  children: [
-                    // Sort / filter bar
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
-                      child: Row(
-                        children: [
-                          if (_products.isNotEmpty) ...[
-                            Text(
-                              '${_products.length} items',
-                              style: AppTypography.bodySmall(color: AppColors.muted),
-                            ),
-                          ],
-                          const Spacer(),
-                          TextButton.icon(
-                            onPressed: _openFilters,
-                            icon: const Icon(Icons.tune_rounded, size: 18),
-                            label: Text(_sortOptions[_sort] ?? 'Sort'),
+          ? LoadState.error(message: _error ?? '', onRetry: _reload)
+          : Column(
+              children: [
+                // Sort / filter bar
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+                  child: Row(
+                    children: [
+                      if (_products.isNotEmpty) ...[
+                        Text(
+                          '${_products.length} items',
+                          style: AppTypography.bodySmall(
+                            color: AppColors.muted,
                           ),
-                        ],
+                        ),
+                      ],
+                      const Spacer(),
+                      TextButton.icon(
+                        onPressed: _openFilters,
+                        icon: const Icon(Icons.tune_rounded, size: 18),
+                        label: Text(_sortOptions[_sort] ?? 'Sort'),
                       ),
-                    ),
-                    Expanded(
-                      child: _products.isEmpty
-                          ? const LoadState.empty(message: 'No products match your filters.')
-                          : RefreshIndicator(
-                              onRefresh: _reload,
-                              child: GridView.builder(
-                                controller: _scrollController,
-                                physics: const AlwaysScrollableScrollPhysics(),
-                                padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
-                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  mainAxisSpacing: 14,
-                                  crossAxisSpacing: 10,
-                                  childAspectRatio: 0.62,
-                                ),
-                                itemCount: _products.length + (_hasMore ? 1 : 0),
-                                itemBuilder: (context, i) {
-                                  if (i >= _products.length) {
-                                    return const Center(
-                                      child: Padding(
-                                        padding: EdgeInsets.all(12),
-                                        child: CircularProgressIndicator(strokeWidth: 2),
-                                      ),
-                                    );
-                                  }
-                                  final product = _products[i];
-                                  return ProductCard(
-                                    product: product,
-                                    isWishlisted: wishlist.isWishlisted(product.id),
-                                    onWishlistTap: () => wishlist.toggle(product.id, product: product),
-                                    onTap: () => Navigator.of(context).pushNamed('/product/${product.slug}'),
-                                  );
-                                },
-                              ),
-                            ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
+                Expanded(
+                  child: _products.isEmpty
+                      ? const LoadState.empty(
+                          message: 'No products match your filters.',
+                        )
+                      : RefreshIndicator(
+                          onRefresh: _reload,
+                          child: LayoutBuilder(
+                            builder: (context, constraints) => GridView.builder(
+                              controller: _scrollController,
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    mainAxisSpacing: 14,
+                                    crossAxisSpacing: 10,
+                                    childAspectRatio: productGridRatio(
+                                      constraints.maxWidth,
+                                      horizontalPadding: 12,
+                                      crossAxisSpacing: 10,
+                                    ),
+                                  ),
+                              itemCount: _products.length + (_hasMore ? 1 : 0),
+                              itemBuilder: (context, i) {
+                                if (i >= _products.length) {
+                                  return const Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.all(12),
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                  );
+                                }
+                                final product = _products[i];
+                                final cart = context.read<CartProvider>();
+                                return ProductCard(
+                                  product: product,
+                                  isWishlisted: wishlist.isWishlisted(
+                                    product.id,
+                                  ),
+                                  onWishlistTap: () => wishlist.toggle(
+                                    product.id,
+                                    product: product,
+                                  ),
+                                  onTap: () => Navigator.of(
+                                    context,
+                                  ).pushNamed('/product/${product.slug}'),
+                                  onAddToBag: product.hasVariants
+                                      ? () => Navigator.of(
+                                          context,
+                                        ).pushNamed('/product/${product.slug}')
+                                      : product.inStock
+                                      ? () async {
+                                          final error = await cart.addItem(
+                                            productId: product.id,
+                                            productSlug: product.slug,
+                                          );
+                                          if (!context.mounted) return;
+                                          ScaffoldMessenger.of(context)
+                                            ..hideCurrentSnackBar()
+                                            ..showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  error ?? 'Added to bag',
+                                                ),
+                                                duration: const Duration(
+                                                  seconds: 2,
+                                                ),
+                                              ),
+                                            );
+                                        }
+                                      : null,
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                ),
+              ],
+            ),
     );
   }
 }
@@ -244,7 +298,8 @@ class _FilterSheet extends StatefulWidget {
   final String? minPrice;
   final String? maxPrice;
   final bool inStock;
-  final void Function(String sort, String? min, String? max, bool inStock) onApply;
+  final void Function(String sort, String? min, String? max, bool inStock)
+  onApply;
 
   @override
   State<_FilterSheet> createState() => _FilterSheetState();
@@ -292,7 +347,10 @@ class _FilterSheetState extends State<_FilterSheet> {
                 onChanged: (v) => setState(() => _sort = v!),
               ),
             const SizedBox(height: 8),
-            Text('Price range', style: AppTypography.label(color: AppColors.muted)),
+            Text(
+              'Price range',
+              style: AppTypography.label(color: AppColors.muted),
+            ),
             const SizedBox(height: 8),
             Row(
               children: [
@@ -300,7 +358,10 @@ class _FilterSheetState extends State<_FilterSheet> {
                   child: TextField(
                     controller: _min,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Min ₹', isDense: true),
+                    decoration: const InputDecoration(
+                      labelText: 'Min ₹',
+                      isDense: true,
+                    ),
                   ),
                 ),
                 const Padding(
@@ -311,7 +372,10 @@ class _FilterSheetState extends State<_FilterSheet> {
                   child: TextField(
                     controller: _max,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Max ₹', isDense: true),
+                    decoration: const InputDecoration(
+                      labelText: 'Max ₹',
+                      isDense: true,
+                    ),
                   ),
                 ),
               ],
@@ -337,7 +401,12 @@ class _FilterSheetState extends State<_FilterSheet> {
                 Expanded(
                   child: FilledButton(
                     onPressed: () {
-                      widget.onApply(_sort, _min.text.trim(), _max.text.trim(), _inStock);
+                      widget.onApply(
+                        _sort,
+                        _min.text.trim(),
+                        _max.text.trim(),
+                        _inStock,
+                      );
                       Navigator.of(context).pop();
                     },
                     child: const Text('Apply'),

@@ -1,11 +1,8 @@
 import 'package:intl/intl.dart';
 
 /// Indian Rupee formatting — `en_IN` grouping (₹1,23,456).
-NumberFormat get inrFormat => NumberFormat.currency(
-      symbol: '₹',
-      locale: 'en_IN',
-      decimalDigits: 0,
-    );
+NumberFormat get inrFormat =>
+    NumberFormat.currency(symbol: '₹', locale: 'en_IN', decimalDigits: 0);
 
 /// Formats an amount as ₹X — the app's money display everywhere.
 String formatINR(num value) => inrFormat.format(value);

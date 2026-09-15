@@ -86,28 +86,39 @@ class Product {
       description: json['description'] as String?,
       hasVariants: json['has_variants'] as bool? ?? false,
       stockQuantity: (json['stock_quantity'] as num?)?.toInt() ?? 0,
-      gallery: (json['gallery'] as List<dynamic>?)
+      gallery:
+          (json['gallery'] as List<dynamic>?)
               ?.map((e) => ProductImage.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
-      variants: (json['variants'] as List<dynamic>?)
+      variants:
+          (json['variants'] as List<dynamic>?)
               ?.map((e) => ProductVariant.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
-      categories: (json['categories'] as List<dynamic>?)
+      categories:
+          (json['categories'] as List<dynamic>?)
               ?.map((e) => CategoryRef.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
-      collections: (json['collections'] as List<dynamic>?)
+      collections:
+          (json['collections'] as List<dynamic>?)
               ?.map((e) => CollectionRef.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
-      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at'] as String) : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'] as String)
+          : null,
     );
   }
 
   /// Cheap copy for optimistic UI updates (wishlist toggle, etc.).
-  Product copyWith({bool? inStock, bool? isNew, int? reviewCount, double? rating}) {
+  Product copyWith({
+    bool? inStock,
+    bool? isNew,
+    int? reviewCount,
+    double? rating,
+  }) {
     return Product(
       id: id,
       title: title,

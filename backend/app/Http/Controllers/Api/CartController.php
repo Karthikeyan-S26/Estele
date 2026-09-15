@@ -181,8 +181,14 @@ class CartController
 
     private function currentCart(Request $request): Cart
     {
-        // Authenticated users get a cart bound to their user_id...
-        if ($user = $request->user()) {
+        // Authenticated users get a cart bound to their user_id. These routes
+        // are NOT under the auth:api-token middleware (guests must still reach
+        // them via X-Cart-Token), so the user must be resolved explicitly
+        // through the bearer-token guard — $request->user() would use the web
+        // guard and always return null here, which made post-login cart calls
+        // silently read a phantom empty session cart while checkout kept using
+        // the merged user cart.
+        if ($user = auth('api-token')->user()) {
             return Cart::firstOrCreate(['user_id' => $user->id]);
         }
 

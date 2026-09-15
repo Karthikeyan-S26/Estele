@@ -17,12 +17,17 @@ class AuthProvider extends ChangeNotifier {
   User? _user;
   bool _refreshing = false;
   String? _verificationToken;
+  String? _verifiedPhone;
 
   AuthStatus get status => _status;
   User? get user => _user;
   bool get isAuthenticated => _status == AuthStatus.authenticated;
   bool get isLoading => _refreshing;
   String? get verificationToken => _verificationToken;
+
+  /// The phone number the current registration nonce was verified against —
+  /// /register must use the exact same number or the nonce is rejected.
+  String? get verifiedPhone => _verifiedPhone;
 
   Future<void> _restore() async {
     final loggedIn = await AuthRepository.isLoggedIn();
@@ -76,11 +81,32 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<String?> login(String email, String password) async {
+  Future<String?> sendMobileOtp(String phone) async {
     try {
-      final user = await AuthRepository.login(email, password);
-      _user = user;
-      _status = AuthStatus.authenticated;
+      await AuthRepository.sendMobileOtp(phone);
+      return null;
+    } on ApiException catch (e) {
+      return e.message;
+    } catch (_) {
+      return 'Unable to reach the server. Check your connection.';
+    }
+  }
+
+  /// Verifies the code and mirrors the backend branch: an existing number signs
+  /// the user in; a new number is remembered as verified so account completion
+  /// can finish registration.
+  Future<String?> verifyMobileOtp(String phone, String code) async {
+    try {
+      final result = await AuthRepository.verifyMobileOtp(phone, code);
+      if (result.isExisting) {
+        _user = result.user;
+        _status = AuthStatus.authenticated;
+        _verificationToken = null;
+        _verifiedPhone = null;
+      } else {
+        _verificationToken = result.verificationToken;
+        _verifiedPhone = phone;
+      }
       notifyListeners();
       return null;
     } on ApiException catch (e) {
@@ -90,69 +116,26 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<String?> sendLoginOtp(String phone) async {
-    try {
-      await AuthRepository.sendLoginOtp(phone);
-      return null;
-    } on ApiException catch (e) {
-      return e.message;
-    } catch (_) {
-      return 'Unable to reach the server. Check your connection.';
-    }
-  }
-
-  Future<String?> verifyLoginOtp(String phone, String code) async {
-    try {
-      final user = await AuthRepository.verifyLoginOtp(phone, code);
-      _user = user;
-      _status = AuthStatus.authenticated;
-      notifyListeners();
-      return null;
-    } on ApiException catch (e) {
-      return e.message;
-    } catch (_) {
-      return 'Unable to reach the server. Check your connection.';
-    }
-  }
-
-  Future<String?> sendRegisterOtp(String phone) async {
-    try {
-      await AuthRepository.sendRegisterOtp(phone);
-      return null;
-    } on ApiException catch (e) {
-      return e.message;
-    } catch (_) {
-      return 'Unable to reach the server. Check your connection.';
-    }
-  }
-
-  Future<String?> verifyRegisterOtp(String phone, String code) async {
-    try {
-      _verificationToken = await AuthRepository.verifyRegisterOtp(phone, code);
-      return null;
-    } on ApiException catch (e) {
-      _verificationToken = null;
-      return e.message;
-    } catch (_) {
-      _verificationToken = null;
-      return 'Unable to reach the server. Check your connection.';
-    }
-  }
-
-  Future<String?> register({required String name, required String email, required String phone, required String password}) async {
+  /// Completes a new customer's account with the verified phone. Requires a
+  /// live, phone-matched registration nonce from verifyMobileOtp — the backend
+  /// validates the nonce server-side, so an account can't be created for an
+  /// unverified number.
+  Future<String?> registerMobile({
+    required String name,
+    required String phone,
+  }) async {
     final token = _verificationToken;
-    if (token == null) {
-      return 'Please verify your phone number first.';
+    if (token == null || _verifiedPhone != phone) {
+      return 'Please verify your mobile number with OTP first.';
     }
     try {
-      final user = await AuthRepository.register(
+      final user = await AuthRepository.registerMobile(
         name: name,
-        email: email,
         phone: phone,
-        password: password,
         verificationToken: token,
       );
       _verificationToken = null;
+      _verifiedPhone = null;
       _user = user;
       _status = AuthStatus.authenticated;
       notifyListeners();
@@ -169,17 +152,20 @@ class AuthProvider extends ChangeNotifier {
     _user = null;
     _status = AuthStatus.unauthenticated;
     _verificationToken = null;
+    _verifiedPhone = null;
     notifyListeners();
   }
 
-  Future<String?> forgotPassword(String email) async {
-    try {
-      await AuthRepository.forgotPassword(email);
-      return null;
-    } on ApiException catch (e) {
-      return e.message;
-    } catch (_) {
-      return 'Unable to reach the server. Check your connection.';
-    }
+  /// Local-only session teardown for when the server rejects the token (401 —
+  /// expired or revoked). No server call: the token is already dead, and firing
+  /// /logout would just 401 again. The root shell listens for the status
+  /// change and re-fetches the guest cart.
+  Future<void> forceLogoutLocal() async {
+    await Storage.clearUser();
+    _user = null;
+    _status = AuthStatus.unauthenticated;
+    _verificationToken = null;
+    _verifiedPhone = null;
+    notifyListeners();
   }
 }

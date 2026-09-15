@@ -42,10 +42,11 @@ class _BlogPostScreenState extends State<BlogPostScreen> {
         });
       }
     } catch (_) {
-      if (mounted) setState(() {
-        _failed = true;
-        _loading = false;
-      });
+      if (mounted)
+        setState(() {
+          _failed = true;
+          _loading = false;
+        });
     }
   }
 
@@ -55,7 +56,10 @@ class _BlogPostScreenState extends State<BlogPostScreen> {
     if (_failed || _post == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: LoadState.error(message: 'Could not load this story.', onRetry: _load),
+        body: LoadState.error(
+          message: 'Could not load this story.',
+          onRetry: _load,
+        ),
       );
     }
 
@@ -68,12 +72,22 @@ class _BlogPostScreenState extends State<BlogPostScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           if (post.category != null)
-            Text(post.category!.toUpperCase(), style: AppTypography.label(size: 10, color: AppColors.accent, letterSpacing: 1.4)),
+            Text(
+              post.category!.toUpperCase(),
+              style: AppTypography.label(
+                size: 10,
+                color: AppColors.accent,
+                letterSpacing: 1.4,
+              ),
+            ),
           const SizedBox(height: 8),
           Text(post.title, style: AppTypography.editorial(size: 24)),
           const SizedBox(height: 8),
           if (post.author != null)
-            Text('By ${post.author}', style: AppTypography.bodyMedium(weight: FontWeight.w600)),
+            Text(
+              'By ${post.author}',
+              style: AppTypography.bodyMedium(weight: FontWeight.w600),
+            ),
           if (post.publishedAt != null)
             Text(
               '${post.publishedAt!.day}/${post.publishedAt!.month}/${post.publishedAt!.year}',
@@ -87,7 +101,10 @@ class _BlogPostScreenState extends State<BlogPostScreen> {
             ),
           const SizedBox(height: 16),
           if (post.excerpt != null)
-            Text(post.excerpt!, style: AppTypography.editorial(size: 16, color: AppColors.muted)),
+            Text(
+              post.excerpt!,
+              style: AppTypography.editorial(size: 16, color: AppColors.muted),
+            ),
           const SizedBox(height: 12),
           if (post.content != null && post.content!.isNotEmpty)
             Html(
@@ -103,8 +120,16 @@ class _BlogPostScreenState extends State<BlogPostScreen> {
                   fontFamily: 'Cinzel',
                   color: AppColors.heading,
                 ),
-                'h2': Style(fontSize: FontSize(18), fontFamily: 'Cinzel', color: AppColors.heading),
-                'h3': Style(fontSize: FontSize(16), fontFamily: 'Cinzel', color: AppColors.heading),
+                'h2': Style(
+                  fontSize: FontSize(18),
+                  fontFamily: 'Cinzel',
+                  color: AppColors.heading,
+                ),
+                'h3': Style(
+                  fontSize: FontSize(16),
+                  fontFamily: 'Cinzel',
+                  color: AppColors.heading,
+                ),
                 'a': Style(color: AppColors.accentDark),
               },
             ),

@@ -106,13 +106,49 @@
       <div class="col-span-2 md:col-span-4 lg:col-span-2">
         <h3 class="mb-3.5 font-display text-[12px] font-semibold uppercase tracking-[0.14em] text-gold">Join the VIP Club</h3>
         <p class="text-[12.5px] leading-relaxed text-white/70">{{ $footerVipBody }}</p>
-        <form class="mt-3 flex overflow-hidden rounded-md border border-white/20 bg-white/5" action="{{ route('newsletter.subscribe') }}" method="post" data-newsletter>
+        <form class="mt-3 flex overflow-hidden rounded-md border border-white/20 bg-white/5" action="{{ route('newsletter.subscribe') }}" method="post" data-newsletter-form>
           @csrf
           <label class="sr-only-custom" for="footer-nl-email">Email address</label>
           <input class="min-w-0 flex-1 bg-transparent px-3 py-2.5 text-[13px] text-white outline-none placeholder:text-white/40" id="footer-nl-email" type="email" name="email" placeholder="Your email" required>
           <button class="shrink-0 bg-gold px-3.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-deepwine transition-colors hover:bg-white" type="submit">Join</button>
         </form>
         <p class="mt-2 text-[12px] text-gold" data-newsletter-msg hidden>Welcome to the club — check your inbox.</p>
+        <p class="mt-2 text-[12px] text-white/80" data-newsletter-err hidden>Could not subscribe. Please try again.</p>
+        <script>
+          (function () {
+            var form = document.querySelector('[data-newsletter-form]');
+            if (!form) return;
+            var msg = document.querySelector('[data-newsletter-msg]');
+            var err = document.querySelector('[data-newsletter-err]');
+            var input = form.querySelector('input[name="email"]');
+            form.addEventListener('submit', function (e) {
+              e.preventDefault();
+              if (!input || !input.value.trim()) return;
+              var csrf = document.querySelector('meta[name="csrf-token"]');
+              fetch(form.getAttribute('action'), {
+                method: 'POST',
+                headers: {
+                  'Accept': 'application/json',
+                  'X-CSRF-TOKEN': csrf ? csrf.getAttribute('content') : '',
+                  'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: new FormData(form),
+              }).then(function (r) {
+                if (msg) msg.hidden = true;
+                if (err) err.hidden = true;
+                if (r.ok) {
+                  if (msg) msg.hidden = false;
+                  if (input) input.value = '';
+                } else if (err) {
+                  err.hidden = false;
+                }
+              }).catch(function () {
+                if (msg) msg.hidden = true;
+                if (err) err.hidden = false;
+              });
+            });
+          })();
+        </script>
         <div class="mt-5 space-y-1.5 text-[12.5px] text-white/75">
           <p class="font-semibold text-white">{{ $footerCompany }}</p>
           <p class="leading-normal">{{ $footerAddress }}</p>
@@ -141,7 +177,7 @@
       </div>
       <div class="flex gap-4">
         <a class="transition-colors hover:text-gold" href="{{ route('pages.show', 'privacy-policy') }}">Privacy Policy</a>
-        <a class="transition-colors hover:text-gold" href="{{ route('pages.show', 'return-policy') }}">Terms &amp; Conditions</a>
+        <a class="transition-colors hover:text-gold" href="{{ route('pages.show', 'terms-and-conditions') }}">Terms &amp; Conditions</a>
         <a class="transition-colors hover:text-gold" href="{{ route('pages.show', 'shipping-policy') }}">Shipping Policy</a>
       </div>
     </div>

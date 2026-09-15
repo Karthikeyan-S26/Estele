@@ -53,9 +53,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Future<void> _openWriteReview() async {
     final auth = context.read<AuthProvider>();
     if (!auth.isAuthenticated) {
-      await Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
+      await Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const LoginScreen()));
       return;
     }
     final submitted = await showModalBottomSheet<bool>(
@@ -65,7 +65,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
     if (submitted != true || !mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Thanks for your review! It will appear once approved.')),
+      const SnackBar(
+        content: Text('Thanks for your review! It will appear once approved.'),
+      ),
     );
     _load();
   }
@@ -83,9 +85,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         _related = result.related;
         _avgRating = result.page.ratio;
         _reviewCount = result.page.count;
-        _reviews = result.page.reviews
-            .map((e) => Review.fromJson(e))
-            .toList();
+        _reviews = result.page.reviews.map((e) => Review.fromJson(e)).toList();
         _initVariants(result.page.product);
         _loading = false;
       });
@@ -108,7 +108,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     _sizes = attrs.toList();
     if (_sizes.isNotEmpty) {
       _selectedSku = product.variants.where((v) => v.inStock).isNotEmpty
-          ? product.variants.firstWhere((v) => v.inStock, orElse: () => product.variants.first).sku
+          ? product.variants
+                .firstWhere(
+                  (v) => v.inStock,
+                  orElse: () => product.variants.first,
+                )
+                .sku
           : product.variants.first.sku;
       _selectedSizeIndex = _sizes.indexOf(
         product.variants.first.attributes.values.firstOrNull ?? '',
@@ -133,19 +138,23 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         quantity: _quantity,
       );
     } else {
-      error = await cart.addItem(productId: product.id, productSlug: product.slug, quantity: _quantity);
+      error = await cart.addItem(
+        productId: product.id,
+        productSlug: product.slug,
+        quantity: _quantity,
+      );
     }
     if (!mounted) return;
     setState(() {
       _addingToCart = false;
       if (error == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Added to your bag')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Added to your bag')));
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error)));
       }
     });
   }
@@ -158,7 +167,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     if (_failed || _product == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: LoadState.error(message: 'Could not load this piece.', onRetry: _load),
+        body: LoadState.error(
+          message: 'Could not load this piece.',
+          onRetry: _load,
+        ),
       );
     }
 
@@ -180,7 +192,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   wishlist.isWishlisted(product.id)
                       ? Icons.favorite_rounded
                       : Icons.favorite_outline_rounded,
-                  color: wishlist.isWishlisted(product.id) ? AppColors.accent : AppColors.heading,
+                  color: wishlist.isWishlisted(product.id)
+                      ? AppColors.accent
+                      : AppColors.heading,
                 ),
                 onPressed: () => wishlist.toggle(product.id, product: product),
               ),
@@ -199,7 +213,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 children: [
                   PageView.builder(
                     controller: _pageController,
-                    itemCount: product.gallery.isEmpty ? 1 : product.gallery.length,
+                    itemCount: product.gallery.isEmpty
+                        ? 1
+                        : product.gallery.length,
                     itemBuilder: (context, i) {
                       if (product.gallery.isEmpty) {
                         return AppImage(url: product.imageUrl);
@@ -218,13 +234,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           return AnimatedBuilder(
                             animation: _pageController,
                             builder: (_, __) {
-                              final selected = (_pageController.page ?? 0).round() == i;
+                              final selected =
+                                  (_pageController.page ?? 0).round() == i;
                               return Container(
                                 width: selected ? 12 : 6,
                                 height: 6,
-                                margin: const EdgeInsets.symmetric(horizontal: 3),
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 3,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: selected ? AppColors.accent : AppColors.lineStrong,
+                                  color: selected
+                                      ? AppColors.accent
+                                      : AppColors.lineStrong,
                                   borderRadius: BorderRadius.circular(3),
                                 ),
                               );
@@ -257,26 +278,44 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   Text(product.title, style: AppTypography.editorial(size: 24)),
                   const SizedBox(height: 6),
                   if (_avgRating != null)
-                    RatingStars(rating: _avgRating, count: _reviewCount, size: 16)
+                    RatingStars(
+                      rating: _avgRating,
+                      count: _reviewCount,
+                      size: 16,
+                    )
                   else
-                    Text('New arrival', style: AppTypography.bodySmall(size: 12)),
+                    Text(
+                      'New arrival',
+                      style: AppTypography.bodySmall(size: 12),
+                    ),
                   const SizedBox(height: 10),
                   PriceText(
                     price: product.price,
                     compareAtPrice: product.compareAtPrice,
-                    discountPercent: product.effectiveDiscountPercent > 0 ? product.effectiveDiscountPercent : null,
+                    discountPercent: product.effectiveDiscountPercent > 0
+                        ? product.effectiveDiscountPercent
+                        : null,
                     size: 22,
                   ),
                   const SizedBox(height: 10),
                   if (product.inStock == false)
-                    Text('Currently out of stock', style: AppTypography.bodyMedium(color: AppColors.sale)),
+                    Text(
+                      'Currently out of stock',
+                      style: AppTypography.bodyMedium(color: AppColors.sale),
+                    ),
                   const SizedBox(height: 4),
-                  Text('SKU ${product.sku}', style: AppTypography.bodySmall(size: 11)),
+                  Text(
+                    'SKU ${product.sku}',
+                    style: AppTypography.bodySmall(size: 11),
+                  ),
 
                   // Variant size selector
                   if (_sizes.isNotEmpty) ...[
                     const SizedBox(height: 18),
-                    Text('Select size', style: AppTypography.label(letterSpacing: 1.2)),
+                    Text(
+                      'Select size',
+                      style: AppTypography.label(letterSpacing: 1.2),
+                    ),
                     const SizedBox(height: 10),
                     Wrap(
                       spacing: 8,
@@ -289,7 +328,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             setState(() {
                               _selectedSizeIndex = i;
                               final matching = product.variants
-                                  .where((v) => v.attributes.values.contains(_sizes[i]))
+                                  .where(
+                                    (v) =>
+                                        v.attributes.values.contains(_sizes[i]),
+                                  )
                                   .toList();
                               if (matching.isNotEmpty) {
                                 _selectedSku = matching.any((v) => v.inStock)
@@ -323,10 +365,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               ? const SizedBox(
                                   width: 16,
                                   height: 16,
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
                                 )
-                              : const Icon(Icons.shopping_bag_outlined, size: 18),
-                          label: Text(product.inStock ? 'Add to bag' : 'Out of stock'),
+                              : const Icon(
+                                  Icons.shopping_bag_outlined,
+                                  size: 18,
+                                ),
+                          label: Text(
+                            product.inStock ? 'Add to bag' : 'Out of stock',
+                          ),
                         ),
                       ),
                     ],
@@ -335,7 +385,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   TextButton.icon(
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Free shipping above ₹999 · Easy 30-day returns')),
+                        const SnackBar(
+                          content: Text(
+                            'Free shipping above ₹999 · Easy 30-day returns',
+                          ),
+                        ),
                       );
                     },
                     icon: const Icon(Icons.local_shipping_outlined, size: 16),
@@ -345,7 +399,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   const Divider(height: 32),
 
                   // Description
-                  Text('About this piece', style: AppTypography.sectionTitle(size: 17)),
+                  Text(
+                    'About this piece',
+                    style: AppTypography.sectionTitle(size: 17),
+                  ),
                   const SizedBox(height: 10),
                   Text(
                     product.description ?? 'A timeless Estele creation.',
@@ -357,7 +414,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Reviews', style: AppTypography.sectionTitle(size: 17)),
+                      Text(
+                        'Reviews',
+                        style: AppTypography.sectionTitle(size: 17),
+                      ),
                       TextButton.icon(
                         onPressed: _openWriteReview,
                         icon: const Icon(Icons.rate_review_outlined, size: 18),
@@ -377,7 +437,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   if (_reviews.isEmpty)
                     Text(
                       'No reviews yet — be the first to write one.',
-                      style: AppTypography.bodySmall(size: 12.5, color: AppColors.muted),
+                      style: AppTypography.bodySmall(
+                        size: 12.5,
+                        color: AppColors.muted,
+                      ),
                     )
                   else
                     ..._reviews.take(3).map((r) => _ReviewTile(review: r)),
@@ -385,7 +448,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   // Related
                   if (_related.isNotEmpty) ...[
                     const Divider(height: 32),
-                    Text('You may also love', style: AppTypography.sectionTitle(size: 17)),
+                    Text(
+                      'You may also love',
+                      style: AppTypography.sectionTitle(size: 17),
+                    ),
                     const SizedBox(height: 12),
                     SizedBox(
                       height: 220,
@@ -400,8 +466,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               product: related,
                               compact: true,
                               isWishlisted: wishlist.isWishlisted(related.id),
-                              onWishlistTap: () => wishlist.toggle(related.id, product: related),
-                              onTap: () => Navigator.of(context).pushReplacementNamed('/product/${related.slug}'),
+                              onWishlistTap: () =>
+                                  wishlist.toggle(related.id, product: related),
+                              onTap: () =>
+                                  Navigator.of(context).pushReplacementNamed(
+                                    '/product/${related.slug}',
+                                  ),
                             ),
                           );
                         },
@@ -436,7 +506,12 @@ class _InfoBadge extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1),
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1,
+        ),
       ),
     );
   }
@@ -475,10 +550,17 @@ class _ReviewTile extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 6),
-          RatingStars(rating: review.rating.toDouble(), showCount: false, size: 14),
+          RatingStars(
+            rating: review.rating.toDouble(),
+            showCount: false,
+            size: 14,
+          ),
           const SizedBox(height: 6),
           if (review.body != null && review.body!.isNotEmpty)
-            Text(review.body!, style: AppTypography.body(size: 13.5, color: AppColors.ink)),
+            Text(
+              review.body!,
+              style: AppTypography.body(size: 13.5, color: AppColors.ink),
+            ),
         ],
       ),
     );
@@ -565,9 +647,13 @@ class _WriteReviewSheetState extends State<_WriteReviewSheet> {
               children: List.generate(5, (i) {
                 final star = i + 1;
                 return IconButton(
-                  onPressed: _submitting ? null : () => setState(() => _rating = star),
+                  onPressed: _submitting
+                      ? null
+                      : () => setState(() => _rating = star),
                   icon: Icon(
-                    star <= _rating ? Icons.star_rounded : Icons.star_border_rounded,
+                    star <= _rating
+                        ? Icons.star_rounded
+                        : Icons.star_border_rounded,
                     color: AppColors.gold,
                     size: 30,
                   ),
@@ -599,7 +685,13 @@ class _WriteReviewSheetState extends State<_WriteReviewSheet> {
             ),
             if (_error != null) ...[
               const SizedBox(height: 8),
-              Text(_error!, style: AppTypography.bodySmall(size: 12.5, color: AppColors.error)),
+              Text(
+                _error!,
+                style: AppTypography.bodySmall(
+                  size: 12.5,
+                  color: AppColors.error,
+                ),
+              ),
             ],
             const SizedBox(height: 16),
             FilledButton(
@@ -609,7 +701,14 @@ class _WriteReviewSheetState extends State<_WriteReviewSheet> {
                 backgroundColor: AppColors.deepWine,
               ),
               child: _submitting
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
                   : const Text('Submit review'),
             ),
             const SizedBox(height: 8),

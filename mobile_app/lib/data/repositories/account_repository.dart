@@ -18,17 +18,17 @@ class AccountRepository {
   }) async {
     final json = await ApiClient.patch(
       '/account/profile',
-      body: {
-        'name': name,
-        'email': email,
-      },
+      body: {'name': name, 'email': email},
       auth: true,
     );
     return User.fromJson(json['data'] as Map<String, dynamic>);
   }
 
   /// GET /api/account/orders — paginated order history.
-  static Future<({List<Order> items, Map<String, dynamic> meta})> orders({int page = 1, String? status}) async {
+  static Future<({List<Order> items, Map<String, dynamic> meta})> orders({
+    int page = 1,
+    String? status,
+  }) async {
     final json = await ApiClient.get(
       '/account/orders?page=$page${status != null ? '&status=$status' : ''}',
       auth: true,
@@ -43,7 +43,8 @@ class AccountRepository {
   }
 
   /// GET /api/account/addresses — address book.
-  static Future<({List<Address> items, Map<String, dynamic> meta})> addresses() async {
+  static Future<({List<Address> items, Map<String, dynamic> meta})>
+  addresses() async {
     final json = await ApiClient.get('/account/addresses', auth: true);
     return (
       items: (json['data'] as List<dynamic>? ?? [])
@@ -53,11 +54,21 @@ class AccountRepository {
     );
   }
 
-/// GET /api/account/wallet/transactions — the wallet ledger (credits, debits,
+  /// GET /api/account/wallet/transactions — the wallet ledger (credits, debits,
   /// and validity of expiring credits). Also carries the user's current balance
   /// so the app never renders a stale cached figure.
-  static Future<({List<WalletTransaction> items, Map<String, dynamic> meta, double? balance})> walletTransactions({int page = 1}) async {
-    final json = await ApiClient.get('/account/wallet/transactions?page=$page', auth: true);
+  static Future<
+    ({
+      List<WalletTransaction> items,
+      Map<String, dynamic> meta,
+      double? balance,
+    })
+  >
+  walletTransactions({int page = 1}) async {
+    final json = await ApiClient.get(
+      '/account/wallet/transactions?page=$page',
+      auth: true,
+    );
     final rawBalance = json['balance'];
     return (
       items: (json['data'] as List<dynamic>? ?? [])
@@ -70,13 +81,21 @@ class AccountRepository {
 
   /// POST /api/account/addresses.
   static Future<Address> storeAddress(Address address) async {
-    final json = await ApiClient.post('/account/addresses', body: address.toJson(), auth: true);
+    final json = await ApiClient.post(
+      '/account/addresses',
+      body: address.toJson(),
+      auth: true,
+    );
     return Address.fromJson(json['data'] as Map<String, dynamic>);
   }
 
   /// PATCH /api/account/addresses/{id}.
   static Future<Address> updateAddress(Address address) async {
-    final json = await ApiClient.patch('/account/addresses/${address.id}', body: address.toJson(), auth: true);
+    final json = await ApiClient.patch(
+      '/account/addresses/${address.id}',
+      body: address.toJson(),
+      auth: true,
+    );
     return Address.fromJson(json['data'] as Map<String, dynamic>);
   }
 
@@ -87,12 +106,13 @@ class AccountRepository {
 
   /// POST /api/account/orders/{order_number}/cancellation-request — flags the
   /// order for admin review (does not cancel it directly).
-  static Future<String?> requestOrderCancellation(String orderNumber, {String? reason}) async {
+  static Future<String?> requestOrderCancellation(
+    String orderNumber, {
+    String? reason,
+  }) async {
     final json = await ApiClient.post(
       '/account/orders/$orderNumber/cancellation-request',
-      body: {
-        if (reason != null && reason.isNotEmpty) 'reason': reason,
-      },
+      body: {if (reason != null && reason.isNotEmpty) 'reason': reason},
       auth: true,
     );
     return json['message'] as String?;

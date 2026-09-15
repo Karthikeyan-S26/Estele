@@ -40,10 +40,11 @@ class _OrdersScreenState extends State<OrdersScreen> {
         });
       }
     } catch (_) {
-      if (mounted) setState(() {
-        _failed = true;
-        _loading = false;
-      });
+      if (mounted)
+        setState(() {
+          _failed = true;
+          _loading = false;
+        });
     }
   }
 
@@ -54,29 +55,34 @@ class _OrdersScreenState extends State<OrdersScreen> {
       body: _loading
           ? const LoadState.loading()
           : _failed && _orders == null
-              ? LoadState.error(message: 'Could not load orders.', onRetry: _load)
-              : _orders!.isEmpty
-                  ? LoadState.empty(message: 'No orders yet. Start your collection today!')
-                  : RefreshIndicator(
-                      onRefresh: _load,
-                      child: ListView.builder(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _orders!.length,
-                        itemBuilder: (context, i) {
-                          final order = _orders![i];
-                          return _OrderCard(
-                            order: order,
-                            onTap: () async {
-                              await Navigator.of(context).push(
-                                MaterialPageRoute(builder: (_) => OrderDetailScreen(orderNumber: order.orderNumber)),
-                              );
-                              _load();
-                            },
-                          );
-                        },
-                      ),
-                    ),
+          ? LoadState.error(message: 'Could not load orders.', onRetry: _load)
+          : _orders!.isEmpty
+          ? LoadState.empty(
+              message: 'No orders yet. Start your collection today!',
+            )
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: ListView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                itemCount: _orders!.length,
+                itemBuilder: (context, i) {
+                  final order = _orders![i];
+                  return _OrderCard(
+                    order: order,
+                    onTap: () async {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              OrderDetailScreen(orderNumber: order.orderNumber),
+                        ),
+                      );
+                      _load();
+                    },
+                  );
+                },
+              ),
+            ),
     );
   }
 }
@@ -107,7 +113,10 @@ class _OrderCard extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: Text(order.orderNumber, style: AppTypography.bodyMedium(weight: FontWeight.w700)),
+                    child: Text(
+                      order.orderNumber,
+                      style: AppTypography.bodyMedium(weight: FontWeight.w700),
+                    ),
                   ),
                   _StatusChip(status: order.status),
                 ],
@@ -117,7 +126,10 @@ class _OrderCard extends StatelessWidget {
                 order.items.isEmpty
                     ? '${order.items.length} item · ${formatINR(order.total)}'
                     : '${order.items.first.productTitle}${order.items.length > 1 ? ' + ${order.items.length - 1} more' : ''} · ${formatINR(order.total)}',
-                style: AppTypography.bodySmall(size: 12.5, color: AppColors.muted),
+                style: AppTypography.bodySmall(
+                  size: 12.5,
+                  color: AppColors.muted,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
@@ -148,15 +160,19 @@ class _StatusChip extends StatelessWidget {
         color: cancelled
             ? AppColors.soldOut.withValues(alpha: 0.15)
             : done
-                ? AppColors.success.withValues(alpha: 0.15)
-                : AppColors.pinkSoft,
+            ? AppColors.success.withValues(alpha: 0.15)
+            : AppColors.pinkSoft,
         borderRadius: BorderRadius.circular(2),
       ),
       child: Text(
         statusLabel(),
         style: AppTypography.bodySmall(
           size: 10.5,
-          color: cancelled ? AppColors.soldOut : done ? AppColors.success : AppColors.accentDark,
+          color: cancelled
+              ? AppColors.soldOut
+              : done
+              ? AppColors.success
+              : AppColors.accentDark,
           weight: FontWeight.w700,
         ),
       ),

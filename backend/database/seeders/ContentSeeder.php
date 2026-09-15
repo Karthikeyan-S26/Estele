@@ -39,6 +39,7 @@ class ContentSeeder extends Seeder
             ['title' => 'Shipping Policy', 'slug' => 'shipping-policy', 'content' => '<p>Orders are processed within 1-2 business days and shipped via our courier partners.</p>'],
             ['title' => 'Return Policy', 'slug' => 'return-policy', 'content' => '<p>Not happy with your order? Returns are accepted within 7 days of delivery.</p>'],
             ['title' => 'Franchise', 'slug' => 'franchise', 'content' => '<p>Interested in partnering with us? Reach out to our franchise team.</p>'],
+            ['title' => 'Terms & Conditions', 'slug' => 'terms-and-conditions', 'content' => '<p>These terms and conditions govern your use of our website. By accessing the site you agree to these terms. Prices, offers and availability are subject to change without prior notice. All content, branding and product imagery are the property of Estele and may not be reproduced without permission.</p>'],
         ];
 
         foreach ($pages as $page) {

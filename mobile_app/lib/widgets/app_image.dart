@@ -35,7 +35,10 @@ class AppImage extends StatelessWidget {
             width: width,
             height: height,
             placeholder: (_, __) => _Placeholder(color: placeholderColor),
-            errorWidget: (_, __, ___) => _Placeholder(icon: Icons.image_outlined, color: placeholderColor),
+            errorWidget: (_, __, ___) => _Placeholder(
+              icon: Icons.image_outlined,
+              color: placeholderColor,
+            ),
           )
         : _Placeholder(icon: Icons.image_outlined, color: placeholderColor);
 

@@ -58,7 +58,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   void dispose() {
     _pincodeDebounce?.cancel();
     _postalCode.removeListener(_onPincodeEdited);
-    for (final c in [_label, _line1, _line2, _city, _state, _postalCode, _phone, _note]) {
+    for (final c in [
+      _label,
+      _line1,
+      _line2,
+      _city,
+      _state,
+      _postalCode,
+      _phone,
+      _note,
+    ]) {
       c.dispose();
     }
     super.dispose();
@@ -81,8 +90,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     await auth.refreshProfile();
     try {
       final result = await AccountRepository.addresses();
-      final defaultAddress = result.items.where((a) => a.isDefault).firstOrNull
-          ?? result.items.firstOrNull;
+      final defaultAddress =
+          result.items.where((a) => a.isDefault).firstOrNull ??
+          result.items.firstOrNull;
       if (mounted) {
         setState(() {
           _saved = result.items;
@@ -183,6 +193,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Future<void> _placeOrder() async {
+    if (_placing) return;
     if (!(_addressFormKey.currentState?.validate() ?? false)) {
       return;
     }
@@ -254,8 +265,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           _goToConfirmation(order);
         } catch (_) {
           if (!mounted) return;
-          _offerReservedOrder(orderNumber,
-              'Payment received but could not be verified with the server. Your order is reserved — check Order details shortly.');
+          _offerReservedOrder(
+            orderNumber,
+            'Payment received but could not be verified with the server. Your order is reserved — check Order details shortly.',
+          );
         }
         return;
       }
@@ -293,7 +306,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               Navigator.of(dialogContext).pop();
               Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(
-                    builder: (_) => OrderDetailScreen(orderNumber: orderNumber)),
+                  builder: (_) => OrderDetailScreen(orderNumber: orderNumber),
+                ),
                 (route) => route.isFirst,
               );
             },
@@ -315,9 +329,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.lock_outline, size: 44, color: AppColors.lineStrong),
+                const Icon(
+                  Icons.lock_outline,
+                  size: 44,
+                  color: AppColors.lineStrong,
+                ),
                 const SizedBox(height: 12),
-                Text('Sign in to checkout', style: AppTypography.sectionTitle(size: 17)),
+                Text(
+                  'Sign in to checkout',
+                  style: AppTypography.sectionTitle(size: 17),
+                ),
                 const SizedBox(height: 6),
                 Text(
                   'Your bag is saved — just sign in or create an account to place your order.\nYour guest bag merges automatically.',
@@ -339,7 +360,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
 
     final cart = context.watch<CartProvider>().cart;
-    final walletBalance = context.watch<AuthProvider>().user?.walletBalance ?? 0;
+    final walletBalance =
+        context.watch<AuthProvider>().user?.walletBalance ?? 0;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Checkout')),
@@ -351,7 +373,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 padding: const EdgeInsets.all(16),
                 children: [
                   // Delivery
-                  Text('1 · Delivery details', style: AppTypography.sectionTitle(size: 17)),
+                  Text(
+                    '1 · Delivery details',
+                    style: AppTypography.sectionTitle(size: 17),
+                  ),
                   const SizedBox(height: 12),
 
                   if (_saved.isNotEmpty) ...[
@@ -366,7 +391,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               label: Text(a.label.isEmpty ? 'Home' : a.label),
                               selected: selected,
                               onSelected: (_) {
-                                setState(() => _selectedSaved = selected ? null : a);
+                                setState(
+                                  () => _selectedSaved = selected ? null : a,
+                                );
                                 if (!selected) _fillFromSelected();
                               },
                             ),
@@ -382,7 +409,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       Expanded(
                         child: TextFormField(
                           controller: _label,
-                          decoration: const InputDecoration(labelText: 'Label (Home / Office)', isDense: true),
+                          decoration: const InputDecoration(
+                            labelText: 'Label (Home / Office)',
+                            isDense: true,
+                          ),
                         ),
                       ),
                     ],
@@ -390,13 +420,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   const SizedBox(height: 10),
                   TextFormField(
                     controller: _line1,
-                    decoration: const InputDecoration(labelText: 'Address *', isDense: true),
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Address is required' : null,
+                    decoration: const InputDecoration(
+                      labelText: 'Address *',
+                      isDense: true,
+                    ),
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Address is required'
+                        : null,
                   ),
                   const SizedBox(height: 10),
                   TextFormField(
                     controller: _line2,
-                    decoration: const InputDecoration(labelText: 'Address line 2 (optional)', isDense: true),
+                    decoration: const InputDecoration(
+                      labelText: 'Address line 2 (optional)',
+                      isDense: true,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   Row(
@@ -405,8 +443,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         flex: 2,
                         child: TextFormField(
                           controller: _city,
-                          decoration: const InputDecoration(labelText: 'City *', isDense: true),
-                          validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                          decoration: const InputDecoration(
+                            labelText: 'City *',
+                            isDense: true,
+                          ),
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Required'
+                              : null,
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -414,8 +457,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         flex: 2,
                         child: TextFormField(
                           controller: _state,
-                          decoration: const InputDecoration(labelText: 'State *', isDense: true),
-                          validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                          decoration: const InputDecoration(
+                            labelText: 'State *',
+                            isDense: true,
+                          ),
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Required'
+                              : null,
                         ),
                       ),
                     ],
@@ -434,7 +482,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             counterText: '',
                             helperText: 'City & state auto-fill',
                           ),
-                          validator: (v) => (v == null || v.length != 6 || !RegExp(r'^\d{6}$').hasMatch(v))
+                          validator: (v) =>
+                              (v == null ||
+                                  v.length != 6 ||
+                                  !RegExp(r'^\d{6}$').hasMatch(v))
                               ? 'Valid 6-digit PIN required'
                               : null,
                         ),
@@ -444,8 +495,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         child: TextFormField(
                           controller: _phone,
                           keyboardType: TextInputType.phone,
-                          decoration: const InputDecoration(labelText: 'Phone *', isDense: true),
-                          validator: (v) => (v == null || v.length < 10) ? 'Valid phone required' : null,
+                          decoration: const InputDecoration(
+                            labelText: 'Phone *',
+                            isDense: true,
+                          ),
+                          validator: (v) => (v == null || v.length < 10)
+                              ? 'Valid phone required'
+                              : null,
                         ),
                       ),
                     ],
@@ -453,7 +509,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                   const Divider(height: 32),
                   // Payment
-                  Text('2 · Payment method', style: AppTypography.sectionTitle(size: 17)),
+                  Text(
+                    '2 · Payment method',
+                    style: AppTypography.sectionTitle(size: 17),
+                  ),
                   const SizedBox(height: 12),
                   RadioListTile<String>(
                     value: 'cod',
@@ -469,7 +528,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     onChanged: (v) => setState(() => _paymentMethod = v!),
                     title: const Text('Pay online (Razorpay)'),
                     subtitle: const Text('UPI, cards, netbanking and wallets.'),
-                    secondary: const Icon(Icons.account_balance_wallet_outlined),
+                    secondary: const Icon(
+                      Icons.account_balance_wallet_outlined,
+                    ),
                   ),
 
                   if (walletBalance > 0) ...[
@@ -477,7 +538,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     CheckboxListTile(
                       value: _useWallet,
                       onChanged: (v) => setState(() => _useWallet = v ?? false),
-                      title: Text('Use wallet balance (${formatINR(walletBalance)})'),
+                      title: Text(
+                        'Use wallet balance (${formatINR(walletBalance)})',
+                      ),
                       subtitle: Text(
                         _walletAmount > 0
                             ? 'Wallet credit: ${formatINR(_walletAmount)} · To pay: ${formatINR(_due)}'
@@ -485,13 +548,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         style: AppTypography.bodySmall(size: 12),
                       ),
                       controlAffinity: ListTileControlAffinity.trailing,
-                      secondary: const Icon(Icons.account_balance_wallet, color: AppColors.accent),
+                      secondary: const Icon(
+                        Icons.account_balance_wallet,
+                        color: AppColors.accent,
+                      ),
                     ),
                   ],
 
                   const Divider(height: 32),
                   // Summary
-                  Text('3 · Review', style: AppTypography.sectionTitle(size: 17)),
+                  Text(
+                    '3 · Review',
+                    style: AppTypography.sectionTitle(size: 17),
+                  ),
                   const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.all(14),
@@ -504,30 +573,56 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       children: [
                         _Row(label: 'Subtotal', value: cart.totals.subtotal),
                         if (cart.totals.discount > 0)
-                          _Row(label: 'Coupon discount', value: -cart.totals.discount, sale: true),
+                          _Row(
+                            label: 'Coupon discount',
+                            value: -cart.totals.discount,
+                            sale: true,
+                          ),
                         _Row(label: 'Shipping', value: cart.totals.shipping),
-                        if (_walletAmount > 0) _Row(label: 'Wallet credit', value: -_walletAmount, sale: true),
+                        if (_walletAmount > 0)
+                          _Row(
+                            label: 'Wallet credit',
+                            value: -_walletAmount,
+                            sale: true,
+                          ),
                         const Divider(height: 16),
-                        _Row(label: _walletAmount > 0 ? 'To pay' : 'Order total', value: _due, bold: true),
+                        _Row(
+                          label: _walletAmount > 0 ? 'To pay' : 'Order total',
+                          value: _due,
+                          bold: true,
+                        ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _note,
-                    decoration: const InputDecoration(labelText: 'Order note (optional)', isDense: true),
+                    decoration: const InputDecoration(
+                      labelText: 'Order note (optional)',
+                      isDense: true,
+                    ),
                   ),
 
                   if (_error != null) ...[
                     const SizedBox(height: 12),
-                    Text(_error!, style: AppTypography.bodySmall(size: 13, color: AppColors.error)),
+                    Text(
+                      _error!,
+                      style: AppTypography.bodySmall(
+                        size: 13,
+                        color: AppColors.error,
+                      ),
+                    ),
                   ],
 
                   const SizedBox(height: 20),
                   FilledButton(
                     onPressed: _placing ? null : _placeOrder,
                     child: _placing
-                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
                         : Text('Place order · ${formatINR(_due)}'),
                   ),
                   const SizedBox(height: 20),
@@ -539,7 +634,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 }
 
 class _Row extends StatelessWidget {
-  const _Row({required this.label, required this.value, this.sale = false, this.bold = false});
+  const _Row({
+    required this.label,
+    required this.value,
+    this.sale = false,
+    this.bold = false,
+  });
 
   final String label;
   final double value;
@@ -553,11 +653,23 @@ class _Row extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: AppTypography.body(size: 13.5, color: sale ? AppColors.sale : AppColors.muted)),
+          Text(
+            label,
+            style: AppTypography.body(
+              size: 13.5,
+              color: sale ? AppColors.sale : AppColors.muted,
+            ),
+          ),
           Text(
             formatINR(value),
-            style: (bold ? AppTypography.price(size: 15) : AppTypography.body(size: 13.5, weight: FontWeight.w600))
-                .copyWith(color: sale ? AppColors.sale : AppColors.heading),
+            style:
+                (bold
+                        ? AppTypography.price(size: 15)
+                        : AppTypography.body(
+                            size: 13.5,
+                            weight: FontWeight.w600,
+                          ))
+                    .copyWith(color: sale ? AppColors.sale : AppColors.heading),
           ),
         ],
       ),

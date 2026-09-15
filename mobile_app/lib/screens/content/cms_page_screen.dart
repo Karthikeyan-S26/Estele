@@ -41,10 +41,11 @@ class _CmsPageScreenState extends State<CmsPageScreen> {
         });
       }
     } catch (_) {
-      if (mounted) setState(() {
-        _failed = true;
-        _loading = false;
-      });
+      if (mounted)
+        setState(() {
+          _failed = true;
+          _loading = false;
+        });
     }
   }
 
@@ -54,7 +55,10 @@ class _CmsPageScreenState extends State<CmsPageScreen> {
     if (_failed || _page == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: LoadState.error(message: 'Could not load this page.', onRetry: _load),
+        body: LoadState.error(
+          message: 'Could not load this page.',
+          onRetry: _load,
+        ),
       );
     }
 
@@ -74,9 +78,21 @@ class _CmsPageScreenState extends State<CmsPageScreen> {
                 color: AppColors.ink,
                 lineHeight: LineHeight(1.6),
               ),
-              'h1': Style(fontSize: FontSize(19), fontFamily: 'Cinzel', color: AppColors.heading),
-              'h2': Style(fontSize: FontSize(17), fontFamily: 'Cinzel', color: AppColors.heading),
-              'h3': Style(fontSize: FontSize(15), fontFamily: 'Cinzel', color: AppColors.heading),
+              'h1': Style(
+                fontSize: FontSize(19),
+                fontFamily: 'Cinzel',
+                color: AppColors.heading,
+              ),
+              'h2': Style(
+                fontSize: FontSize(17),
+                fontFamily: 'Cinzel',
+                color: AppColors.heading,
+              ),
+              'h3': Style(
+                fontSize: FontSize(15),
+                fontFamily: 'Cinzel',
+                color: AppColors.heading,
+              ),
               'a': Style(color: AppColors.accentDark),
             },
           ),

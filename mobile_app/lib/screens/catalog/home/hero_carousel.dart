@@ -3,14 +3,19 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../models/home_data.dart';
-import '../../../theme/app_colors.dart';
-import '../../../theme/app_typography.dart';
 import '../../../utils/app_link.dart';
 import '../../../widgets/app_image.dart';
 
-/// Hero carousel with automatic rotation + progress dots. Uses the purpose-shot
-/// banner images (the copy is baked into the artwork), so any banner title the
-/// CMS provides stays as a small chip instead of overlapping the art.
+/// Hero carousel reproduces `home/index.blade.php` (the `data-fade` banner):
+///  - full-width card inset `mx-3 mt-3` with `rounded-xl` (12px);
+///  - mobile aspect ratio `768 / 320` (desktop overrides to 1800/420);
+///  - image is `object-cover`, full-bleed — the copy is baked into the
+///    artwork, so banner titles never overlay the image;
+///  - chevron arrows left/right (white/85 40px circles, visible on every
+///    breakpoint per the blade comment);
+///  - dots over the slide's lower edge (`bottom-4`): active is a 24px white
+///    pill, inactive 6px white/55, gap-2;
+///  - autoplay `data-autoplay="5000"` with a 700 ms crossfade.
 class HeroCarousel extends StatefulWidget {
   const HeroCarousel({super.key, required this.banners});
 
@@ -21,21 +26,17 @@ class HeroCarousel extends StatefulWidget {
 }
 
 class _HeroCarouselState extends State<HeroCarousel> {
-  final _controller = PageController();
+  int _index = 0;
   Timer? _timer;
 
   @override
   void initState() {
     super.initState();
     if (widget.banners.length > 1) {
-      _timer = Timer.periodic(const Duration(seconds: 4), (_) {
-        if (!_controller.hasClients) return;
-        final next = (_controller.page ?? 0).round() + 1;
-        _controller.animateToPage(
-          next % widget.banners.length,
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeInOut,
-        );
+      _timer = Timer.periodic(const Duration(milliseconds: 5000), (_) {
+        if (mounted) {
+          setState(() => _index = (_index + 1) % widget.banners.length);
+        }
       });
     }
   }
@@ -43,85 +44,122 @@ class _HeroCarouselState extends State<HeroCarousel> {
   @override
   void dispose() {
     _timer?.cancel();
-    _controller.dispose();
     super.dispose();
+  }
+
+  void _goTo(int i) {
+    setState(() => _index = (i + widget.banners.length) % widget.banners.length);
   }
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 190,
-      child: Stack(
-        children: [
-          PageView.builder(
-            controller: _controller,
-            itemCount: widget.banners.length,
-            itemBuilder: (context, i) => _Slide(banner: widget.banners[i]),
-          ),
-          if (widget.banners.length > 1)
-            Positioned(
-              bottom: 8,
-              left: 0,
-              right: 0,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(widget.banners.length, (i) {
-                  return AnimatedBuilder(
-                    animation: _controller,
-                    builder: (_, __) {
-                      final selected = (_controller.page ?? 0).round() == i;
-                      return Container(
-                        width: selected ? 16 : 6,
+    final banner = widget.banners[_index];
+    final image = banner.mobileImageUrl ?? banner.imageUrl;
+
+    return Padding(
+      // mx-3 mt-3, md:mx-4 md:mt-4
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: AspectRatio(
+        // style="aspect-ratio: 768 / 320"
+        aspectRatio: 768 / 320,
+        child: ClipRRect(
+          // rounded-xl = 12px
+          borderRadius: BorderRadius.circular(12),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Fade between slides (hero-fade, duration-700).
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 700),
+                child: GestureDetector(
+                  key: ValueKey(_index),
+                  onTap: () => resolveAppLink(context, banner.linkUrl),
+                  child: AppImage(
+                    url: image,
+                    fit: BoxFit.cover, // object-cover
+                  ),
+                ),
+              ),
+              // Left arrow — white/85 40px circle, left-3, 16px chevron
+              // (h-4 w-4 stroke-width 2, like the Blade SVGs).
+              Positioned(
+                left: 12,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: _AccentedButton(
+                    icon: Icons.chevron_left_rounded,
+                    onTap: () => _goTo(_index - 1),
+                  ),
+                ),
+              ),
+              Positioned(
+                right: 12,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: _AccentedButton(
+                    icon: Icons.chevron_right_rounded,
+                    onTap: () => _goTo(_index + 1),
+                  ),
+                ),
+              ),
+              // Dots — bottom-4, gap-2, active w-6 white / inactive w-1.5 white/55.
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 16,
+                child: IgnorePointer(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(widget.banners.length, (i) {
+                      final active = i == _index;
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        width: active ? 24 : 6,
                         height: 6,
-                        margin: const EdgeInsets.symmetric(horizontal: 3),
                         decoration: BoxDecoration(
-                          color: selected ? AppColors.accent : AppColors.lineStrong,
-                          borderRadius: BorderRadius.circular(3),
+                          color: active
+                              ? Colors.white
+                              : Colors.white.withValues(alpha: 0.55),
+                          borderRadius: BorderRadius.circular(999),
                         ),
                       );
-                    },
-                  );
-                }),
+                    }),
+                  ),
+                ),
               ),
-            ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
 }
 
-class _Slide extends StatelessWidget {
-  const _Slide({required this.banner});
+/// Round white/85 arrow button — `h-10 w-10 rounded-full bg-white/85`,
+/// chevron icon `h-4 w-4 stroke-width 2`.
+class _AccentedButton extends StatelessWidget {
+  const _AccentedButton({required this.icon, required this.onTap});
 
-  final HomeBanner banner;
+  final IconData icon;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final image = banner.mobileImageUrl ?? banner.imageUrl;
-    final title = banner.title;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
-      child: GestureDetector(
-        onTap: () => resolveAppLink(context, banner.linkUrl),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            AppImage(url: image, borderRadius: BorderRadius.circular(4)),
-            if (title != null && title.isNotEmpty)
-              Align(
-                alignment: Alignment.bottomLeft,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.label(size: 12, color: Colors.white, letterSpacing: 1.4),
-                  ),
-                ),
-              ),
-          ],
+    return Material(
+      color: Colors.white.withValues(alpha: 0.85),
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: SizedBox(
+          width: 40,
+          height: 40,
+child: Center(
+        child: Icon(icon, size: 16, color: const Color(0xFF1F1D1D)),
+      ),
         ),
       ),
     );

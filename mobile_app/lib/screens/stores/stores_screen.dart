@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../data/repositories/content_repository.dart';
 import '../../theme/app_colors.dart';
@@ -39,10 +40,11 @@ class _StoresScreenState extends State<StoresScreen> {
         });
       }
     } catch (_) {
-      if (mounted) setState(() {
-        _failed = true;
-        _loading = false;
-      });
+      if (mounted)
+        setState(() {
+          _failed = true;
+          _loading = false;
+        });
     }
   }
 
@@ -109,29 +111,69 @@ class _StoreCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(name, style: AppTypography.sectionTitle(size: 16)),
-                Text(city, style: AppTypography.bodyMedium(weight: FontWeight.w500, color: AppColors.accent)),
+                Text(
+                  city,
+                  style: AppTypography.bodyMedium(
+                    weight: FontWeight.w500,
+                    color: AppColors.accent,
+                  ),
+                ),
                 const SizedBox(height: 6),
                 if (address.isNotEmpty)
-                  Text(address, style: AppTypography.body(size: 13, color: AppColors.muted)),
+                  Text(
+                    address,
+                    style: AppTypography.body(size: 13, color: AppColors.muted),
+                  ),
                 const SizedBox(height: 4),
                 if (hours != null && hours.isNotEmpty)
-                  Text('Hours: $hours', style: AppTypography.bodySmall(size: 12, color: AppColors.muted)),
+                  Text(
+                    'Hours: $hours',
+                    style: AppTypography.bodySmall(
+                      size: 12,
+                      color: AppColors.muted,
+                    ),
+                  ),
                 if (phone != null && phone.isNotEmpty) ...[
                   const SizedBox(height: 4),
-                  Text(phone, style: AppTypography.bodySmall(size: 12, color: AppColors.ink, weight: FontWeight.w600)),
+                  Text(
+                    phone,
+                    style: AppTypography.bodySmall(
+                      size: 12,
+                      color: AppColors.ink,
+                      weight: FontWeight.w600,
+                    ),
+                  ),
                 ],
                 const SizedBox(height: 10),
                 Row(
                   children: [
                     OutlinedButton.icon(
                       onPressed: () {
-                        // Backend may include a maps href.
-                        final mapsUrl = store['maps_url'] as String?;
-                        if (mapsUrl != null && mapsUrl.isNotEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Opening directions…')),
-                          );
-                        }
+                        // Real directions: open the device maps app at a
+                        // Google-Maps search for the store's address (the
+                        // backend doesn't ship geo-coordinates for stores).
+                        final query = [
+                          if (name.isNotEmpty) name,
+                          if (address.isNotEmpty) address,
+                          if (city.isNotEmpty) city,
+                        ].join(', ');
+                        if (query.isEmpty) return;
+                        final uri = Uri.parse(
+                          'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(query)}',
+                        );
+                        launchUrl(
+                          uri,
+                          mode: LaunchMode.externalApplication,
+                        ).catchError((_) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Could not open maps.'),
+                              ),
+                            );
+                          }
+                          return false;
+                        });
                       },
                       icon: const Icon(Icons.directions_outlined, size: 17),
                       label: const Text('Directions'),

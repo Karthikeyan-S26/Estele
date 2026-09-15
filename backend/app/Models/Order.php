@@ -146,6 +146,8 @@ class Order extends Model
                 $order->restock();
             }
 
+            $order->releaseCouponUsageIfCancelledUnpaid();
+
             if ($to === 'delivered' && $order->payment_method === 'cod' && $order->payment_status === 'pending') {
                 $order->payment_status = 'paid';
             }
@@ -194,6 +196,38 @@ class Order extends Model
                 );
             }
         });
+    }
+
+    /**
+     * A cancelled order that was never paid for frees its coupon slot: the
+     * order is dead and no revenue ever landed, so counting it against the
+     * coupon's usage_limit would let abandoned carts exhaust a promo the
+     * store never profited from (and an auto-cancelled customer who reorders
+     * would find the code "maxed out"). Paid cancellations and returns keep
+     * their usage — the coupon genuinely helped close that sale.
+     *
+     * Runs inside the same `updating` hook as restock(), so it only fires on
+     * the single live status transition (cancelled/returned are terminal, so
+     * it can never fire twice for the same order). Idempotent and floor-safe:
+     * it never pushes used_count below zero. Fires `updated` on the coupon
+     * (which clears the storefront's public-coupon cache, same as the
+     * increment at checkout).
+     */
+    protected function releaseCouponUsageIfCancelledUnpaid(): void
+    {
+        if ($this->status !== 'cancelled' || ! in_array($this->payment_status, ['pending', 'failed'], true)) {
+            return;
+        }
+
+        $usage = $this->couponUsages()->first();
+
+        if (! $usage) {
+            return;
+        }
+
+        Coupon::whereKey($usage->coupon_id)
+            ->where('used_count', '>', 0)
+            ->decrement('used_count');
     }
 
     /**

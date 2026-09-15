@@ -37,5 +37,7 @@
         <env name="TWILIO_WHATSAPP_FROM" value=""/>
         <env name="VAS_SMS_API_KEY" value=""/>
         <env name="TWILIO_SID" value=""/>
+        <env name="TWILIO_AUTH_TOKEN" value=""/>
+        <env name="TWILIO_VERIFY_SERVICE_SID" value=""/>
     </php>
 </phpunit>
