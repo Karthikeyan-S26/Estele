@@ -6,7 +6,7 @@
     </a>
   </div>
 @else
-  <div class="flex-1 divide-y divide-line overflow-y-auto px-5">
+  <div class="divide-y divide-line overflow-y-auto px-5">
     @foreach($items as $item)
       <div class="flex gap-3 py-4" data-cart-drawer-item="{{ $item->id }}">
         <a class="block aspect-square w-16 shrink-0 overflow-hidden rounded bg-placeholder" href="{{ route('products.show', $item->product) }}">
