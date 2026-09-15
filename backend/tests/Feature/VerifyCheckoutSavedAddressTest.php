@@ -23,6 +23,29 @@ class VerifyCheckoutSavedAddressTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_checkout_page_prefills_contact_details_for_a_logged_in_user(): void
+    {
+        $user = User::factory()->create(['email' => 'prefill@example.com', 'phone' => '9123456789']);
+        $this->actingAs($user);
+        config(['session.driver' => 'database']);
+
+        $firstResponse = $this->get('/cart');
+        $sessionCookieName = config('session.cookie');
+        $sessionCookieValue = collect($firstResponse->headers->getCookies())
+            ->first(fn ($c) => $c->getName() === $sessionCookieName)
+            ->getValue();
+        $sessionId = DB::table('sessions')->orderByDesc('last_activity')->value('id');
+
+        $cart = Cart::firstOrCreate(['session_id' => $sessionId]);
+        $cart->items()->create(['product_id' => $this->makeProduct(500)->id, 'quantity' => 1]);
+
+        $response = $this->withUnencryptedCookie($sessionCookieName, $sessionCookieValue)->get('/checkout');
+
+        $response->assertOk();
+        $response->assertSee('value="prefill@example.com"', false);
+        $response->assertSee('value="9123456789"', false);
+    }
+
     public function test_checkout_with_address_id_uses_the_saved_address(): void
     {
         $user = User::factory()->create(['name' => 'Jane Doe']);

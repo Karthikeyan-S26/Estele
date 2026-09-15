@@ -18,10 +18,10 @@
         <fieldset class="field-set">
           <legend class="mb-3.5 text-[14px] font-medium uppercase tracking-[0.5px]">Contact</legend>
           <label class="mb-1.5 block text-[13px] font-medium text-heading" for="customer_email">Email</label>
-          <input class="w-full border border-line-strong bg-white px-4 py-3 text-base outline-none transition-colors placeholder:text-muted focus:border-heading mb-3.5" id="customer_email" name="customer_email" type="email" placeholder="you@example.com" value="{{ old('customer_email') }}" autocomplete="email" required>
+          <input class="w-full border border-line-strong bg-white px-4 py-3 text-base outline-none transition-colors placeholder:text-muted focus:border-heading mb-3.5" id="customer_email" name="customer_email" type="email" placeholder="you@example.com" value="{{ old('customer_email', auth()->user()?->email) }}" autocomplete="email" required>
           @error('customer_email') <p class="mb-3.5 -mt-2 text-[12px] text-salebadge">{{ $message }}</p> @enderror
           <label class="mb-1.5 block text-[13px] font-medium text-heading" for="customer_phone">Phone</label>
-          <input class="w-full border border-line-strong bg-white px-4 py-3 text-base outline-none transition-colors placeholder:text-muted focus:border-heading mb-3.5" id="customer_phone" name="customer_phone" type="tel" placeholder="+91" value="{{ old('customer_phone') }}" inputmode="tel" autocomplete="tel" required>
+          <input class="w-full border border-line-strong bg-white px-4 py-3 text-base outline-none transition-colors placeholder:text-muted focus:border-heading mb-3.5" id="customer_phone" name="customer_phone" type="tel" placeholder="+91" value="{{ old('customer_phone', auth()->user()?->phone) }}" inputmode="tel" autocomplete="tel" required>
           @error('customer_phone') <p class="mb-3.5 -mt-2 text-[12px] text-salebadge">{{ $message }}</p> @enderror
         </fieldset>
 
