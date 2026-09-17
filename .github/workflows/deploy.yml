@@ -104,21 +104,33 @@ jobs:
       # directly. .env, storage/ (all uploaded product/banner/old-jewellery
       # media lives under storage/app), vendor/, and the storage symlink are
       # excluded so a deploy can never touch production data or config.
+      #
+      # Every pattern below is ROOT-ANCHORED (leading '/') on purpose: an
+      # unanchored rsync --exclude matches at ANY depth, not just the sync
+      # root. 'vendor/' without the slash silently swallowed every nested
+      # directory literally named "vendor" too — resources/views/vendor/
+      # (the vendor portal's own Blade views) and lang/vendor/ never made it
+      # to the server, 500ing every /vendor/* page with "View not found"
+      # (found via the server's own storage/logs/laravel-*.log, not a code
+      # bug at all) until this was root-anchored. Same reasoning applies to
+      # storage/ and node_modules/ even though no current nested collision
+      # for those is known — anchoring costs nothing and closes the same
+      # class of bug before it can happen again.
       - name: Sync application files to Hostinger
         run: |
           rsync -az --delete \
             -e "ssh -p ${{ secrets.HOSTINGER_PORT }}" \
-            --exclude '.env' \
-            --exclude '.env.*' \
-            --exclude 'storage/' \
-            --exclude 'vendor/' \
-            --exclude 'node_modules/' \
-            --exclude 'bootstrap/cache/*.php' \
-            --exclude 'public/storage' \
-            --exclude '.phpunit.result.cache' \
+            --exclude '/.env' \
+            --exclude '/.env.*' \
+            --exclude '/storage/' \
+            --exclude '/vendor/' \
+            --exclude '/node_modules/' \
+            --exclude '/bootstrap/cache/*.php' \
+            --exclude '/public/storage' \
+            --exclude '/.phpunit.result.cache' \
             --exclude '*.log' \
-            --exclude '.git/' \
-            --exclude '.github/' \
+            --exclude '/.git/' \
+            --exclude '/.github/' \
             ./backend/ "${{ secrets.HOSTINGER_USERNAME }}@${{ secrets.HOSTINGER_HOST }}:${{ secrets.HOSTINGER_DEPLOY_PATH }}/"
 
       # Written to a file (rather than an inline SSH heredoc) so the shell
