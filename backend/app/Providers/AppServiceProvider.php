@@ -38,14 +38,16 @@ use App\Observers\ReviewObserver;
 use App\Observers\SettingObserver;
 use App\Policies\CustomerPolicy;
 use App\Policies\OldJewelleryRequestPolicy;
+use App\Services\Otp\OtpManager;
 use App\Services\WhatsApp\CloudApiWhatsAppGateway;
 use App\Services\WhatsApp\LogWhatsAppGateway;
-use App\Services\Otp\OtpManager;
 use App\Services\WhatsApp\WhatsAppGateway;
 use App\View\Composers\SiteDataComposer;
 use BezhanSalleh\FilamentShield\Facades\FilamentShield;
+use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
@@ -85,6 +87,21 @@ class AppServiceProvider extends ServiceProvider
 
         // Logins stay alive for five years unless the user signs out.
         Auth::guard('web')->setRememberDuration((int) config('session.lifetime'));
+
+        // The app stores and computes everything in UTC (config/app.timezone)
+        // — that must not change, since scheduled jobs (bidding windows,
+        // wallet-credit expiry) reason about "now" in UTC. But every
+        // customer-facing date/time on the storefront was displaying that
+        // same UTC instant verbatim, showing times 5.5 hours behind for
+        // India — this macro is the one place that display-only conversion
+        // happens: ->formatIst('d M Y, h:i A') anywhere a Blade view prints
+        // a timestamp to a customer.
+        $formatIst = function (string $format) {
+            /** @var Carbon|CarbonImmutable $this */
+            return $this->clone()->setTimezone('Asia/Kolkata')->format($format);
+        };
+        Carbon::macro('formatIst', $formatIst);
+        CarbonImmutable::macro('formatIst', $formatIst);
 
         // The per-IP throttles on the OTP routes cannot stop SMS pumping from
         // rotating addresses, so codes are also capped per phone number.

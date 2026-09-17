@@ -66,6 +66,7 @@
             </div>
           </label>
           <p class="mt-2 text-[11px] leading-snug text-muted">Turn the piece slowly and show any hallmark or stamp — it helps vendors give their best offer.</p>
+          <p class="mt-1.5 hidden text-[11px] font-medium text-salebadge" data-file-error></p>
         </div>
 
         <div data-media-picker="image">
@@ -103,6 +104,7 @@
             </div>
           </label>
           <p class="mt-2 text-[11px] leading-snug text-muted">A clear, well-lit shot of the full piece.</p>
+          <p class="mt-1.5 hidden text-[11px] font-medium text-salebadge" data-file-error></p>
         </div>
       </div>
 
@@ -115,7 +117,11 @@
       </div>
 
       <button class="inline-flex w-full items-center justify-center gap-2 border border-accent bg-accent px-6 py-3.5 text-[13px] font-medium uppercase tracking-[0.5px] text-white transition-colors hover:border-accent-dark hover:bg-accent-dark disabled:cursor-not-allowed disabled:opacity-60" type="submit" data-submit>
-        Submit Request
+        <svg class="hidden h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true" data-submit-spinner>
+          <circle class="opacity-25" cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3"></circle>
+          <path class="opacity-90" d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"></path>
+        </svg>
+        <span data-submit-label>Submit Request</span>
       </button>
     </form>
   </div>
@@ -123,12 +129,19 @@
   @push('scripts')
     <script>
       (function () {
+        // Keep in sync with StoreOldJewelleryRequestRequest's max: rules (in KB).
+        var MAX_BYTES = { image: 3 * 1024 * 1024, video: 20 * 1024 * 1024 };
+        var MAX_LABEL = { image: '3MB', video: '20MB' };
+
         function formatSize(bytes) {
           if (bytes < 1024 * 1024) return Math.max(1, Math.round(bytes / 1024)) + ' KB';
           return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
         }
 
+        var pickers = [];
+
         document.querySelectorAll('[data-media-picker]').forEach(function (picker) {
+          var kind = picker.getAttribute('data-media-picker');
           var zone = picker.querySelector('[data-dropzone]');
           var input = picker.querySelector('[data-file-input]');
           var empty = picker.querySelector('[data-empty]');
@@ -137,6 +150,7 @@
           var nameEl = picker.querySelector('[data-file-name]');
           var sizeEl = picker.querySelector('[data-file-size]');
           var removeBtn = picker.querySelector('[data-remove]');
+          var errorEl = picker.querySelector('[data-file-error]');
           var objectUrl = null;
 
           function clearPreview() {
@@ -144,6 +158,18 @@
             objectUrl = null;
             preview.removeAttribute('src');
             if (preview.tagName === 'VIDEO') preview.load();
+          }
+
+          function showError(message) {
+            if (!errorEl) return;
+            errorEl.textContent = message;
+            errorEl.classList.remove('hidden');
+          }
+
+          function clearError() {
+            if (!errorEl) return;
+            errorEl.textContent = '';
+            errorEl.classList.add('hidden');
           }
 
           function render() {
@@ -157,6 +183,19 @@
               return;
             }
 
+            // Reject oversized files before they ever preview or reach the
+            // server — photo must stay under 3MB, video under 20MB.
+            var limit = MAX_BYTES[kind];
+            if (limit && file.size > limit) {
+              input.value = '';
+              zone.removeAttribute('data-filled');
+              empty.classList.remove('hidden');
+              filled.classList.add('hidden');
+              showError((kind === 'video' ? 'Video' : 'Photo') + ' is too large — max ' + MAX_LABEL[kind] + ' (this file is ' + formatSize(file.size) + ').');
+              return;
+            }
+
+            clearError();
             objectUrl = URL.createObjectURL(file);
             preview.src = objectUrl;
             nameEl.textContent = file.name;
@@ -172,6 +211,7 @@
             event.preventDefault();
             event.stopPropagation();
             input.value = '';
+            clearError();
             render();
           });
 
@@ -194,14 +234,44 @@
             input.files = event.dataTransfer.files;
             render();
           });
+
+          pickers.push({ kind: kind, input: input });
         });
 
         var form = document.querySelector('[data-sell-jewellery-form]');
         var submit = form && form.querySelector('[data-submit]');
+        var spinner = submit && submit.querySelector('[data-submit-spinner]');
+        var label = submit && submit.querySelector('[data-submit-label]');
+
         if (form && submit) {
-          form.addEventListener('submit', function () {
+          form.addEventListener('submit', function (event) {
+            // Final guard: block submit if any picker still holds an
+            // oversize file (covers the rare case a size slips through,
+            // e.g. a file re-selected via the OS picker after a drop).
+            for (var i = 0; i < pickers.length; i++) {
+              var file = pickers[i].input.files && pickers[i].input.files[0];
+              var limit = MAX_BYTES[pickers[i].kind];
+              if (file && limit && file.size > limit) {
+                event.preventDefault();
+                return;
+              }
+            }
+
             submit.disabled = true;
-            submit.textContent = 'Uploading…';
+            if (spinner) spinner.classList.remove('hidden');
+
+            // Cycle the label through a few reassuring messages instead of
+            // sitting on a single static "Uploading…" for the whole
+            // (often slow, on mobile data) upload — keeps it feeling alive.
+            if (label) {
+              var messages = ['Uploading…', 'Almost there…', 'Hang tight…'];
+              var i2 = 0;
+              label.textContent = messages[0];
+              setInterval(function () {
+                i2 = (i2 + 1) % messages.length;
+                label.textContent = messages[i2];
+              }, 2200);
+            }
           });
         }
       })();

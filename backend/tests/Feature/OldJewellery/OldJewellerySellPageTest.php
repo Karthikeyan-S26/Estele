@@ -44,10 +44,13 @@ class OldJewellerySellPageTest extends TestCase
         $user = User::factory()->create();
         $request = $this->makeRequest(['user_id' => $user->id]);
 
+        // The show page deliberately keeps request numbers, bid mechanics,
+        // and vendor mentions off the customer-facing UI — just the plain
+        // status. Assert on that instead of the (no longer shown) number.
         $this->actingAs($user)
             ->get(route('account.sell-jewellery.show', $request))
             ->assertOk()
-            ->assertSee($request->request_number);
+            ->assertSee('In Review');
     }
 
     public function test_a_user_cannot_view_another_users_request(): void
@@ -65,14 +68,16 @@ class OldJewellerySellPageTest extends TestCase
     {
         $user = User::factory()->create();
         $other = User::factory()->create();
-        $mine = $this->makeRequest(['user_id' => $user->id]);
-        $otherRequest = $this->makeRequest(['user_id' => $other->id]);
+        $mine = $this->makeRequest(['user_id' => $user->id, 'final_amount' => 12345]);
+        $otherRequest = $this->makeRequest(['user_id' => $other->id, 'final_amount' => 67890]);
 
+        // The card no longer prints the request number, so distinguish the
+        // two rows by their (also no-longer-duplicated-elsewhere) amounts.
         $this->actingAs($user)
             ->get(route('account.sell-jewellery.index'))
             ->assertOk()
-            ->assertSee($mine->request_number)
-            ->assertDontSee($otherRequest->request_number);
+            ->assertSee('12,345')
+            ->assertDontSee('67,890');
     }
 
     public function test_wallet_page_shows_balance_and_credits(): void
@@ -85,7 +90,7 @@ class OldJewellerySellPageTest extends TestCase
             ->assertSee('500');
     }
 
-    public function test_show_page_renders_stepper_for_bidding_active_status(): void
+    public function test_show_page_renders_status_panel_for_bidding_active_status(): void
     {
         $user = User::factory()->create();
         $request = $this->makeRequest(['user_id' => $user->id, 'status' => 'bidding_active']);
@@ -93,11 +98,11 @@ class OldJewellerySellPageTest extends TestCase
         $this->actingAs($user)
             ->get(route('account.sell-jewellery.show', $request))
             ->assertOk()
-            ->assertSee('Approved')
+            ->assertSee('In Review')
             ->assertSee('data-poll-status', false);
     }
 
-    public function test_show_page_displays_final_amount_when_completed(): void
+    public function test_show_page_displays_credited_amount_when_completed(): void
     {
         $user = User::factory()->create();
         $request = $this->makeRequest([
@@ -108,11 +113,14 @@ class OldJewellerySellPageTest extends TestCase
             'credited_amount' => 13500,
         ]);
 
+        // Only the credited (post-deduction) amount is shown to the
+        // customer now — the gross/deduction breakdown was dropped along
+        // with the rest of the bid mechanics.
         $this->actingAs($user)
             ->get(route('account.sell-jewellery.show', $request))
             ->assertOk()
-            ->assertSee('15,000')
-            ->assertSee('13,500');
+            ->assertSee('13,500')
+            ->assertDontSee('15,000');
     }
 
     public function test_store_creates_a_request_and_redirects_to_show(): void

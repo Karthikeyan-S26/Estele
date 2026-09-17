@@ -6,6 +6,7 @@ use App\Http\Requests\Api\StoreOldJewelleryRequestRequest;
 use App\Models\OldJewelleryRequest;
 use App\Services\OldJewellery\OldJewelleryRequestService;
 use App\Services\OldJewellery\VendorInvitationService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -43,7 +44,7 @@ class OldJewellerySellController extends Controller
 
         return redirect()
             ->route('account.sell-jewellery.show', $fresh)
-            ->with('success', 'Your request has been submitted — vendors are being notified now.');
+            ->with('success', 'Your jewellery has been submitted.');
     }
 
     public function index(): View
@@ -57,17 +58,12 @@ class OldJewellerySellController extends Controller
     {
         Gate::authorize('view', $oldJewelleryRequest);
 
-        $cancelReason = $oldJewelleryRequest->status === 'cancelled'
-            ? $oldJewelleryRequest->activityLogs()->latest('id')->value('action')
-            : null;
-
         return view('account.sell-jewellery.show', [
             'oldJewelleryRequest' => $oldJewelleryRequest,
-            'cancelReason' => $cancelReason,
         ]);
     }
 
-    public function status(OldJewelleryRequest $oldJewelleryRequest): \Illuminate\Http\JsonResponse
+    public function status(OldJewelleryRequest $oldJewelleryRequest): JsonResponse
     {
         Gate::authorize('view', $oldJewelleryRequest);
 

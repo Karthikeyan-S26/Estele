@@ -9,6 +9,16 @@
   </nav>
 
   <div class="mx-auto w-full max-w-wrapper px-3 pb-10 md:px-4 md:pb-[60px]">
+    <div class="mb-6 flex flex-wrap gap-3">
+      <a class="inline-flex items-center gap-1.5 rounded-full border border-line px-4 py-2 text-[12px] font-medium uppercase tracking-[0.3px] text-heading transition-colors hover:border-accent hover:text-accent" href="{{ route('account.sell-jewellery.index') }}">
+        My Requests
+      </a>
+      <a class="inline-flex items-center gap-1.5 rounded-full border border-line px-4 py-2 text-[12px] font-medium uppercase tracking-[0.3px] text-heading transition-colors hover:border-accent hover:text-accent" href="{{ route('account.sell-jewellery.wallet') }}">
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2" /><path d="M3 10h18M7 15h3" /></svg>
+        My Wallet
+      </a>
+    </div>
+
     <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
       <h1 class="text-[20px] uppercase tracking-[0.5px] md:text-[26px]">My Sell Requests</h1>
       <a class="text-[12px] font-medium uppercase tracking-[0.3px] text-heading underline hover:text-accent" href="{{ route('account.sell-jewellery.create') }}">+ New Request</a>

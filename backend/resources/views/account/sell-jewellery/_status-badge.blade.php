@@ -30,14 +30,13 @@
 @endphp
 
 @if (($asCard ?? false))
-  <a href="{{ route('account.sell-jewellery.show', $request) }}" class="block rounded-lg border border-line p-4 transition-colors hover:border-accent">
+  <a href="{{ route('account.sell-jewellery.show', $request) }}" class="block rounded-lg border border-line p-4 transition-colors hover:border-accent hover:shadow-sm">
     <div class="mb-2 flex items-center justify-between gap-2">
-      <span class="text-[13px] font-medium uppercase tracking-[0.3px] text-heading">{{ $request->request_number }}</span>
-      <span class="rounded-full px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.3px] {{ $badgeClass }}">{{ $badgeLabel }}</span>
+      <span class="rounded-full px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-[0.3px] {{ $badgeClass }}">{{ $badgeLabel }}</span>
+      <span class="text-[11px] text-muted">{{ $request->created_at->formatIst('d M Y, h:i A') }}</span>
     </div>
-    <p class="text-[12px] text-muted">Submitted {{ $request->created_at->format('d M Y, h:i A') }}</p>
     @if ($request->final_amount)
-      <p class="mt-2 text-[13px] font-medium text-heading">Final offer: ₹{{ number_format((float) $request->final_amount, 2) }}</p>
+      <p class="mt-1 text-[14px] font-medium text-heading">₹{{ number_format((float) $request->final_amount, 2) }}</p>
     @endif
   </a>
 @else
