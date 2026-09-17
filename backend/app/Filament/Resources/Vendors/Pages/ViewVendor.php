@@ -14,7 +14,6 @@ class ViewVendor extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            VendorsTable::sendOtpAction(),
             VendorsTable::verifyOtpAction()->after(fn () => $this->refreshFormData(['mobile_verified_at'])),
             EditAction::make(),
         ];

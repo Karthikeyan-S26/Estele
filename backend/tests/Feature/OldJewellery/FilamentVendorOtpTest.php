@@ -16,13 +16,27 @@ class FilamentVendorOtpTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_send_otp_action_issues_a_code_for_the_vendor_mobile(): void
+    public function test_verify_mobile_action_issues_a_code_as_soon_as_it_opens(): void
+    {
+        $this->actingAsSuperAdmin();
+        $vendor = Vendor::create(['name' => 'Acme Gold', 'mobile' => '9111111111', 'is_active' => true]);
+
+        // A single "Verify mobile" click sends the code and opens straight
+        // on the code field — mounting the action is enough, no separate
+        // "send" action to call first.
+        Livewire::test(EditVendor::class, ['record' => $vendor->id])
+            ->mountAction('verify_otp');
+
+        $this->assertDatabaseHas('otp_codes', ['phone' => '9111111111']);
+    }
+
+    public function test_resend_otp_action_issues_another_code(): void
     {
         $this->actingAsSuperAdmin();
         $vendor = Vendor::create(['name' => 'Acme Gold', 'mobile' => '9111111111', 'is_active' => true]);
 
         Livewire::test(EditVendor::class, ['record' => $vendor->id])
-            ->callAction(['verify_otp', 'send_otp'])
+            ->callAction(['verify_otp', 'resend_otp'])
             ->assertHasNoActionErrors();
 
         $this->assertDatabaseHas('otp_codes', ['phone' => '9111111111']);
@@ -32,15 +46,27 @@ class FilamentVendorOtpTest extends TestCase
     {
         $this->actingAsSuperAdmin();
         $vendor = Vendor::create(['name' => 'Acme Gold', 'mobile' => '9111111111', 'is_active' => true]);
-        OtpCode::create(['phone' => '9111111111', 'code_hash' => Hash::make('123456'), 'expires_at' => now()->addMinutes(5)]);
 
-        Livewire::test(EditVendor::class, ['record' => $vendor->id])
-            ->callAction('verify_otp', ['code' => '654321'])
+        // mountUsing() issues a fresh (randomly-coded) OTP the instant the
+        // modal opens, so — rather than pre-seeding a known code that
+        // mounting would immediately consume anyway — mount once, overwrite
+        // the hash of the row it just created with a known code, then submit
+        // the already-mounted action directly (callAction() would re-mount
+        // and re-issue a new OTP, consuming this known code first).
+        $component = Livewire::test(EditVendor::class, ['record' => $vendor->id])
+            ->mountAction('verify_otp');
+
+        OtpCode::where('phone', '9111111111')->whereNull('consumed_at')
+            ->latest('id')->first()
+            ->update(['code_hash' => Hash::make('123456')]);
+
+        $component->fillForm(['code' => '654321'])
+            ->callMountedAction()
             ->assertHasNoActionErrors();
         $this->assertNull($vendor->fresh()->mobile_verified_at);
 
-        Livewire::test(EditVendor::class, ['record' => $vendor->id])
-            ->callAction('verify_otp', ['code' => '123456'])
+        $component->fillForm(['code' => '123456'])
+            ->callMountedAction()
             ->assertHasNoActionErrors();
         $this->assertNotNull($vendor->fresh()->mobile_verified_at);
     }

@@ -12,6 +12,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -117,8 +118,11 @@ class VendorsTable
     }
 
     /**
-     * One modal for the whole mobile check: "Send code" texts the vendor a
-     * 6-digit OTP, they read it back, the admin types it in and confirms.
+     * One button, one step: clicking "Verify mobile" fires the OTP straight
+     * away and opens the modal already on the code field — no separate
+     * "send" button for the admin to notice and press first. A quiet
+     * "Resend code" footer link covers the code expiring or never arriving,
+     * without competing with the single primary action.
      */
     public static function verifyOtpAction(): Action
     {
@@ -127,11 +131,28 @@ class VendorsTable
             ->icon(Heroicon::OutlinedShieldCheck)
             ->color('success')
             ->visible(fn (Vendor $record) => ! $record->mobile_verified_at)
+            // Runs when the modal mounts, so the single "Verify mobile"
+            // click both fires the OTP and opens the modal straight on the
+            // code field — no separate "send" step to show. Must still fill
+            // the (empty) form schema itself, same as Filament's own default
+            // mountUsing() does, or the modal's form never initialises.
+            ->mountUsing(function (Schema $schema, Vendor $record) {
+                $schema->fill();
+                app(OtpManager::class)->issue($record->mobile);
+            })
             ->modalHeading(fn (Vendor $record) => "Verify {$record->mobile}")
-            ->modalDescription('Press "Send code", ask the vendor for the 6-digit code they receive, then enter it below.')
-            ->modalSubmitActionLabel('Confirm code')
+            ->modalDescription('Enter the 6-digit code just sent to the vendor.')
+            ->modalSubmitActionLabel('Verify')
             ->extraModalFooterActions([
-                self::sendOtpAction(),
+                Action::make('resend_otp')
+                    ->label('Resend code')
+                    ->link()
+                    ->color('gray')
+                    ->action(function (Vendor $record) {
+                        app(OtpManager::class)->issue($record->mobile);
+
+                        Notification::make()->title('Code resent.')->success()->send();
+                    }),
             ])
             ->schema([
                 TextInput::make('code')
@@ -141,29 +162,20 @@ class VendorsTable
                     ->length(6)
                     ->autofocus(),
             ])
-            ->action(function (array $data, Vendor $record) {
+            ->action(function (array $data, Action $action, Vendor $record) {
                 if (! app(OtpManager::class)->verify($record->mobile, (string) $data['code'])) {
                     Notification::make()->title('Invalid or expired code.')->danger()->send();
 
-                    return;
+                    // Keep the modal open on a wrong code instead of closing
+                    // it — closing would force the admin to click "Verify
+                    // mobile" again just to retry, which re-issues a whole
+                    // new OTP for what might just be a typo.
+                    $action->halt();
                 }
 
                 $record->update(['mobile_verified_at' => now()]);
 
-                Notification::make()->title('Mobile number verified.')->success()->send();
-            });
-    }
-
-    public static function sendOtpAction(): Action
-    {
-        return Action::make('send_otp')
-            ->label('Send code')
-            ->icon(Heroicon::OutlinedDevicePhoneMobile)
-            ->color('gray')
-            ->action(function (Vendor $record) {
-                app(OtpManager::class)->issue($record->mobile);
-
-                Notification::make()->title("Code sent to {$record->mobile}")->success()->send();
+                Notification::make()->title('Verified.')->success()->send();
             });
     }
 }
