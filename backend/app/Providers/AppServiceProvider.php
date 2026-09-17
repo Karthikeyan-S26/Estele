@@ -121,6 +121,15 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
+        // Blunts password-guessing against a vendor's email, same spirit as
+        // the OTP throttle above — a handful of vendor accounts means a
+        // guessed password is a real risk without this.
+        RateLimiter::for('vendor-login', function (Request $request) {
+            $email = strtolower((string) $request->input('email'));
+
+            return Limit::perMinute(5)->by('vendor-login:'.$email.'|'.$request->ip());
+        });
+
         // Laravel's policy auto-discovery matches on class name
         // ("FooPolicy" <-> "Foo"), which can't work for User: the Customers
         // admin resource needs its own permission namespace (Customer, not

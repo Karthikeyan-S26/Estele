@@ -13,9 +13,9 @@ use Illuminate\Notifications\Notifiable;
  * Two ways in, both supported at once:
  *  - the per-invitation signed token (OldJewelleryVendorInvitation), which
  *    needs no account at all, and
- *  - a linked User ($this->user) that logs into the admin panel, created when
- *    the admin supplies an email. What that login can see is decided purely by
- *    the Filament Shield permissions on its role — nothing here grants access.
+ *  - a linked User ($this->user) that logs into its own portal at /vendor
+ *    (App\Http\Controllers\Vendor\*), created when the admin supplies an
+ *    email — never the Filament admin panel; see User::canAccessPanel().
  *
  * ACCESS_ROLE_* picks which notifications this contact receives, not what it
  * may do: 'vendor' gets the bidding stream, 'admin' only account mail.
@@ -74,6 +74,28 @@ class Vendor extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * The bidding vendor tied to the signed-in user, or null when there
+     * isn't one (a customer, staff, or nobody signed in). This is the one
+     * place App\Http\Controllers\Vendor\* and EnsureVendorAccess ask "is the
+     * current login a vendor" — 'admin'-access contacts are excluded, since
+     * that access level is a panel login that happens to live in this
+     * table, not a bidding vendor with a portal to see.
+     */
+    public static function current(): ?self
+    {
+        $userId = auth()->id();
+
+        if (! $userId) {
+            return null;
+        }
+
+        return static::query()
+            ->where('user_id', $userId)
+            ->where('access_role', self::ACCESS_ROLE_VENDOR)
+            ->first();
     }
 
     /**

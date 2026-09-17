@@ -23,8 +23,15 @@ use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\RewardSubmissionController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SitemapController;
+use App\Http\Controllers\Vendor\VendorAuthController;
+use App\Http\Controllers\Vendor\VendorBidHistoryController;
+use App\Http\Controllers\Vendor\VendorDashboardController;
+use App\Http\Controllers\Vendor\VendorPortalMediaController;
+use App\Http\Controllers\Vendor\VendorProfileController;
+use App\Http\Controllers\Vendor\VendorRequestController;
 use App\Http\Controllers\VendorBidController;
 use App\Http\Controllers\VendorMediaController;
+use App\Http\Middleware\EnsureVendorAccess;
 use App\Models\Setting;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
@@ -360,6 +367,53 @@ Route::post('/old-jewellery/vendor/{token}/accept', [VendorBidController::class,
 Route::post('/old-jewellery/vendor/{token}/decline', [VendorBidController::class, 'decline'])
     ->name('old-jewellery.vendor.decline')
     ->middleware('throttle:30,1');
+
+/*
+|--------------------------------------------------------------------------
+| Vendor Portal (session login — entirely separate from /admin)
+|--------------------------------------------------------------------------
+| A vendor contact signs in here, never at /admin — see
+| App\Models\User::canAccessPanel(). Everything under this prefix is
+| jewellery-bidding only: open requests it was invited to, its own bid
+| history, and its own profile. EnsureVendorAccess guards every route
+| below except the login screen itself.
+*/
+
+Route::prefix('vendor')->name('vendor.')->group(function () {
+    // Deliberately no 'guest' middleware here — same reason the admin login
+    // (App\Filament\Pages\Auth\Login) doesn't use it: a customer or staff
+    // login already sitting in the shared 'web' guard slot must still be
+    // able to reach this form and sign in as a vendor instead. showLogin()
+    // itself handles "already a vendor" (redirect to dashboard) and parks
+    // an OTP-only customer session rather than silently overwriting it.
+    Route::get('/login', [VendorAuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [VendorAuthController::class, 'login'])
+        ->middleware('throttle:vendor-login')
+        ->name('login.store');
+
+    Route::middleware(EnsureVendorAccess::class)->group(function () {
+        Route::post('/logout', [VendorAuthController::class, 'logout'])->name('logout');
+
+        Route::get('/', [VendorDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/bids', [VendorBidHistoryController::class, 'index'])->name('bids');
+
+        Route::get('/requests/{oldJewelleryRequest:request_number}', [VendorRequestController::class, 'show'])
+            ->name('requests.show');
+        Route::post('/requests/{oldJewelleryRequest:request_number}/bid', [VendorRequestController::class, 'bid'])
+            ->name('requests.bid');
+        Route::post('/requests/{oldJewelleryRequest:request_number}/decline', [VendorRequestController::class, 'decline'])
+            ->name('requests.decline');
+        Route::get('/requests/{oldJewelleryRequest:request_number}/image', [VendorPortalMediaController::class, 'image'])
+            ->name('requests.image');
+        Route::get('/requests/{oldJewelleryRequest:request_number}/video', [VendorPortalMediaController::class, 'video'])
+            ->name('requests.video');
+
+        Route::get('/profile', [VendorProfileController::class, 'edit'])->name('profile');
+        Route::post('/profile/contact', [VendorProfileController::class, 'updateContact'])->name('profile.contact');
+        Route::post('/profile/password', [VendorProfileController::class, 'updatePassword'])->name('profile.password');
+    });
+});
+
 Route::get('/admin/old-jewellery/{oldJewelleryRequest}/video', [AdminOldJewelleryMediaController::class, 'video'])
     ->middleware('auth')
     ->name('admin.old-jewellery.video');

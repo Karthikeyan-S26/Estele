@@ -13,10 +13,10 @@ use Tests\TestCase;
  * Covers the "one browser, two sessions" flow: a customer logged in on the
  * storefront opens /admin/login, signs in as an admin, then signs out of
  * the admin panel — the customer should land back exactly where they were,
- * with no separate login step. See App\Support\AdminSessionParking for why
+ * with no separate login step. See App\Support\PanelSessionParking for why
  * this needs its own park/restore trick rather than a second auth guard.
  */
-class AdminSessionParkingTest extends TestCase
+class PanelSessionParkingTest extends TestCase
 {
     use RefreshDatabase;
 

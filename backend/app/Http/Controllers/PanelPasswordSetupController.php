@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,8 +14,10 @@ use Illuminate\View\View;
 
 /**
  * Where a panel invite lands: the recipient chooses their own password, then
- * signs in at the normal admin login. Uses the 'panel_invites' broker (48h)
- * rather than the 60-minute self-service one.
+ * signs in — at the vendor portal login for a vendor contact, at the normal
+ * admin login for everyone else (staff, or an 'admin'-access contact — see
+ * User::canAccessPanel()). Uses the 'panel_invites' broker (48h) rather than
+ * the 60-minute self-service one.
  */
 class PanelPasswordSetupController extends Controller
 {
@@ -34,13 +37,17 @@ class PanelPasswordSetupController extends Controller
             'password' => ['required', 'confirmed', PasswordRule::min(8)],
         ]);
 
+        $isVendor = false;
+
         $status = Password::broker('panel_invites')->reset(
             $validated,
-            function ($user, string $password) {
+            function (User $user, string $password) use (&$isVendor) {
                 $user->forceFill([
                     'password' => Hash::make($password),
                     'remember_token' => Str::random(60),
                 ])->save();
+
+                $isVendor = $user->vendor()->where('access_role', 'vendor')->exists();
 
                 event(new PasswordReset($user));
             },
@@ -52,7 +59,7 @@ class PanelPasswordSetupController extends Controller
                 ->withErrors(['email' => __($status)]);
         }
 
-        return redirect('/admin/login')
+        return redirect($isVendor ? route('vendor.login') : '/admin/login')
             ->with('status', 'Your password has been set. Please sign in.');
     }
 }

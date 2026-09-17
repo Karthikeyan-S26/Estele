@@ -6,13 +6,16 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * Lets a customer's storefront session and an admin's Filament session share
- * one browser without either signing the other out.
+ * Lets a customer's storefront session share one browser with an admin
+ * panel session OR a vendor portal session, without either signing the
+ * other out.
  *
  * There is only one auth guard in this app ('web' — see config/auth.php),
- * used both by the OTP-only storefront login (App\Http\Controllers\
- * OtpAuthController) and by the Filament admin panel's email+password login.
- * Logging in as one necessarily replaces the other in that single guard slot.
+ * used by the OTP-only storefront login (App\Http\Controllers\
+ * OtpAuthController), the Filament admin panel's email+password login, and
+ * the vendor portal's email+password login (App\Http\Controllers\Vendor\
+ * VendorAuthController). Logging in as one necessarily replaces whichever
+ * of the others was in that single guard slot.
  *
  * The fix used here is a session "parking" trick rather than a second guard:
  * a second guard was tried and reverted (it required threading an explicit
@@ -21,16 +24,19 @@ use Illuminate\Support\Facades\Auth;
  * an authenticated Filament request, which silently broke role checks in
  * queued jobs and customer-triggered notifications). Instead:
  *
- * 1. App\Filament\Pages\Auth\Login::mount() parks the current session's
- *    customer (if there is one) via park() below, then logs them out so the
- *    admin login form loads instead of Filament bouncing straight past it.
- * 2. App\Http\Controllers\Auth\AdminLogoutController restores the parked
- *    customer (if any) via restore() below, in the SAME request that logs
- *    the admin out — critically, before Filament's own logout would call
- *    session()->invalidate() and destroy the parked id, which is why this
- *    needs its own controller instead of the package's LogoutController.
+ * 1. App\Filament\Pages\Auth\Login::mount() (admin) and
+ *    App\Http\Controllers\Vendor\VendorAuthController::showLogin() (vendor)
+ *    each park the current session's occupant (if there is one) via park()
+ *    below, then log them out so their own login form loads instead of
+ *    silently inheriting someone else's session.
+ * 2. App\Http\Controllers\Auth\AdminLogoutController and
+ *    VendorAuthController::logout() restore the parked user (if any) via
+ *    restore() below, in the SAME request that logs the admin/vendor out —
+ *    critically, before Filament's own logout would call
+ *    session()->invalidate() and destroy the parked id, which is why the
+ *    admin side needs its own logout controller instead of the package's.
  */
-class AdminSessionParking
+class PanelSessionParking
 {
     private const SESSION_KEY = 'parked_customer_id';
 

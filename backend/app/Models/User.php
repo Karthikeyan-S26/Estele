@@ -28,7 +28,19 @@ class User extends Authenticatable implements FilamentUser
     {
         // An invited contact exists before it has a password — it must not be
         // able to reach the panel until the setup link has actually been used.
-        return filled($this->password) && $this->roles()->exists();
+        if (blank($this->password)) {
+            return false;
+        }
+
+        $roleNames = $this->roles()->pluck('name');
+
+        // A login whose ONLY role(s) are Vendor::ACCESS_ROLES has its own
+        // dedicated portal at /vendor (see routes/web.php and
+        // EnsureVendorAccess) and must never reach the Filament admin panel
+        // — a vendor's access is jewellery bidding only, nothing store-wide.
+        // Someone who is ALSO real staff (holds another role too) keeps
+        // panel access through that other role, unaffected by this.
+        return $roleNames->isNotEmpty() && $roleNames->diff(Vendor::ACCESS_ROLES)->isNotEmpty();
     }
 
     protected static function booted(): void
