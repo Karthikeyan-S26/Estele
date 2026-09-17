@@ -80,12 +80,12 @@ class VerifyRewardSubmissionApprovalTest extends TestCase
         $this->assertSame($admin->id, $submission->fresh()->reviewed_by);
     }
 
-    public function test_a_vendor_can_approve_a_submission(): void
+    public function test_a_marketing_user_can_approve_a_submission(): void
     {
         $this->seed(ShieldSeeder::class);
-        $vendor = User::factory()->create();
-        $vendor->assignRole('vendor');
-        $this->actingAs($vendor);
+        $marketer = User::factory()->create();
+        $marketer->assignRole('marketing');
+        $this->actingAs($marketer);
 
         $customer = User::factory()->create(['wallet_balance' => 0]);
         $order = $this->makeOrder($customer);
@@ -96,7 +96,7 @@ class VerifyRewardSubmissionApprovalTest extends TestCase
 
         $submission->refresh();
         $this->assertSame('approved', $submission->status);
-        $this->assertSame($vendor->id, $submission->reviewed_by);
+        $this->assertSame($marketer->id, $submission->reviewed_by);
         $this->assertSame('200.00', $customer->fresh()->wallet_balance);
     }
 

@@ -38,6 +38,17 @@ class VendorForm
                 ->description('Optional. With an email the vendor gets a link to set a password and can see their requests in this panel.')
                 ->columns(2)
                 ->schema([
+                    Placeholder::make('panel_access_scope')
+                        ->label('What they can see')
+                        ->columnSpanFull()
+                        // Fixed and the same for every vendor — there is no
+                        // per-vendor permission to configure, so this is the
+                        // one place an admin needs to check that, instead of
+                        // Shield's Roles screen (which covers every resource
+                        // in the store, not just vendors). If that ever
+                        // needs to change, it changes for every vendor at
+                        // once via the 'vendor' role in ShieldSeeder.
+                        ->content('Only the old-jewellery requests they were personally invited to bid on — nothing else in the store, and not even other vendors\' bids on the same request. Every vendor contact gets exactly this, and it never needs configuring per vendor.'),
                     TextInput::make('email')
                         ->email()
                         ->unique(ignoreRecord: true)

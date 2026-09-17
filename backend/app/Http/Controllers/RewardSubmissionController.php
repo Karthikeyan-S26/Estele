@@ -79,8 +79,11 @@ class RewardSubmissionController extends Controller
         // Sent after the media/DB writes commit, same "outside the write
         // path" placement WalletService::credit() uses for its own
         // notification — a mail failure here must never roll back or block
-        // the submission itself.
-        $reviewers = User::role(['vendor', 'super_admin'])->whereNotNull('email')->get();
+        // the submission itself. 'marketing' is who reviews reward
+        // submissions (see ShieldSeeder) — NOT 'vendor', which is the
+        // old-jewellery bidding marketplace contact and has nothing to do
+        // with this.
+        $reviewers = User::role(['marketing', 'super_admin'])->whereNotNull('email')->get();
         foreach ($reviewers as $reviewer) {
             Mail::to($reviewer->email)->queue(new NewRewardSubmissionNotification($submission->fresh(['user', 'order'])));
         }

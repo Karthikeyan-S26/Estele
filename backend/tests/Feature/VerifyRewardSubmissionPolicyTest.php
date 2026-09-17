@@ -14,24 +14,30 @@ class VerifyRewardSubmissionPolicyTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_vendor_can_view_and_update_reward_submissions(): void
-    {
-        $this->seed(ShieldSeeder::class);
-        $vendor = User::factory()->create();
-        $vendor->assignRole('vendor');
-
-        $this->assertTrue($vendor->can('ViewAny', RewardSubmission::class));
-        $this->assertTrue($vendor->can('View', RewardSubmission::class));
-        $this->assertTrue($vendor->can('Update', RewardSubmission::class));
-    }
-
-    public function test_marketing_role_cannot_view_reward_submissions(): void
+    public function test_marketing_can_view_and_update_reward_submissions(): void
     {
         $this->seed(ShieldSeeder::class);
         $marketer = User::factory()->create();
         $marketer->assignRole('marketing');
 
-        $this->assertFalse($marketer->can('ViewAny', RewardSubmission::class));
+        $this->assertTrue($marketer->can('ViewAny', RewardSubmission::class));
+        $this->assertTrue($marketer->can('View', RewardSubmission::class));
+        $this->assertTrue($marketer->can('Update', RewardSubmission::class));
+    }
+
+    /**
+     * The old-jewellery bidding marketplace contact (App\Models\Vendor) —
+     * unrelated to reward submissions, which 'marketing' reviews instead.
+     * See the docblock on ShieldSeeder's vendor block for why this needs a
+     * regression test: the two used to share this role name by accident.
+     */
+    public function test_old_jewellery_vendor_cannot_view_reward_submissions(): void
+    {
+        $this->seed(ShieldSeeder::class);
+        $vendor = User::factory()->create();
+        $vendor->assignRole('vendor');
+
+        $this->assertFalse($vendor->can('ViewAny', RewardSubmission::class));
     }
 
     public function test_super_admin_can_view_and_update_reward_submissions(): void
@@ -52,11 +58,11 @@ class VerifyRewardSubmissionPolicyTest extends TestCase
         $this->assertFalse($nobody->can('ViewAny', RewardSubmission::class));
     }
 
-    public function test_vendor_cannot_delete_a_reward_submission(): void
+    public function test_marketing_cannot_delete_a_reward_submission(): void
     {
         $this->seed(ShieldSeeder::class);
-        $vendor = User::factory()->create();
-        $vendor->assignRole('vendor');
+        $marketer = User::factory()->create();
+        $marketer->assignRole('marketing');
 
         $customer = User::factory()->create();
         $order = Order::create([
@@ -80,9 +86,9 @@ class VerifyRewardSubmissionPolicyTest extends TestCase
         ]);
         $submission = RewardSubmission::create(['user_id' => $customer->id, 'order_id' => $order->id, 'status' => 'pending']);
 
-        $this->actingAs($vendor);
+        $this->actingAs($marketer);
 
-        $this->assertFalse($vendor->can('Delete', $submission));
+        $this->assertFalse($marketer->can('Delete', $submission));
         $this->assertFalse(RewardSubmissionResource::canDelete($submission));
     }
 

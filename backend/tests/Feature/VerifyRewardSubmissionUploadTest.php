@@ -49,11 +49,15 @@ class VerifyRewardSubmissionUploadTest extends TestCase
         ]);
     }
 
-    public function test_submitting_proof_notifies_every_vendor_and_super_admin(): void
+    public function test_submitting_proof_notifies_every_marketing_user_and_super_admin_but_not_vendors(): void
     {
         Queue::fake();
         Mail::fake();
 
+        // The old-jewellery bidding marketplace contact — must NOT be
+        // notified about an unrelated customer reward submission. This is
+        // the regression case for the vendor/marketing role mix-up fixed
+        // alongside ShieldSeeder.
         $vendor = User::factory()->create();
         $vendor->assignRole('vendor');
         $admin = User::factory()->create();
@@ -72,8 +76,9 @@ class VerifyRewardSubmissionUploadTest extends TestCase
             ])
             ->assertRedirect();
 
-        Mail::assertQueued(NewRewardSubmissionNotification::class, fn ($mail) => $mail->hasTo($vendor->email));
+        Mail::assertQueued(NewRewardSubmissionNotification::class, fn ($mail) => $mail->hasTo($marketer->email));
         Mail::assertQueued(NewRewardSubmissionNotification::class, fn ($mail) => $mail->hasTo($admin->email));
+        Mail::assertNotQueued(NewRewardSubmissionNotification::class, fn ($mail) => $mail->hasTo($vendor->email));
         Mail::assertQueued(NewRewardSubmissionNotification::class, 2);
     }
 

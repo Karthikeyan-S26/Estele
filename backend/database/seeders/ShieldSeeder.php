@@ -73,22 +73,33 @@ class ShieldSeeder extends Seeder
             'ViewAny:Popup', 'View:Popup', 'Create:Popup', 'Update:Popup', 'Delete:Popup',
             // Subscriber list is read-only everywhere — nobody hand-edits captured emails.
             'ViewAny:NewsletterSubscriber', 'View:NewsletterSubscriber',
+            // Reviews and approves/denies customer reward-submission videos —
+            // moderation of customer-submitted content, the same job as
+            // Review above. Update (not Create/Delete): the approve/reject
+            // actions on RewardSubmissionsTable both operate via an update,
+            // and the resource's own canCreate() is already false.
+            //
+            // This used to live on the 'vendor' role, back when that name
+            // meant "a staff reviewer" — before App\Models\Vendor (the
+            // old-jewellery bidding marketplace contact) was built and
+            // reused the same role name. That left every jewellery-bidding
+            // vendor contact able to approve unrelated customer reward
+            // claims, and RewardSubmissionController::store() emailing every
+            // one of them about it. See the migration alongside this file
+            // for how existing databases are corrected.
+            'ViewAny:RewardSubmission', 'View:RewardSubmission', 'Update:RewardSubmission',
         ]);
 
-        // Reviews and approves/denies customer reward-submission videos —
-        // Update (not Create/Delete): the approve/reject actions on
-        // RewardSubmissionsTable both operate via an update, and the
-        // resource's own canCreate() is already false — there is nothing for
-        // a vendor to create or delete here.
-        //
-        // Also read-only access to the old-jewellery requests it was invited
-        // to bid on (migration 2026_09_12_120100_give_vendor_role_...) —
-        // kept in sync here because syncPermissions() below replaces the
-        // role's entire permission set, so re-running this seeder would
-        // otherwise silently revoke what that migration granted.
+        // Read-only access to the old-jewellery requests it was invited to
+        // bid on (migration 2026_09_12_120100_give_vendor_role_...) — kept in
+        // sync here because syncPermissions() below replaces the role's
+        // entire permission set, so re-running this seeder would otherwise
+        // silently revoke what that migration granted. This is the ONLY
+        // thing a vendor contact's login can see — see VendorForm's "Panel
+        // access" note, which is the one place an admin should need to check
+        // what a vendor gets.
         $vendor = Role::firstOrCreate(['name' => 'vendor', 'guard_name' => 'web']);
         $vendor->syncPermissions([
-            'ViewAny:RewardSubmission', 'View:RewardSubmission', 'Update:RewardSubmission',
             'ViewAny:OldJewelleryRequest', 'View:OldJewelleryRequest',
         ]);
     }
