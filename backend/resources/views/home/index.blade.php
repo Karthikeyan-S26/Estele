@@ -88,11 +88,11 @@
           </div>
         @endforeach
         {{-- Arrows visible on all breakpoints now (previously desktop-only via hidden md:grid) --}}
-        <button class="absolute left-3 top-1/2 z-[3] grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/85 text-heading shadow-sm backdrop-blur-sm transition-colors hover:bg-white md:left-5" type="button" data-hero-prev aria-label="Previous slide">
-          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        <button class="absolute left-3 top-1/2 z-[3] grid h-6 w-6 -translate-y-1/2 place-items-center rounded-full bg-white/85 text-heading shadow-sm backdrop-blur-sm transition-colors hover:bg-white md:left-5 md:h-10 md:w-10" type="button" data-hero-prev aria-label="Previous slide">
+          <svg class="h-2.5 w-2.5 md:h-4 md:w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
-        <button class="absolute right-3 top-1/2 z-[3] grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/85 text-heading shadow-sm backdrop-blur-sm transition-colors hover:bg-white md:right-5" type="button" data-hero-next aria-label="Next slide">
-          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        <button class="absolute right-3 top-1/2 z-[3] grid h-6 w-6 -translate-y-1/2 place-items-center rounded-full bg-white/85 text-heading shadow-sm backdrop-blur-sm transition-colors hover:bg-white md:right-5 md:h-10 md:w-10" type="button" data-hero-next aria-label="Next slide">
+          <svg class="h-2.5 w-2.5 md:h-4 md:w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
         </button>
         {{-- Dots sit over the slide's lower edge rather than in a white strip
              below it, so the banner keeps its full-bleed edge. --}}

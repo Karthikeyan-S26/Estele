@@ -273,12 +273,16 @@
         </li>
       @endif
     </ul>
-    <div class="p-5">
+    <div class="space-y-3 p-5">
       @auth
         <a class="inline-flex items-center justify-center gap-2 border border-accent bg-accent px-8 py-[13px] text-[13px] font-medium uppercase tracking-[0.5px] text-white transition-colors hover:border-accent-dark hover:bg-accent-dark w-full" href="{{ route('account.index') }}">My Account</a>
       @else
         <a class="inline-flex items-center justify-center gap-2 border border-accent bg-accent px-8 py-[13px] text-[13px] font-medium uppercase tracking-[0.5px] text-white transition-colors hover:border-accent-dark hover:bg-accent-dark w-full" href="{{ route('login') }}">Login / Register</a>
       @endauth
+      <a class="inline-flex items-center justify-center gap-2 border border-heading px-8 py-[13px] text-[13px] font-medium uppercase tracking-[0.5px] text-heading transition-colors hover:border-accent hover:text-accent w-full" href="#">
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg>
+        Download App
+      </a>
     </div>
   </nav>
 </div>

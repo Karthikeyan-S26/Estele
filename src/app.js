@@ -115,6 +115,44 @@ import './app.css';
       }
     }
 
+    /* data-loop: clone a full extra set of slides onto BOTH ends so prev/next
+       can always just move one step in the clicked direction (never jump to
+       the opposite end and scroll back across everything). The visible
+       scroll range covers: [head clones] [real slides] [tail clones]. Once
+       the user scrolls past a full clone set into the far clone zone, snap
+       (no animation) back by exactly one real-track-width, landing on the
+       equivalent real slide with no visible jump. */
+    var loop = root.hasAttribute('data-loop');
+    var loopWidth = 0; // width of the real (non-cloned) slides, in px
+    var realStart = 0; // scrollLeft of the first real slide
+    var realEnd   = 0; // scrollLeft of the first real slide, shifted one loop early
+    if (loop) {
+      var headClones = slides.map(function (s) {
+        var hc = s.cloneNode(true);
+        hc.setAttribute('aria-hidden', 'true');
+        Array.prototype.forEach.call(hc.querySelectorAll('a, button, input'), function (el) {
+          el.setAttribute('tabindex', '-1');
+        });
+        return hc;
+      });
+      headClones.forEach(function (hc) { track.insertBefore(hc, track.firstChild); });
+
+      slides.forEach(function (s) {
+        var tc = s.cloneNode(true);
+        tc.setAttribute('aria-hidden', 'true');
+        Array.prototype.forEach.call(tc.querySelectorAll('a, button, input'), function (el) {
+          el.setAttribute('tabindex', '-1');
+        });
+        track.appendChild(tc);
+      });
+
+      loopWidth = slides.length * step();
+      realStart = loopWidth;
+      realEnd   = realStart + loopWidth;
+
+      track.scrollLeft = realStart;
+    }
+
     /* ---- dots (only when asked for), one per page of visible slides ---- */
     var dots = [];
     if (dotsBox) {
@@ -140,8 +178,8 @@ import './app.css';
       var x   = track.scrollLeft;
       var max = maxScroll();
 
-      if (prev) prev.disabled = x <= 1;
-      if (next) next.disabled = x >= max - 1;
+      if (prev) prev.disabled = !loop && x <= 1;
+      if (next) next.disabled = !loop && x >= max - 1;
 
       if (dots.length) {
         var active = pageIndex();
@@ -151,6 +189,10 @@ import './app.css';
       }
     }
 
+    /* Both arrows always just move one step in their own direction. Looping
+       is handled separately by snapping the scroll position once it drifts
+       into a clone zone (see the scroll listener below) — the button click
+       itself never jumps across the track. */
     if (prev) prev.addEventListener('click', function () {
       track.scrollBy({ left: -step(), behavior: 'smooth' });
     });
@@ -162,7 +204,22 @@ import './app.css';
     track.addEventListener('scroll', function () {
       if (ticking) return;
       ticking = true;
-      requestAnimationFrame(function () { sync(); ticking = false; });
+      requestAnimationFrame(function () {
+        if (loop) {
+          var x = track.scrollLeft;
+          /* A full loop-width past the start (into the tail clones) or
+             before it (into the head clones): re-anchor by exactly one
+             loop-width, landing on the same real slide with no visible
+             jump — direction of travel never reverses. */
+          if (x >= realEnd) {
+            track.scrollLeft = x - loopWidth;
+          } else if (x < realStart) {
+            track.scrollLeft = x + loopWidth;
+          }
+        }
+        sync();
+        ticking = false;
+      });
     });
     window.addEventListener('resize', sync);
 
