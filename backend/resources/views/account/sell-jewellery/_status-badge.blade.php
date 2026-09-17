@@ -30,14 +30,22 @@
 @endphp
 
 @if (($asCard ?? false))
-  <a href="{{ route('account.sell-jewellery.show', $request) }}" class="block rounded-lg border border-line p-4 transition-colors hover:border-accent hover:shadow-sm">
-    <div class="mb-2 flex items-center justify-between gap-2">
-      <span class="rounded-full px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-[0.3px] {{ $badgeClass }}">{{ $badgeLabel }}</span>
-      <span class="text-[11px] text-muted">{{ $request->created_at->formatIst('d M Y, h:i A') }}</span>
+  <a href="{{ route('account.sell-jewellery.show', $request) }}" class="flex items-center gap-3 rounded-lg border border-line p-4 transition-colors hover:border-accent hover:shadow-sm">
+    <div class="h-14 w-14 shrink-0 overflow-hidden rounded-md bg-greysoft">
+      @if ($request->getFirstMediaUrl('image', 'thumb'))
+        <img class="h-full w-full object-cover" src="{{ $request->getFirstMediaUrl('image', 'thumb') }}" alt="">
+      @endif
     </div>
-    @if ($request->final_amount)
-      <p class="mt-1 text-[14px] font-medium text-heading">₹{{ number_format((float) $request->final_amount, 2) }}</p>
-    @endif
+    <div class="min-w-0 flex-1">
+      <div class="mb-1.5 flex items-center justify-between gap-2">
+        <span class="truncate text-[13px] font-medium text-heading">{{ $request->request_number }}</span>
+        <span class="shrink-0 text-[11px] text-muted">{{ $request->created_at->formatIst('d M Y') }}</span>
+      </div>
+      <span class="inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-[0.3px] {{ $badgeClass }}">{{ $badgeLabel }}</span>
+      @if ($request->final_amount)
+        <span class="ml-2 text-[13px] font-medium text-heading">₹{{ number_format((float) $request->final_amount, 2) }}</span>
+      @endif
+    </div>
   </a>
 @else
   <span class="rounded-full px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.3px] {{ $badgeClass }}">{{ $badgeLabel }}</span>

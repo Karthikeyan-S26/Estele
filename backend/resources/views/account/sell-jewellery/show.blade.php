@@ -51,6 +51,8 @@
   </nav>
 
   <div class="mx-auto w-full max-w-2xl px-3 pb-10 md:px-4 md:pb-[60px]" data-poll-status data-should-poll="{{ $isPolling ? '1' : '0' }}" data-status-url="{{ route('account.sell-jewellery.status', $oldJewelleryRequest) }}">
+    <h1 class="mb-4 text-[18px] uppercase tracking-[0.4px] text-heading">{{ $oldJewelleryRequest->request_number }}</h1>
+
     <div class="rounded-xl border {{ $statusPanel['tone'] }} p-5 md:p-6">
       <div class="flex items-start gap-3">
         <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full {{ $statusPanel['icon'] }}">
@@ -69,6 +71,18 @@
       <div class="mt-4 rounded-lg border border-line bg-pinksoft p-4 text-center">
         <p class="text-[12px] uppercase tracking-[0.3px] text-muted">Credited to Wallet</p>
         <p class="mt-1 text-[22px] font-medium text-heading">₹{{ number_format((float) $oldJewelleryRequest->credited_amount, 2) }}</p>
+      </div>
+    @endif
+
+    @if ($oldJewelleryRequest->hasMedia('image') || $oldJewelleryRequest->description)
+      <div class="mt-4 rounded-xl border border-line bg-white p-4 md:p-5">
+        <p class="mb-3 text-[12px] font-medium uppercase tracking-[0.3px] text-muted">What you submitted</p>
+        @if ($oldJewelleryRequest->getFirstMediaUrl('image', 'thumb'))
+          <img class="mb-3 max-h-56 w-full rounded-lg object-cover" src="{{ $oldJewelleryRequest->getFirstMediaUrl('image', 'thumb') }}" alt="Your jewellery photo">
+        @endif
+        @if ($oldJewelleryRequest->description)
+          <p class="text-[13px] leading-relaxed text-muted">{{ $oldJewelleryRequest->description }}</p>
+        @endif
       </div>
     @endif
   </div>
