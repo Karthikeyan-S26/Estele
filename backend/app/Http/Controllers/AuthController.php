@@ -69,7 +69,7 @@ class AuthController extends Controller
         );
 
         return redirect()
-            ->intended(route('account.index'))
+            ->route('categories.index')
             ->with('success', 'Account created — welcome!');
     }
 

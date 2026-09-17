@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\Otp\LogOtpGateway;
 use App\Services\Otp\OtpManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 /**
@@ -40,7 +41,7 @@ class VerifyOtpLoginFlowTest extends TestCase
 
         $this->assertNotNull($otp);
         $this->assertNotSame(RecordingOtpGatewayForTests::$lastCode, $otp->code_hash);
-        $this->assertTrue(\Illuminate\Support\Facades\Hash::check(RecordingOtpGatewayForTests::$lastCode, $otp->code_hash));
+        $this->assertTrue(Hash::check(RecordingOtpGatewayForTests::$lastCode, $otp->code_hash));
     }
 
     public function test_verify_succeeds_with_the_correct_code(): void
@@ -144,7 +145,7 @@ class VerifyOtpLoginFlowTest extends TestCase
         $this->post(route('login.verify.attempt'), ['code' => RecordingOtpGatewayForTests::$lastCode]);
 
         $this->post(route('register.attempt'), ['name' => 'Reg User', 'phone' => '9990001111'])
-            ->assertRedirect(route('account.index'));
+            ->assertRedirect(route('categories.index'));
 
         $this->assertAuthenticated();
         $user = User::where('phone', '9990001111')->firstOrFail();

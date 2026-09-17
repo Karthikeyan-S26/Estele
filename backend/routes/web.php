@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AdminOldJewelleryMediaController;
+use App\Http\Controllers\Auth\AdminLogoutController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\CartController;
@@ -365,6 +366,14 @@ Route::get('/admin/old-jewellery/{oldJewelleryRequest}/video', [AdminOldJeweller
 
 // The image original sits on a private disk with no public URL, so the
 // admin lightbox streams it through the controller the same way the video is.
+// Registered here (loaded during the framework's routing bootstrap, before
+// AdminPanelProvider::boot() runs) so this wins the dispatch match over
+// Filament's own POST /admin/logout — see AdminLogoutController's docblock
+// for why the package's version cannot be used as-is.
+Route::post('/admin/logout', AdminLogoutController::class)
+    ->middleware('web')
+    ->name('filament.admin.auth.logout');
+
 Route::get('/admin/old-jewellery/{oldJewelleryRequest}/image', [AdminOldJewelleryMediaController::class, 'image'])
     ->middleware('auth')
     ->name('admin.old-jewellery.image');
