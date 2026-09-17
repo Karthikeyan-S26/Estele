@@ -5,6 +5,7 @@ use App\Http\Middleware\VendorTokenAuth;
 use App\Http\Middleware\VerifyFastrrRequest;
 use App\Jobs\CloseExpiredOldJewelleryBiddingJob;
 use App\Jobs\ExpireOldJewelleryWalletCreditsJob;
+use App\Jobs\PurgeApprovedRewardMediaJob;
 use App\Jobs\SendOldJewelleryWalletReminderJob;
 use App\Models\Redirect;
 use Illuminate\Console\Scheduling\Schedule;
@@ -39,6 +40,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->job(new SendOldJewelleryWalletReminderJob)
             ->daily()
             ->name('old-jewellery:wallet-expiry-reminders')
+            ->withoutOverlapping();
+
+        $schedule->job(new PurgeApprovedRewardMediaJob)
+            ->hourly()
+            ->name('rewards:purge-approved-media')
             ->withoutOverlapping();
 
         // Safety net: any media row whose model is gone (and its files) is
