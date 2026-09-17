@@ -4,6 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Vendor Sign In | Estele</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&display=swap">
   <link rel="stylesheet" href="{{ asset('theme/app.css') }}?v={{ @filemtime(public_path('theme/app.css')) }}">
 </head>
 <body class="flex min-h-screen items-center justify-center bg-ivory px-4 py-10">
@@ -11,6 +14,9 @@
   <div class="w-full max-w-[400px]">
 
     <div class="mb-6 text-center">
+      <div class="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-pinksoft text-accent">
+        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3v4M8 3v4M2 11h20"/></svg>
+      </div>
       <span class="font-display text-[20px] uppercase tracking-[2px] text-heading">Estele <span class="text-gold">Vendor</span></span>
       <p class="mt-1 text-[12.5px] text-muted">Sign in to see your jewellery requests, bids and settlements.</p>
     </div>

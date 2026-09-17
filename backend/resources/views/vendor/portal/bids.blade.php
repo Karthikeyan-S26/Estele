@@ -8,8 +8,12 @@
   <p class="mb-6 text-[13px] text-muted">Every bid you've placed, and what happened to the ones you won.</p>
 
   @if ($bids->isEmpty())
-    <div class="rounded-xl border border-line bg-white p-6 text-center text-[13px] text-muted">
-      You haven't placed a bid yet.
+    <div class="rounded-xl border border-dashed border-line bg-white p-8 text-center">
+      <span class="mx-auto mb-3 grid h-10 w-10 place-items-center rounded-full bg-greysoft text-muted">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      </span>
+      <p class="text-[13px] text-muted">You haven't placed a bid yet.</p>
+      <a href="{{ route('vendor.dashboard') }}" class="mt-3 inline-flex items-center gap-1.5 text-[12px] font-medium text-accent hover:text-accent-dark">See open requests →</a>
     </div>
   @else
     <div class="space-y-3">

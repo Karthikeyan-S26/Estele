@@ -22,14 +22,16 @@ class VendorDashboardController extends Controller
             ->get();
 
         $bids = $vendor->bids()->with('request')->get();
+        $wonBids = $bids->filter(fn ($bid) => $bid->request?->winning_bid_id === $bid->id);
 
         return view('vendor.portal.dashboard', [
             'vendor' => $vendor,
             'openInvitations' => $openInvitations,
             'stats' => [
                 'open' => $openInvitations->count(),
-                'won' => $bids->filter(fn ($bid) => $bid->request?->winning_bid_id === $bid->id)->count(),
+                'won' => $wonBids->count(),
                 'submitted' => $bids->count(),
+                'wonValue' => $wonBids->sum('amount'),
             ],
         ]);
     }
