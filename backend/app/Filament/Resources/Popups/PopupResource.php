@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Popups;
 
+use App\Filament\Concerns\HasNewRecordsBadge;
 use App\Filament\Resources\Popups\Pages\CreatePopup;
 use App\Filament\Resources\Popups\Pages\EditPopup;
 use App\Filament\Resources\Popups\Pages\ListPopups;
@@ -16,6 +17,8 @@ use Filament\Tables\Table;
 
 class PopupResource extends Resource
 {
+    use HasNewRecordsBadge;
+
     protected static ?string $model = Popup::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedMegaphone;

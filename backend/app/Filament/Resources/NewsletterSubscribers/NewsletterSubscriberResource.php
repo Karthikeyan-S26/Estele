@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\NewsletterSubscribers;
 
+use App\Filament\Concerns\HasNewRecordsBadge;
 use App\Filament\Resources\NewsletterSubscribers\Pages\ListNewsletterSubscribers;
 use App\Filament\Resources\NewsletterSubscribers\Tables\NewsletterSubscribersTable;
 use App\Models\NewsletterSubscriber;
@@ -12,6 +13,8 @@ use Filament\Tables\Table;
 
 class NewsletterSubscriberResource extends Resource
 {
+    use HasNewRecordsBadge;
+
     protected static ?string $model = NewsletterSubscriber::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedEnvelope;

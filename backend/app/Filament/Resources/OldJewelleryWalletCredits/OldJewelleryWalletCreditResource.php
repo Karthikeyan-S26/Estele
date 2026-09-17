@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\OldJewelleryWalletCredits;
 
+use App\Filament\Concerns\HasNewRecordsBadge;
 use App\Filament\Resources\OldJewelleryWalletCredits\Pages\ListOldJewelleryWalletCredits;
 use App\Filament\Resources\OldJewelleryWalletCredits\Tables\OldJewelleryWalletCreditsTable;
 use App\Models\OldJewelleryWalletCredit;
@@ -12,6 +13,8 @@ use Filament\Tables\Table;
 
 class OldJewelleryWalletCreditResource extends Resource
 {
+    use HasNewRecordsBadge;
+
     protected static ?string $model = OldJewelleryWalletCredit::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClock;

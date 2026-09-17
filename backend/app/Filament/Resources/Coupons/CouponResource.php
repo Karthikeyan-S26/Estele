@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Coupons;
 
 use App\Filament\Clusters\CouponsAndOffers\CouponsAndOffersCluster;
+use App\Filament\Concerns\HasNewRecordsBadge;
 use App\Filament\Resources\Coupons\Pages\CreateCoupon;
 use App\Filament\Resources\Coupons\Pages\EditCoupon;
 use App\Filament\Resources\Coupons\Pages\ListCoupons;
@@ -17,6 +18,8 @@ use Filament\Tables\Table;
 
 class CouponResource extends Resource
 {
+    use HasNewRecordsBadge;
+
     protected static ?string $model = Coupon::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTag;

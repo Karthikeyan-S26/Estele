@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Roles;
 
+use App\Filament\Concerns\HasNewRecordsBadge;
 use App\Filament\Resources\Roles\Pages\CreateRole;
 use App\Filament\Resources\Roles\Pages\EditRole;
 use App\Filament\Resources\Roles\Pages\ListRoles;
@@ -35,6 +36,8 @@ use Spatie\Permission\Models\Role;
  */
 class RoleResource extends ShieldRoleResource
 {
+    use HasNewRecordsBadge;
+
     #[Override]
     public static function table(Table $table): Table
     {

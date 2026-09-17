@@ -2,12 +2,12 @@
 
 namespace App\Filament\Resources\Reviews;
 
+use App\Filament\Concerns\HasNewRecordsBadge;
 use App\Filament\Resources\Reviews\Pages\CreateReview;
 use App\Filament\Resources\Reviews\Pages\EditReview;
 use App\Filament\Resources\Reviews\Pages\ListReviews;
 use App\Filament\Resources\Reviews\Schemas\ReviewForm;
 use App\Filament\Resources\Reviews\Tables\ReviewsTable;
-use App\Filament\Support\NavigationSeen;
 use App\Models\Review;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -17,20 +17,22 @@ use Filament\Tables\Table;
 
 class ReviewResource extends Resource
 {
+    use HasNewRecordsBadge;
+
     protected static ?string $model = Review::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedStar;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Content';
 
-    public static function getNavigationBadge(): ?string
+    protected static function getNewRecordsQueries(): array
     {
-        return NavigationSeen::badge('reviews', Review::query()->where('status', 'pending'));
+        return [Review::query()->where('status', 'pending')];
     }
 
-    public static function getNavigationBadgeColor(): ?string
+    protected static function countsBacklogInBadge(): bool
     {
-        return 'warning';
+        return true;
     }
 
     public static function getNavigationBadgeTooltip(): ?string

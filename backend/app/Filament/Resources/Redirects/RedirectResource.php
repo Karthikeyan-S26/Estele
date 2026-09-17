@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Redirects;
 
 use App\Filament\Clusters\Seo\SeoCluster;
+use App\Filament\Concerns\HasNewRecordsBadge;
 use App\Filament\Resources\Redirects\Pages\CreateRedirect;
 use App\Filament\Resources\Redirects\Pages\EditRedirect;
 use App\Filament\Resources\Redirects\Pages\ListRedirects;
@@ -17,6 +18,8 @@ use Filament\Tables\Table;
 
 class RedirectResource extends Resource
 {
+    use HasNewRecordsBadge;
+
     protected static ?string $model = Redirect::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedArrowsRightLeft;

@@ -2,11 +2,11 @@
 
 namespace App\Filament\Resources\Orders;
 
+use App\Filament\Concerns\HasNewRecordsBadge;
 use App\Filament\Resources\Orders\Pages\EditOrder;
 use App\Filament\Resources\Orders\Pages\ListOrders;
 use App\Filament\Resources\Orders\Schemas\OrderForm;
 use App\Filament\Resources\Orders\Tables\OrdersTable;
-use App\Filament\Support\NavigationSeen;
 use App\Models\Order;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -16,6 +16,8 @@ use Filament\Tables\Table;
 
 class OrderResource extends Resource
 {
+    use HasNewRecordsBadge;
+
     protected static ?string $model = Order::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;
@@ -28,14 +30,14 @@ class OrderResource extends Resource
     // without risky vendor changes. Values spaced by 10 for future inserts.
     protected static ?int $navigationSort = 20;
 
-    public static function getNavigationBadge(): ?string
+    protected static function getNewRecordsQueries(): array
     {
-        return NavigationSeen::badge('orders', Order::query()->where('status', 'placed'));
+        return [Order::query()->where('status', 'placed')];
     }
 
-    public static function getNavigationBadgeColor(): ?string
+    protected static function countsBacklogInBadge(): bool
     {
-        return 'warning';
+        return true;
     }
 
     public static function getNavigationBadgeTooltip(): ?string

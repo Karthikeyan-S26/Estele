@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\CmsPages;
 
+use App\Filament\Concerns\HasNewRecordsBadge;
 use App\Filament\Resources\CmsPages\Pages\CreateCmsPage;
 use App\Filament\Resources\CmsPages\Pages\EditCmsPage;
 use App\Filament\Resources\CmsPages\Pages\ListCmsPages;
@@ -16,6 +17,8 @@ use Filament\Tables\Table;
 
 class CmsPageResource extends Resource
 {
+    use HasNewRecordsBadge;
+
     protected static ?string $model = CmsPage::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;

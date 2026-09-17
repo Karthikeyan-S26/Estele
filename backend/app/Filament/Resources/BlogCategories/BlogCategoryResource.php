@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\BlogCategories;
 
+use App\Filament\Concerns\HasNewRecordsBadge;
 use App\Filament\Resources\BlogCategories\Pages\CreateBlogCategory;
 use App\Filament\Resources\BlogCategories\Pages\EditBlogCategory;
 use App\Filament\Resources\BlogCategories\Pages\ListBlogCategories;
@@ -16,6 +17,8 @@ use Filament\Tables\Table;
 
 class BlogCategoryResource extends Resource
 {
+    use HasNewRecordsBadge;
+
     protected static ?string $model = BlogCategory::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedFolder;

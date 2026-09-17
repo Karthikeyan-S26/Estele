@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Offers;
 
 use App\Filament\Clusters\CouponsAndOffers\CouponsAndOffersCluster;
+use App\Filament\Concerns\HasNewRecordsBadge;
 use App\Filament\Resources\Offers\Pages\CreateOffer;
 use App\Filament\Resources\Offers\Pages\EditOffer;
 use App\Filament\Resources\Offers\Pages\ListOffers;
@@ -17,6 +18,8 @@ use Filament\Tables\Table;
 
 class OfferResource extends Resource
 {
+    use HasNewRecordsBadge;
+
     protected static ?string $model = Offer::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedMegaphone;

@@ -2,11 +2,11 @@
 
 namespace App\Filament\Resources\RewardSubmissions;
 
+use App\Filament\Concerns\HasNewRecordsBadge;
 use App\Filament\Resources\RewardSubmissions\Pages\EditRewardSubmission;
 use App\Filament\Resources\RewardSubmissions\Pages\ListRewardSubmissions;
 use App\Filament\Resources\RewardSubmissions\Schemas\RewardSubmissionForm;
 use App\Filament\Resources\RewardSubmissions\Tables\RewardSubmissionsTable;
-use App\Filament\Support\NavigationSeen;
 use App\Models\RewardSubmission;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -16,20 +16,22 @@ use Filament\Tables\Table;
 
 class RewardSubmissionResource extends Resource
 {
+    use HasNewRecordsBadge;
+
     protected static ?string $model = RewardSubmission::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedGift;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Content';
 
-    public static function getNavigationBadge(): ?string
+    protected static function getNewRecordsQueries(): array
     {
-        return NavigationSeen::badge('reward-submissions', RewardSubmission::query()->where('status', 'pending'));
+        return [RewardSubmission::query()->where('status', 'pending')];
     }
 
-    public static function getNavigationBadgeColor(): ?string
+    protected static function countsBacklogInBadge(): bool
     {
-        return 'warning';
+        return true;
     }
 
     public static function getNavigationBadgeTooltip(): ?string

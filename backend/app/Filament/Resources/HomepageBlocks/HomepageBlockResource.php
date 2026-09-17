@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\HomepageBlocks;
 
+use App\Filament\Concerns\HasNewRecordsBadge;
 use App\Filament\Resources\HomepageBlocks\Pages\CreateHomepageBlock;
 use App\Filament\Resources\HomepageBlocks\Pages\EditHomepageBlock;
 use App\Filament\Resources\HomepageBlocks\Pages\ListHomepageBlocks;
@@ -16,6 +17,8 @@ use Filament\Tables\Table;
 
 class HomepageBlockResource extends Resource
 {
+    use HasNewRecordsBadge;
+
     protected static ?string $model = HomepageBlock::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedSquares2x2;

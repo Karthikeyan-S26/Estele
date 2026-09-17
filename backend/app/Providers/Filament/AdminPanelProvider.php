@@ -7,6 +7,7 @@ use App\Filament\Resources\Roles\RoleResource;
 use App\Filament\Widgets\OldJewelleryStatsWidget;
 use App\Filament\Widgets\StoreStatsWidget;
 use App\Filament\Widgets\VendorPerformanceWidget;
+use App\Http\Middleware\MarkAdminNavigationSeen;
 use App\Http\Middleware\SecurityHeaders;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Http\Middleware\Authenticate;
@@ -18,6 +19,7 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Support\Facades\FilamentTimezone;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -90,6 +92,8 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ]);
+                MarkAdminNavigationSeen::class,
+            ])
+            ->renderHook(PanelsRenderHook::BODY_END, fn () => view('filament.live-navigation-badges'));
     }
 }

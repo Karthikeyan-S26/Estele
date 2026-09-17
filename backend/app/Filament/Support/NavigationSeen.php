@@ -20,7 +20,10 @@ class NavigationSeen
         }
     }
 
-    public static function badge(string $key, Builder $pending): ?string
+    /**
+     * @param  array<Builder>  $queries
+     */
+    public static function badge(string $key, array $queries, bool $countBacklog = false): ?string
     {
         $id = auth()->id();
 
@@ -30,11 +33,21 @@ class NavigationSeen
 
         $seen = Cache::get(self::cacheKey($id, $key));
 
-        if ($seen) {
-            $pending->where('created_at', '>', CarbonImmutable::parse($seen));
+        if (! $seen && ! $countBacklog) {
+            self::mark($key);
+
+            return null;
         }
 
-        $count = $pending->count();
+        $count = 0;
+
+        foreach ($queries as $query) {
+            if ($seen) {
+                $query->where($query->getModel()->qualifyColumn('created_at'), '>', CarbonImmutable::parse($seen));
+            }
+
+            $count += $query->count();
+        }
 
         return $count > 0 ? (string) $count : null;
     }

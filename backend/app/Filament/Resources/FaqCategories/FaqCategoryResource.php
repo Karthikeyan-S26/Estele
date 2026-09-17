@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\FaqCategories;
 
+use App\Filament\Concerns\HasNewRecordsBadge;
 use App\Filament\Resources\FaqCategories\Pages\CreateFaqCategory;
 use App\Filament\Resources\FaqCategories\Pages\EditFaqCategory;
 use App\Filament\Resources\FaqCategories\Pages\ListFaqCategories;
@@ -16,6 +17,8 @@ use Filament\Tables\Table;
 
 class FaqCategoryResource extends Resource
 {
+    use HasNewRecordsBadge;
+
     protected static ?string $model = FaqCategory::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedFolder;

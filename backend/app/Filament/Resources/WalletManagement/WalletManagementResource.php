@@ -2,9 +2,11 @@
 
 namespace App\Filament\Resources\WalletManagement;
 
+use App\Filament\Concerns\HasNewRecordsBadge;
 use App\Filament\Resources\WalletManagement\Pages\ListWalletManagement;
 use App\Filament\Resources\WalletManagement\Tables\WalletManagementTable;
 use App\Models\User;
+use App\Models\WalletTransaction;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
@@ -12,6 +14,8 @@ use Filament\Tables\Table;
 
 class WalletManagementResource extends Resource
 {
+    use HasNewRecordsBadge;
+
     protected static ?string $model = User::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedWallet;
@@ -29,6 +33,16 @@ class WalletManagementResource extends Resource
     protected static string|\UnitEnum|null $navigationGroup = 'Sales';
 
     protected static ?int $navigationSort = 2;
+
+    protected static function getNewRecordsQueries(): array
+    {
+        return [WalletTransaction::query()];
+    }
+
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        return 'New wallet transactions since your last visit';
+    }
 
     public static function table(Table $table): Table
     {

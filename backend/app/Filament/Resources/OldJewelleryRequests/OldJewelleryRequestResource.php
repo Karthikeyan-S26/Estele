@@ -2,11 +2,11 @@
 
 namespace App\Filament\Resources\OldJewelleryRequests;
 
+use App\Filament\Concerns\HasNewRecordsBadge;
 use App\Filament\Resources\OldJewelleryRequests\Pages\ListOldJewelleryRequests;
 use App\Filament\Resources\OldJewelleryRequests\Pages\ViewOldJewelleryRequest;
 use App\Filament\Resources\OldJewelleryRequests\Schemas\OldJewelleryRequestInfolist;
 use App\Filament\Resources\OldJewelleryRequests\Tables\OldJewelleryRequestsTable;
-use App\Filament\Support\NavigationSeen;
 use App\Models\OldJewelleryRequest;
 use App\Models\Vendor;
 use BackedEnum;
@@ -19,6 +19,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class OldJewelleryRequestResource extends Resource
 {
+    use HasNewRecordsBadge;
+
     protected static ?string $model = OldJewelleryRequest::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedSparkles;
@@ -31,14 +33,14 @@ class OldJewelleryRequestResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'request_number';
 
-    public static function getNavigationBadge(): ?string
+    protected static function getNewRecordsQueries(): array
     {
-        return NavigationSeen::badge('old-jewellery-requests', OldJewelleryRequest::query()->whereIn('status', ['pending', 'submitted']));
+        return [OldJewelleryRequest::query()->whereIn('status', ['pending', 'submitted'])];
     }
 
-    public static function getNavigationBadgeColor(): ?string
+    protected static function countsBacklogInBadge(): bool
     {
-        return 'warning';
+        return true;
     }
 
     public static function getNavigationBadgeTooltip(): ?string
