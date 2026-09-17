@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Vendors\Schemas;
 
 use App\Models\User;
+use App\Services\Vendors\PanelAccessService;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -53,7 +54,7 @@ class VendorForm
                                 $existing = User::where('email', $value)->first();
 
                                 if ($existing && $existing->id !== $ownedByThisVendor) {
-                                    $fail('That email already belongs to a different account. Use a different address for this vendor.');
+                                    $fail(PanelAccessService::collisionMessage($existing));
                                 }
                             };
                         }),

@@ -45,7 +45,17 @@ class ListStaff extends ListRecords
                     );
 
                     if ($user instanceof User) {
-                        Notification::make()->title('Invite sent')->body("{$data['email']} can now set a password and sign in.")->success()->send();
+                        // This email was already a Vendor contact's login —
+                        // say so plainly, since the staff role just added
+                        // sits alongside their existing vendor access rather
+                        // than replacing it, and that would otherwise be
+                        // invisible until someone noticed the "Vendor
+                        // portal" tag on their row.
+                        $body = $user->vendor
+                            ? "{$data['email']} can now set a password and sign in. This email already had vendor portal access — that stays, alongside the new staff role."
+                            : "{$data['email']} can now set a password and sign in.";
+
+                        Notification::make()->title('Invite sent')->body($body)->success()->send();
 
                         return;
                     }

@@ -29,7 +29,7 @@ class PanelAccessService
      * and the vendor still works through its signed invitation token.
      *
      * @throws \RuntimeException if the email belongs to a user this vendor
-     *         does not already own — see ensureUser().
+     *                           does not already own — see ensureUser().
      */
     public function grant(Vendor $vendor, bool $isResend = false): bool
     {
@@ -75,20 +75,18 @@ class PanelAccessService
                 // already sitting on that address.
                 $collision = User::where('email', $vendor->email)
                     ->whereKeyNot($user->id)
-                    ->exists();
+                    ->first();
 
                 if ($collision) {
-                    throw new \RuntimeException(
-                        'That email already belongs to a different account. Use a different address for this vendor.'
-                    );
+                    throw new \RuntimeException(self::collisionMessage($collision));
                 }
 
                 $user->forceFill(['email' => $vendor->email])->save();
             } else {
-                if (User::where('email', $vendor->email)->exists()) {
-                    throw new \RuntimeException(
-                        'That email already belongs to an existing account. Use a different address for this vendor.'
-                    );
+                $collision = User::where('email', $vendor->email)->first();
+
+                if ($collision) {
+                    throw new \RuntimeException(self::collisionMessage($collision));
                 }
 
                 $user = User::create([
@@ -108,6 +106,25 @@ class PanelAccessService
 
             return $user;
         });
+    }
+
+    /**
+     * Names what the colliding account actually is, so the admin isn't left
+     * guessing whether it's a staff login, another vendor, or a customer —
+     * "already belongs to a different account" alone was the kind of vague
+     * error that made this screen feel unpredictable. Public: VendorForm's
+     * live "is this email taken" check surfaces the same wording before the
+     * admin even submits, instead of only finding out on save.
+     */
+    public static function collisionMessage(User $existing): string
+    {
+        $reason = match (true) {
+            $existing->vendor !== null => 'another vendor\'s login',
+            $existing->roles->isNotEmpty() => 'a staff member\'s login',
+            default => 'a customer account',
+        };
+
+        return "That email already belongs to {$reason}. Use a different address for this vendor.";
     }
 
     /**

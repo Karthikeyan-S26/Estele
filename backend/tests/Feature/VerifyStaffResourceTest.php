@@ -37,6 +37,46 @@ class VerifyStaffResourceTest extends TestCase
             ->assertDontSee('Plain Customer');
     }
 
+    public function test_staff_list_shows_a_person_who_is_both_staff_and_a_vendor_contact(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $both = User::factory()->create(['name' => 'Dual Role']);
+        $both->assignRole(['marketing', 'vendor']);
+        Vendor::create(['name' => 'Acme', 'mobile' => '9222222222', 'is_active' => true, 'user_id' => $both->id, 'access_role' => 'vendor']);
+
+        // Gaining a Vendor row must not make an existing staff member vanish
+        // from this list — that silent disappearance (fixed here) is what
+        // made admins think the vendor screen had "turned off" their staff
+        // access.
+        $this->get('/admin/staff')->assertOk()->assertSee('Dual Role');
+    }
+
+    public function test_change_role_and_remove_access_never_touch_a_linked_vendor_role(): void
+    {
+        $this->actingAsSuperAdmin();
+        Role::firstOrCreate(['name' => 'editor', 'guard_name' => 'web']);
+
+        $both = User::factory()->create();
+        $both->assignRole(['marketing', 'vendor']);
+        Vendor::create(['name' => 'Acme', 'mobile' => '9333333333', 'is_active' => true, 'user_id' => $both->id, 'access_role' => 'vendor']);
+
+        Livewire::test(ListStaff::class)
+            ->callTableAction('change_role', $both, ['role' => 'editor'])
+            ->assertHasNoTableActionErrors();
+        $this->assertEqualsCanonicalizing(['editor', 'vendor'], $both->fresh()->roles->pluck('name')->all());
+
+        Livewire::test(ListStaff::class)
+            ->callTableAction('remove_access', $both)
+            ->assertHasNoTableActionErrors();
+        $fresh = $both->fresh();
+        // The staff role is gone but the vendor role — and the password
+        // that vendor login needs — must survive; only the Vendors screen
+        // is allowed to take that away.
+        $this->assertSame(['vendor'], $fresh->roles->pluck('name')->all());
+        $this->assertNotNull($fresh->password);
+    }
+
     public function test_add_staff_invites_with_role_and_no_password(): void
     {
         Notification::fake();
