@@ -1,11 +1,9 @@
 A-V REPORT: Estele Mobile App - Production API 404 Diagnosis & Fix
 ===================================================================
 
-STATUS: Root cause CONFIRMED. Production company/main was force-reverted
-from the mobile-API line (tag karthikeyan-mobile-api-2026-09-17), so the
-deployed main has only the old v1 Fastrr/old-jewellery routes. A validated,
-ADDITIVE port (branch mobile-api-port, commit 250b9af) is ready as PR #2.
-Flutter APK verified correct - does NOT need rebuilding.
+STATUS: FIXED AND VERIFIED IN PRODUCTION (18-Sep-2026). main merged to
+250b9af (workflow run #17 success), real public endpoints all return 200
+with live production data. Flutter APK not rebuilt - does NOT need it.
 
 WARNING: Earlier versions of this report were WRONG on two points and have
 been corrected here:
@@ -153,23 +151,21 @@ SECTION 7: PRODUCTION DOCUMENT ROOT
   served correctly. VERIFY on Hostinger after deployment.
 
 ===================================================================
-SECTION 8: REAL PUBLIC ENDPOINT VERIFICATION
+SECTION 8: REAL PUBLIC ENDPOINT VERIFICATION - VERIFIED 200
 ===================================================================
-Current production API status (BEFORE merging PR #2):
-- GET .../api/health     -> 404 ❌
-- GET .../api/home       -> 404 ❌
-- GET .../api/categories -> 404 ❌
-- GET .../api/collections-> 404 ❌
-- GET .../api/search?q=Earrings -> 404 ❌
+After merge of PR #2 (main -> 250b9af) + deploy (workflow run #17, success):
+- GET .../api/health     -> 200 {"status":"ok","service":"estele-api",...} ✓
+- GET .../api/home       -> 200 JSON, 64,172 bytes (all 31 data sections) ✓
+- GET .../api/categories -> 200 JSON, 2,458 bytes (10 real categories) ✓
+- GET .../api/collections-> 200 JSON, 2,396 bytes (real collections) ✓
+- GET .../api/search?q=Earrings -> 200 JSON, 3,660 bytes (real products) ✓
+- GET .../api/v1/fastrr/products -> 401 (auth-protected, route intact) ✓
 - GET .../                -> 200 (storefront) ✓
 - GET .../up              -> 200 (health) ✓
-
-After PR #2 is merged and the pipeline deploy completes (expected):
-- GET .../api/health     -> HTTP 200 JSON (pending)
-- GET .../api/home       -> HTTP 200 JSON (pending)
-- GET .../api/categories -> HTTP 200 JSON (pending)
-- GET .../api/collections-> HTTP 200 JSON (pending)
-- GET .../api/search?q=Earrings -> HTTP 200 JSON (pending)
+- Media: category/product images HEAD -> 200 (served from prod storage) ✓
+- Also confirmed: commit 250b9af changed exactly 6 files (no .env,
+  no secrets); no .env tracked anywhere in the main tree; API resource
+  URLs unescaped; production DB/media untouched and serving live data.
 
 ===================================================================
 SECTION 9: PRODUCTION DATA PRESERVATION
@@ -196,33 +192,25 @@ SECTION 11: SUMMARY & NEXT STEPS
 ===================================================================
 1. Root cause: production main was force-reverted from the mobile-API fork
    (dbfd440...05bbee9; tag karthikeyan-mobile-api-2026-09-17); deployed main
-   has only v1 Fastrr/old-jewellery routes, so mobile /api/* returns 404.
-2. Fix: additive port on branch mobile-api-port (250b9af, parent=05bbee9),
-   validated, ready as PR https://github.com/tcongsinfotech/jewellery/pull/2.
-   Merge triggers deploy.yml -> deploy + migrate (additive table) + optimize.
+   had only v1 Fastrr/old-jewellery routes, so mobile /api/* returned 404.
+2. Fix: additive port on branch mobile-api-port (250b9af, parent=05bbee9).
+   Validated locally, MERGED to main (fast-forward), DEPLOYED via GitHub
+   Actions deploy.yml (run #17, success, head=250b9af).
 3. .env was committed with real secrets (f6a7ad5, pushed). Untracked now
-   (273ba4c). CREDENTIAL ROTATION IS MANDATORY (see Section 3). No values
-   printed anywhere.
+   (273ba4c). CREDENTIAL ROTATION IS STILL MANDATORY (see Section 3). No
+   values printed anywhere.
 4. Security status: file untracked + .gitignore updated; rotation pending.
-5. Code source to deploy: merge PR #2 (mobile-api-port) into main - the
-   recommended, additive path. Full fork recoverable from the tag.
-6. Document root: Laravel public/ already configured (storefront serves).
-7. route:list --path=api (ported main, local): all mobile + v1 routes ✓
-8. /api/health HTTP status: 404 (production now); 200 expected after merge
-9. /api/home HTTP status: 404 (production now); 200 expected after merge
-10. /api/categories HTTP status: 404 (production now); 200 expected after merge
-11. /api/collections HTTP status: 404 (production now); 200 expected after merge
-12. /api/search HTTP status: 404 (production now); 200 expected after merge
-13. Production database/media preserved: ✓ YES (fix is purely additive)
+5. Committed fixtree verified: only the 6 intended files; NO .env tracked.
+6. Document root: Laravel public/ correct (storefront + API both serve).
+7. route:list: mobile API + v1 routes all registered (validated).
+8. /api/health HTTP 200 (production) ✓  MET
+9. /api/home HTTP 200   (production) ✓  MET
+10. /api/categories HTTP 200 (production) ✓  MET
+11. /api/collections HTTP 200 (production) ✓  MET
+12. /api/search HTTP 200 (production) ✓  MET
+13. Production database/media preserved: ✓ YES (live data + image 200s)
 14. Flutter APK does NOT need rebuilding: ✓ YES
 
-REQUIRED PRODUCTION ACTIONS (after PR #2 merges):
-- Pipeline deploys backend, runs migrate --force + optimize automatically.
-- Rotate all credentials listed in Section 3.
-- Verify: GET https://estele.ghrihum-realestate.com/api/health -> 200
-- Verify: GET https://estele.ghrihum-realestate.com/api/home -> 200
-
-FINAL SUCCESS CONDITION:
-GET https://estele.ghrihum-realestate.com/api/health -> 200 JSON
-AND
-GET https://estele.ghrihum-realestate.com/api/home -> 200 JSON
+REMAINING USER ACTION:
+- ROTATE production credentials per Section 3 (DB, Razorpay, Twilio,
+  Shiprocket, AWS, mail, Redis, APP_KEY). API is now live; rotate ASAP.
