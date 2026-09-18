@@ -9,7 +9,7 @@
   </nav>
 
   <div class="mx-auto w-full max-w-wrapper px-3 md:px-4 pb-10 md:pb-[60px]">
-    <h1 class="text-[20px] uppercase tracking-[0.5px] md:text-[26px] mb-5">Checkout</h1>
+    <h1 class="mb-5 text-[18px] md:text-[26px]">Checkout</h1>
 
     <div class="grid grid-cols-1 gap-6 md:grid-cols-[1fr_340px] md:gap-[34px]">
       <form action="{{ route('checkout.store') }}" method="post" class="[&_.field-set]:mb-7" data-loading-submit>
@@ -74,7 +74,7 @@
 
           <div data-address-manual {{ $showManualByDefault ? '' : 'hidden' }}>
             @if($addresses->isNotEmpty())
-              <button class="mb-3.5 text-[12px] font-medium text-heading underline hover:text-accent" type="button" data-address-use-saved">&larr; Use a saved address</button>
+              <button class="mb-3.5 text-[12px] font-medium text-heading underline hover:text-accent" type="button" data-address-use-saved>&larr; Use a saved address</button>
             @endif
             <div class="mb-3.5 grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
@@ -158,11 +158,11 @@
           @endif
         @endauth
 
-        <button class="inline-flex items-center justify-center gap-2 border border-accent bg-accent px-8 py-[13px] text-[13px] font-medium uppercase tracking-[0.5px] text-white transition-colors hover:border-accent-dark hover:bg-accent-dark w-full" type="submit">Place Order</button>
+        <button class="btn-cta h-[49px]" type="submit">Place Order</button>
       </form>
 
-      <aside class="rounded bg-pinksoft p-6 md:sticky md:top-[100px]">
-        <h2 class="mb-4.5 text-[15px] uppercase tracking-[0.5px]">Order Summary</h2>
+      <aside class="rounded-xl border border-line bg-bagsurface p-5 md:sticky md:top-[100px]">
+        <h2 class="mb-4.5 text-[14px] font-bold tracking-[0.04em] text-[#454545]">Order Summary</h2>
         <div class="mb-4.5 divide-y divide-line-strong/40">
           @foreach($items as $item)
             <div class="flex items-center justify-between gap-3 py-2 text-[13px]">
@@ -191,7 +191,7 @@
             <button class="text-[12px] text-muted underline transition-colors hover:text-accent" type="button" data-coupons-modal-open>View all coupons</button>
           </div>
           @if($couponCode)
-            <div class="flex items-center justify-between border border-line-strong bg-white px-4 py-3 text-[14px]">
+            <div class="flex items-center justify-between rounded-[4px] border border-line-strong bg-white px-4 py-3 text-[14px]">
               <span>Applied: <strong>{{ $couponCode }}</strong></span>
               <form action="{{ route('cart.coupon.remove') }}" method="post">
                 @csrf
@@ -203,7 +203,7 @@
             <form action="{{ route('cart.coupon.apply') }}" method="post" class="flex gap-2" data-loading-submit>
               @csrf
               <input class="w-full border border-line-strong bg-white px-4 py-3 text-base outline-none transition-colors placeholder:text-muted focus:border-heading flex-1" id="checkout-coupon" name="code" type="text" placeholder="Enter code" required>
-              <button class="inline-flex items-center justify-center gap-2 border border-accent bg-accent px-5 py-3 text-[12px] font-medium uppercase tracking-[0.5px] text-white transition-colors hover:border-accent-dark hover:bg-accent-dark" type="submit">Apply</button>
+              <button class="w-[72px] shrink-0 rounded-lg bg-success text-[12px] font-bold text-white" type="submit">Apply</button>
             </form>
           @endif
         </div>

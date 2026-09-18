@@ -9,7 +9,7 @@
     <form class="mx-auto flex max-w-[520px] flex-col gap-2.5 sm:flex-row" data-newsletter>
       <label class="sr-only-custom" for="nl-email">Email address</label>
       <input class="w-full border border-line-strong bg-white px-4 py-3 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-heading flex-1" id="nl-email" type="email" name="email" placeholder="Enter your email" required>
-      <button class="inline-flex items-center justify-center gap-2 border border-accent bg-accent px-8 py-[13px] text-[13px] font-medium uppercase tracking-[0.5px] text-white transition-colors hover:border-accent-dark hover:bg-accent-dark" type="submit">Subscribe</button>
+      <button class="btn-cta w-auto px-8 text-[14px]" type="submit">Subscribe</button>
     </form>
     <p class="mt-3 text-[13px] text-[#428445]" data-newsletter-msg hidden>Thanks for subscribing.</p>
   </div>

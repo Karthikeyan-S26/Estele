@@ -72,7 +72,7 @@
         corners, so the banner sits as a card instead of running full-bleed.
       --}}
       <style>@media (min-width: 768px) { .hero-banner-shortened { aspect-ratio: 1800 / 420 !important; } }</style>
-      <section class="hero-fade hero-banner-shortened relative mx-3 mt-3 overflow-hidden rounded-xl md:mx-4 md:mt-4 md:rounded-2xl" style="aspect-ratio: 768 / 320" aria-label="Featured collections" data-carousel data-autoplay="5000" data-fade>
+      <section class="hero-fade hero-banner-shortened skeleton relative overflow-hidden md:mx-4 md:mt-4 md:rounded-2xl" style="aspect-ratio: 768 / 320" aria-label="Featured collections" data-carousel data-autoplay="5000" data-fade>
         @foreach($banners as $index => $banner)
           <div class="hero-slide {{ $index === 0 ? 'is-active' : '' }}" data-carousel-slide>
             <a href="{{ $banner->link_url ?? '#' }}" aria-label="{{ $banner->title }}">

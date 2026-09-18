@@ -7,6 +7,20 @@
   @section('og_image', $product->seoMeta?->og_image ?? $product->getFirstMediaUrl('gallery', 'detail'))
 @endif
 
+@section('sticky_bar')
+  <div class="buybar md:hidden">
+    <button class="grid h-[49px] w-11 shrink-0 place-items-center text-heading" type="button" aria-label="Add to wishlist" onclick="var b=document.querySelector('[data-pdp-wishlist]');b.click();this.querySelector('svg').setAttribute('fill',b.querySelector('svg').getAttribute('fill'));this.classList.toggle('text-accent-dark',b.classList.contains('text-accent'))">
+      <svg class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21.2l7.7-7.7 1.1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+    </button>
+    @if($product->stock_quantity > 0)
+      <button class="btn-cta-outline h-[49px] flex-1 text-[18px]" type="submit" form="pdp-form" name="express" value="1" formaction="{{ route('checkout.express.start', $product) }}" data-express-submit>Buy Now</button>
+      <button class="btn-cta h-[49px] flex-1 text-[18px]" type="submit" form="pdp-form">Add to Bag</button>
+    @else
+      <button class="btn-cta h-[49px] flex-1 text-[18px]" type="button" disabled>Out of Stock</button>
+    @endif
+  </div>
+@endsection
+
 @section('content')
 
   @php
@@ -159,17 +173,11 @@
       inline/scoped-CSS per this app's no-live-Tailwind-build constraint,
       matching the pattern already used for back-to-top's own offset.
     --}}
-    .pdp-buy-box-spacer { display: none; }
     @media (max-width: 767px) {
-      .pdp-buy-box {
-        position: fixed; left: 0; right: 0; bottom: 0; z-index: 80;
-        margin: 0; background: var(--color-white);
-        padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
-        box-shadow: 0 -2px 10px rgba(0, 0, 0, .08); border-top: 1px solid var(--color-line);
-      }
-      .pdp-buy-box-spacer { display: block; height: 132px; }
-      [data-chat] { bottom: 200px !important; }
-      .back-to-top-btn { bottom: 260px !important; }
+      .pdp-image-wrap { margin-left: -16px; margin-right: -16px; }
+      .pdp-main { padding: 0 !important; border-radius: 0; }
+      [data-chat] { bottom: 84px !important; }
+      .back-to-top-btn { bottom: 144px !important; }
     }
   </style>
 
@@ -215,9 +223,9 @@
 
     <div>
       <div class="pdp-title-row mb-1.5">
-        <h1 class="font-serif text-[24px] md:text-[30px] font-semibold text-heading leading-tight">{{ $product->title }}</h1>
+        <h1 class="text-[20px] font-normal leading-tight text-black md:text-[30px] md:font-bold md:text-heading">{{ $product->title }}</h1>
         <div class="pdp-icon-group">
-          <button class="pdp-icon-btn" type="button" aria-label="Add to wishlist">
+          <button class="pdp-icon-btn" type="button" aria-label="Add to wishlist" data-wishlist-toggle data-pdp-wishlist data-wishlist-key="{{ $product->title }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21.2l7.7-7.7 1.1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
           </button>
           <button class="pdp-icon-btn" type="button" id="pdp-share-btn" aria-label="Share">
@@ -235,14 +243,27 @@
         </a>
       @endif
 
-      <div class="mb-1 flex flex-wrap items-baseline gap-3">
-        <span class="font-serif text-[26px] font-semibold text-price md:text-[30px]">₹{{ number_format($product->price, 0) }}</span>
+      <span class="block text-[10px] font-bold leading-3 text-black">MRP</span>
+      <div class="flex flex-wrap items-baseline gap-2.5">
+        <span class="text-[24px] font-normal leading-8 text-black md:text-[30px] md:font-bold md:text-price">₹ {{ number_format($product->price, 0) }}</span>
         @if($product->compare_at_price)
-          <span class="text-[16px] text-muted line-through">₹{{ number_format($product->compare_at_price, 0) }}</span>
-          <span class="bg-salebadge px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-white">{{ $discountPercent }}% off</span>
+          <span class="text-[15px] text-muted line-through">₹ {{ number_format($product->compare_at_price, 0) }}</span>
+          <span class="text-[15px] font-bold text-accent-dark">{{ $discountPercent }}% off</span>
         @endif
       </div>
-      <p class="mb-5 text-[12px] text-muted">Inclusive of all taxes &middot; Free shipping available</p>
+      <p class="mb-3 text-[10px] font-bold leading-3 text-[#777]">(Incl. of all taxes)</p>
+      <div class="mb-5 flex flex-wrap gap-2.5">
+        @if($product->stock_quantity > 0 && $product->stock_quantity <= 5)
+          <span class="info-chip">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="13" cy="13" r="8"/><path d="M13 9v4l2.5 2M2 9h4M1 13h4M3 17h3"/></svg>
+            Hurry, Only <strong class="text-black/80">{{ $product->stock_quantity }}</strong> left
+          </span>
+        @endif
+        <span class="info-chip">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M1 5h14v11H1zM15 9h4l4 4v3h-8z"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg>
+          Free shipping available
+        </span>
+      </div>
 
       {{-- Trust badge row --}}
       <div class="mb-6 grid grid-cols-3 gap-2 rounded-xl bg-warmbeige/40 p-3.5 border border-line text-center">
@@ -271,7 +292,7 @@
 
       @include('partials.offers-banner')
 
-      <form class="mt-4" action="{{ route('cart.store', $product) }}" method="post" data-cart-form data-checkout-url="{{ route('checkout.index') }}">
+      <form class="mt-4" id="pdp-form" action="{{ route('cart.store', $product) }}" method="post" data-cart-form data-checkout-url="{{ route('checkout.index') }}">
         @csrf
 
         @if($product->variants->isNotEmpty())
@@ -288,26 +309,19 @@
           </div>
         @endif
 
-        <div class="pdp-buy-box mb-3 flex flex-col gap-3">
-          <div class="flex flex-col sm:flex-row gap-3">
-            <div class="inline-flex h-12 w-36 shrink-0 items-center justify-between rounded-md border border-line-strong bg-white px-1 shadow-sm" data-qty>
-              <button class="grid h-11 w-10 place-items-center rounded text-[16px] font-semibold text-heading transition-colors hover:bg-warmbeige" type="button" data-qty-minus aria-label="Decrease quantity">&minus;</button>
-              <input class="w-10 border-0 text-center font-medium text-base text-heading outline-none" type="number" name="quantity" value="1" min="1" aria-label="Quantity">
-              <button class="grid h-11 w-10 place-items-center rounded text-[16px] font-semibold text-heading transition-colors hover:bg-warmbeige" type="button" data-qty-plus aria-label="Increase quantity">+</button>
-            </div>
-            <button class="flex-1 rounded-md bg-accent py-3.5 px-6 text-center text-[13px] font-semibold uppercase tracking-[0.6px] text-white shadow-sm transition-colors hover:bg-accent-dark" type="submit"
-                    {{ $product->stock_quantity <= 0 ? 'disabled' : '' }}>
-              {{ $product->stock_quantity > 0 ? 'Add to Cart' : 'Out of Stock' }}
-            </button>
+        <div class="mb-4 flex items-center gap-3.5">
+          <span class="text-[14px] font-bold text-heading">Quantity</span>
+          <div class="inline-flex h-10 items-center rounded-md border border-line-strong bg-white px-1" data-qty>
+            <button class="grid h-9 w-9 place-items-center rounded text-[18px] text-heading" type="button" data-qty-minus aria-label="Decrease quantity">&minus;</button>
+            <input class="w-10 border-0 text-center font-bold text-heading outline-none" type="number" name="quantity" value="1" min="1" aria-label="Quantity">
+            <button class="grid h-9 w-9 place-items-center rounded text-[18px] text-heading" type="button" data-qty-plus aria-label="Increase quantity">+</button>
           </div>
-          <button class="inline-flex w-full items-center justify-center gap-2 rounded-md bg-heading py-3.5 px-6 text-center text-[13px] font-semibold uppercase tracking-[0.6px] text-white shadow-sm transition-colors hover:bg-black disabled:opacity-60" type="submit" name="express" value="1" formaction="{{ route('checkout.express.start', $product) }}" data-express-submit
-                  {{ $product->stock_quantity <= 0 ? 'disabled' : '' }}>
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg>
-            Checkout
-          </button>
-          <p class="-mt-1 text-center text-[11px] text-muted">Fast &amp; secure · UPI, cards, net banking, COD</p>
         </div>
-        <div class="pdp-buy-box-spacer" aria-hidden="true"></div>
+        <div class="mb-3 hidden gap-3 md:flex">
+          <button class="btn-cta-outline flex-1" type="submit" name="express" value="1" formaction="{{ route('checkout.express.start', $product) }}" data-express-submit {{ $product->stock_quantity <= 0 ? 'disabled' : '' }}>Buy Now</button>
+          <button class="btn-cta flex-1" type="submit" {{ $product->stock_quantity <= 0 ? 'disabled' : '' }}>{{ $product->stock_quantity > 0 ? 'Add to Bag' : 'Out of Stock' }}</button>
+        </div>
+        <p class="hidden text-center text-[11px] text-muted md:block">Fast &amp; secure · UPI, cards, net banking, COD</p>
       </form>
 
       <div class="mt-7 border-t border-line">
@@ -504,7 +518,7 @@
             @error('photos.*') <p class="mt-1 text-[12px] text-salebadge">{{ $message }}</p> @enderror
           </div>
 
-          <button class="inline-flex items-center justify-center gap-2 border border-accent bg-accent px-8 py-[13px] text-[13px] font-medium uppercase tracking-[0.5px] text-white transition-colors hover:border-accent-dark hover:bg-accent-dark" type="submit">
+          <button class="btn-cta w-auto px-8 text-[14px]" type="submit">
             Submit Review
           </button>
         </form>

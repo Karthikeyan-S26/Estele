@@ -2,19 +2,32 @@
 
 @section('meta_title', 'Search'.($query !== '' ? " — {$query}" : '').' | '.($siteSettings['site_name'] ?? 'Estele'))
 
+@if($query !== '')
+  @section('sticky_bar')
+    <x-listing-bar :sort="$sort" :options="['relevance' => 'Relevance', 'price_asc' => 'Price: Low to High', 'price_desc' => 'Price: High to Low', 'newest' => 'Newest']" :filtered="filled($minPrice) || filled($maxPrice) || $inStock || count($categorySlugs) > 0" />
+  @endsection
+@endif
+
 @section('content')
 
-  <nav class="mx-auto w-full max-w-wrapper px-3 md:px-4 flex flex-wrap items-center gap-1.5 py-4 text-[13px] text-muted" aria-label="Breadcrumb">
+    <div class="flex h-[49px] items-center gap-1 border-b border-line px-2 md:hidden">
+    <a class="grid h-10 w-9 shrink-0 place-items-center text-heading" href="{{ url()->previous() === url()->current() ? route('home') : url()->previous() }}" aria-label="Back">
+      <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+    </a>
+    <span class="truncate text-[16px] font-bold text-heading">{{ $query !== '' ? $query : 'Search' }}</span>
+  </div>
+
+  <nav class="mx-auto hidden w-full max-w-wrapper flex-wrap items-center gap-1.5 px-4 py-4 text-[13px] text-muted md:flex" aria-label="Breadcrumb">
     <x-breadcrumb :items="[['label' => 'Search']]" />
   </nav>
 
-  <div class="mx-auto w-full max-w-wrapper px-3 md:px-4 pb-10 md:pb-[60px]">
-    <h1 class="text-[20px] uppercase tracking-[0.5px] md:text-[26px] mb-5">Search</h1>
+  <div class="mx-auto w-full max-w-wrapper px-2.5 pb-10 pt-3 md:px-4 md:pb-[60px] md:pt-0">
+    <h1 class="mb-5 hidden text-[26px] md:block">Search</h1>
 
     @if($query !== '')
       <div class="mb-5 flex flex-wrap items-center gap-3.5">
         <p class="text-[13px] text-muted md:mr-auto">{{ $products->total() }} {{ \Illuminate\Support\Str::plural('result', $products->total()) }} for &ldquo;{{ $query }}&rdquo;</p>
-        <label class="ml-auto">
+        <label class="ml-auto hidden md:block">
           <span class="sr-only-custom">Sort by</span>
           <select class="border border-line-strong bg-white px-3 py-2 text-[13px] outline-none transition-colors focus:border-heading" onchange="window.location.href=this.value">
             <option value="{{ request()->fullUrlWithQuery(['sort' => 'relevance']) }}" @selected($sort === 'relevance')>Relevance</option>
@@ -46,7 +59,7 @@
         @endif
       </p>
     @else
-      <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 md:gap-5">
+      <div class="grid grid-cols-2 gap-x-2.5 gap-y-5 sm:grid-cols-3 md:gap-5 lg:grid-cols-4">
         @foreach($products as $product)
           <x-product-card :product="$product" />
         @endforeach

@@ -9,7 +9,7 @@
 @endphp
 
 <article class="product-card group">
-  <a class="product-card__frame block" href="{{ route('products.show', $product) }}" aria-label="{{ $product->title }}">
+  <a class="product-card__frame skeleton block" href="{{ route('products.show', $product) }}" aria-label="{{ $product->title }}">
     @if($product->hasMedia('gallery'))
       <img class="product-card__img" src="{{ $product->getFirstMediaUrl('gallery', 'card') }}" alt="{{ $product->title }}" loading="lazy" width="600" height="600">
       @if($product->getMedia('gallery')->count() > 1)
@@ -17,40 +17,41 @@
       @endif
     @endif
 
-    @if($discount > 0)
-      <span class="absolute left-2 top-2 z-[2] rounded-md bg-salebadge px-2 py-1 text-[9.5px] font-bold uppercase leading-none tracking-[0.06em] text-white md:text-[10.5px]">{{ $discount }}% off</span>
+    @if($product->is_featured)
+      <span class="product-card__ribbon">Bestseller</span>
+    @elseif($discount > 0)
+      <span class="product-card__ribbon product-card__ribbon--sale">{{ $discount }}% off</span>
     @endif
 
-    <button class="absolute right-2 top-2 z-[2] grid h-8 w-8 place-items-center rounded-full bg-white/95 text-heading shadow-sm transition-colors hover:text-rose md:h-9 md:w-9" type="button" aria-label="Save {{ $product->title }} to wishlist" data-wishlist-toggle data-product-id="{{ $product->id }}">
-      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21.2l7.7-7.7 1.1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+    <button class="absolute right-1.5 top-1.5 z-[2] grid h-9 w-9 place-items-center text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)] transition-transform active:scale-90" type="button" aria-label="Save {{ $product->title }} to wishlist" data-wishlist-toggle data-product-id="{{ $product->id }}">
+      <svg class="h-6 w-6" viewBox="0 0 24 24" fill="rgba(255,255,255,0.25)" stroke="currentColor" stroke-width="1.8"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21.2l7.7-7.7 1.1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
     </button>
+
+    @if($reviewCount > 0)
+      <span class="absolute bottom-1.5 left-1.5 z-[2] inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-[3px] text-[11px] font-bold leading-none text-heading">
+        <svg class="h-3 w-3 text-star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.3 6.9 1-5 4.8 1.2 6.9L12 17.8 5.9 21l1.2-6.9-5-4.8 6.9-1z"/></svg>{{ number_format($rating, 1) }}
+      </span>
+    @endif
   </a>
 
-  <div class="flex flex-1 flex-col px-3 pb-3 pt-1.5 md:px-3.5 md:pb-3.5">
-    <h3 class="mb-1.5 line-clamp-2 font-serif text-[13px] font-medium leading-snug text-heading md:text-[14.5px] lg:text-[15px]">
+  <div class="flex flex-1 flex-col pt-2">
+    <h3 class="mb-1.5 line-clamp-2 text-[13px] font-normal leading-snug text-heading md:text-[14.5px]">
       <a class="transition-colors hover:text-rose" href="{{ route('products.show', $product) }}">{{ $product->title }}</a>
     </h3>
-    @if($reviewCount > 0)
-      <div class="mb-1.5">
-        <x-review-stars :rating="$rating" :count="$reviewCount" size="text-[11px] md:text-[12px]" />
-      </div>
-    @endif
-    <div class="mb-2.5 flex flex-wrap items-baseline gap-x-1.5 md:mb-3">
-      <span class="text-[14px] font-bold text-price md:text-[15.5px] lg:text-[16.5px]">₹{{ number_format($product->price, 0) }}</span>
+    <div class="mb-2.5 flex flex-wrap items-baseline gap-x-1.5">
+      <span class="text-[14px] font-bold text-price md:text-[16px]">₹ {{ number_format($product->price, 0) }}</span>
       @if($product->compare_at_price)
-        <span class="text-[11px] text-muted line-through md:text-[12.5px]">₹{{ number_format($product->compare_at_price, 0) }}</span>
+        <span class="text-[12px] text-muted line-through">₹ {{ number_format($product->compare_at_price, 0) }}</span>
+        @if($discount > 0)
+          <span class="text-[12px] font-bold text-accent-dark">{{ $discount }}% off</span>
+        @endif
       @endif
     </div>
     <form class="mt-auto flex gap-1.5" action="{{ route('cart.store', $product) }}" method="post" data-cart-form data-checkout-url="{{ route('checkout.index') }}">
       @csrf
       <input type="hidden" name="quantity" value="1">
-      <button class="flex min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md bg-heading px-1 py-2 text-[8.5px] font-semibold uppercase tracking-normal text-white transition-colors hover:bg-rose md:gap-1.5 md:px-3 md:py-2.5 md:text-[11px] md:tracking-[0.12em]" type="submit">
-        <svg class="hidden h-3.5 w-3.5 shrink-0 md:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 7h15l-1.5 8h-12z"/><path d="M6 7 5 3H2"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>
-        Add to cart
-      </button>
-      <button class="flex min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md bg-accent px-1 py-2 text-[8.5px] font-semibold uppercase tracking-normal text-white transition-colors hover:bg-accent-dark md:gap-1.5 md:px-3 md:py-2.5 md:text-[11px] md:tracking-[0.12em]" type="submit" name="express" value="1" formaction="{{ route('checkout.express.start', $product) }}" data-express-submit>
-        Buy now
-      </button>
+      <button class="btn-cta-outline h-9 min-w-0 flex-1 whitespace-nowrap rounded-md px-1 text-[12px] md:h-10 md:text-[13px]" type="submit" name="express" value="1" formaction="{{ route('checkout.express.start', $product) }}" data-express-submit>Buy Now</button>
+      <button class="btn-cta h-9 min-w-0 flex-1 whitespace-nowrap rounded-md px-1 text-[12px] md:h-10 md:text-[13px]" type="submit">Add to Bag</button>
     </form>
   </div>
 </article>

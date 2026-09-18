@@ -28,7 +28,7 @@
       <div class="rounded-lg border border-line p-8 text-center">
         <p class="mb-4 text-[13px] text-muted">You haven't submitted any jewellery yet.</p>
         <a class="inline-flex items-center justify-center gap-2 border border-accent bg-accent px-6 py-2.5 text-[12px] font-medium uppercase tracking-[0.5px] text-white transition-colors hover:border-accent-dark hover:bg-accent-dark" href="{{ route('account.sell-jewellery.create') }}">
-          Submit Your Jewellery
+          Sell Your Jewellery
         </a>
       </div>
     @else

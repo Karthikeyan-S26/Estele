@@ -7,7 +7,7 @@
     <p class="mb-2 text-[13px] font-medium uppercase tracking-[0.5px] text-accent">404</p>
     <h1 class="mb-3 text-[22px] md:text-[28px]">Page Not Found</h1>
     <p class="mb-8 text-[14px] text-muted">The page you're looking for doesn't exist or may have moved.</p>
-    <a class="inline-flex items-center justify-center gap-2 border border-accent bg-accent px-8 py-[13px] text-[13px] font-medium uppercase tracking-[0.5px] text-white transition-colors hover:border-accent-dark hover:bg-accent-dark" href="{{ route('home') }}">
+    <a class="btn-cta w-auto px-8 text-[14px]" href="{{ route('home') }}">
       Back to Home
     </a>
   </div>

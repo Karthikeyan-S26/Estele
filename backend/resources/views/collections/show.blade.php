@@ -6,16 +6,27 @@
   @section('og_image', $collection->seoMeta?->og_image ?? $collection->getFirstMediaUrl('image', 'banner'))
 @endif
 
+@section('sticky_bar')
+  <x-listing-bar :sort="$sort" :filtered="filled($minPrice) || filled($maxPrice) || $inStock" />
+@endsection
+
 @section('content')
 
   <x-breadcrumb-schema :items="[['label' => $collection->name]]" />
 
-  <nav class="mx-auto w-full max-w-wrapper px-3 md:px-4 flex flex-wrap items-center gap-1.5 py-4 text-[13px] text-muted" aria-label="Breadcrumb">
+    <div class="flex h-[49px] items-center gap-1 border-b border-line px-2 md:hidden">
+    <a class="grid h-10 w-9 shrink-0 place-items-center text-heading" href="{{ url()->previous() === url()->current() ? route('home') : url()->previous() }}" aria-label="Back">
+      <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+    </a>
+    <span class="truncate text-[16px] font-bold text-heading">{{ $collection->name }}</span>
+  </div>
+
+  <nav class="mx-auto hidden w-full max-w-wrapper flex-wrap items-center gap-1.5 px-4 py-4 text-[13px] text-muted md:flex" aria-label="Breadcrumb">
     <x-breadcrumb :items="[['label' => $collection->name]]" />
   </nav>
 
   <div class="mx-auto w-full max-w-wrapper px-3 md:px-4">
-    <header class="pb-6 pt-2 text-center md:pb-[30px]">
+    <header class="hidden pb-6 pt-2 text-center md:block md:pb-[30px]">
       <h1 class="text-[20px] uppercase tracking-[0.5px] md:text-[26px] mb-2.5">{{ $collection->name }}</h1>
       @if($collection->description)
         <p class="mx-auto max-w-[70ch] text-[13.5px] text-muted">{{ $collection->description }}</p>
@@ -23,7 +34,7 @@
     </header>
   </div>
 
-  <div class="mx-auto w-full max-w-wrapper px-3 md:px-4 pb-10 md:pb-[60px]">
+  <div class="mx-auto w-full max-w-wrapper px-2.5 pb-10 pt-3 md:px-4 md:pb-[60px] md:pt-0">
 
     <x-filter-panel
       :action="route('collections.show', $collection)"
@@ -33,7 +44,7 @@
       :in-stock="$inStock"
     />
 
-    <div class="mb-5 flex flex-wrap items-center gap-3 border-b border-line pb-4">
+    <div class="mb-3 flex flex-wrap items-center gap-3 md:mb-5 md:border-b md:border-line md:pb-4">
       <p class="text-[12.5px] text-muted md:text-[13px]">
         @if($products->total() > 0)
           Showing {{ $products->firstItem() }}&ndash;{{ $products->lastItem() }} of {{ $products->total() }}
@@ -41,7 +52,7 @@
           No products
         @endif
       </p>
-      <label class="ml-auto">
+      <label class="ml-auto hidden md:block">
         <span class="sr-only-custom">Sort by</span>
         <select class="border border-line-strong bg-white px-2.5 py-2 text-[12.5px] outline-none transition-colors focus:border-heading md:px-3 md:text-[13px]" onchange="window.location.href=this.value">
           <option value="{{ request()->fullUrlWithQuery(['sort' => 'featured']) }}" @selected($sort === 'featured')>Featured</option>
@@ -55,7 +66,7 @@
     @if($products->isEmpty())
       <p class="py-16 text-center text-[13px] text-muted">No products match these filters. Try widening the price range.</p>
     @else
-      <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 md:gap-5 lg:gap-6 xl:grid-cols-5 xl:gap-7 2xl:grid-cols-6">
+      <div class="grid grid-cols-2 gap-x-2.5 gap-y-5 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 md:gap-5 lg:gap-6 xl:grid-cols-5 xl:gap-7 2xl:grid-cols-6">
         @foreach($products as $product)
           <x-product-card :product="$product" />
         @endforeach

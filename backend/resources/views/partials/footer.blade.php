@@ -89,7 +89,7 @@
         </ul>
       </div>
 
-      <div class="lg:col-span-2">
+      <div class="col-span-2 md:col-span-1 lg:col-span-2">
         <h3 class="mb-3.5 font-display text-[12px] font-semibold uppercase tracking-[0.14em] text-gold">Customer Care</h3>
         <ul class="space-y-2 text-[13px] text-white/75">
           <li><a class="transition-colors hover:text-gold" href="{{ auth()->check() ? route('account.index') : route('login') }}">Track Order</a></li>

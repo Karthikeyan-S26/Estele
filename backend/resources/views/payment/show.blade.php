@@ -21,7 +21,7 @@
       </div>
     </div>
 
-    <button id="pay-now-btn" type="button" class="inline-flex w-full items-center justify-center gap-2 border border-accent bg-accent px-8 py-[13px] text-[13px] font-medium uppercase tracking-[0.5px] text-white transition-colors hover:border-accent-dark hover:bg-accent-dark">
+    <button id="pay-now-btn" type="button" class="btn-cta h-[49px]">
       Pay Now
     </button>
 

@@ -30,15 +30,21 @@
   ])->filter()->count() + count($selectedCategories);
 @endphp
 
-<details class="mb-4 rounded-lg border border-line bg-paper md:mb-5" data-filter-panel {{ $activeFilters > 0 ? 'open' : '' }}>
-  <summary class="flex cursor-pointer select-none items-center gap-2 px-3.5 py-3 text-[12.5px] font-medium uppercase tracking-[0.1em] text-heading md:px-4 md:text-[13px]">
+<details class="md:mb-5 md:rounded-lg md:border md:border-line md:bg-paper" data-filter-panel {{ $activeFilters > 0 ? 'open' : '' }}>
+  <summary class="hidden cursor-pointer select-none items-center gap-2 px-4 py-3 text-[13px] font-medium uppercase tracking-[0.1em] text-heading md:flex">
     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
     Filter
     @if($activeFilters > 0)
       <span class="grid h-[18px] min-w-[18px] place-items-center rounded-full bg-accent px-1 text-[10px] font-semibold leading-none text-white">{{ $activeFilters }}</span>
     @endif
   </summary>
-  <form class="grid grid-cols-1 gap-5 border-t border-line p-4 sm:grid-cols-2 md:grid-cols-3" method="get" action="{{ $action }}">
+  <form class="grid grid-cols-1 gap-5 p-4 sm:grid-cols-2 md:grid-cols-3 md:border-t md:border-line" method="get" action="{{ $action }}">
+    <div class="-mx-4 -mt-4 flex items-center justify-between border-b border-line px-5 py-4 md:hidden">
+      <span class="text-[16px] font-bold text-heading">Filter</span>
+      <button class="grid h-8 w-8 place-items-center text-heading" type="button" data-filter-close aria-label="Close">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>
+      </button>
+    </div>
     @if($q !== null)
       <input type="hidden" name="q" value="{{ $q }}">
     @endif
@@ -80,9 +86,7 @@
     @endif
 
     <div class="flex items-center gap-4 sm:col-span-2 md:col-span-3">
-      <button class="inline-flex flex-1 items-center justify-center border border-accent bg-accent px-6 py-3 text-[12px] font-medium uppercase tracking-[0.12em] text-white transition-colors hover:border-accent-dark hover:bg-accent-dark sm:flex-none" type="submit">
-        Apply filters
-      </button>
+      <button class="btn-cta flex-1 text-[14px] sm:w-auto sm:flex-none sm:px-8" type="submit">Apply filters</button>
       @if($activeFilters > 0)
         <a class="text-[12px] text-muted underline transition-colors hover:text-accent" href="{{ $action }}{{ $q !== null ? '?q='.urlencode($q) : '' }}">Clear all</a>
       @endif

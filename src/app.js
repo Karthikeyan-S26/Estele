@@ -697,29 +697,28 @@ import './app.css';
     // handler below fire on this <form> and wipe out its contents.
     $$('[data-cart-form]').forEach(function (form) {
       form.addEventListener('submit', function (e) {
+        var pageLoader = $('[data-page-loader]');
+        if (pageLoader) pageLoader.classList.add('is-active');
         if (e.submitter && e.submitter.name === 'express') {
-          e.submitter.disabled = true;
-          e.submitter.textContent = 'Please wait…';
           return;
         }
         e.preventDefault();
         var buyNow = e.submitter && e.submitter.name === 'buy_now';
         var submitButtons = $$('button[type="submit"]', form);
-        var clicked = e.submitter && e.submitter.type === 'submit' ? e.submitter : submitButtons[0];
-        var originalLabel = clicked ? clicked.innerHTML : null;
+
+        var navigating = false;
 
         submitButtons.forEach(function (btn) { btn.disabled = true; });
-        if (clicked) {
-          clicked.innerHTML = '<span class="btn-loading-dots" aria-hidden="true"><span></span><span></span><span></span></span><span class="sr-only-custom">Adding…</span>';
-        }
 
         request(form.getAttribute('action'), { method: 'POST', body: new FormData(form) })
           .then(function (data) {
             if (data.success === false) {
+              if (pageLoader) pageLoader.classList.remove('is-active');
               alert(data.message || 'Could not add to cart.');
               return;
             }
             if (buyNow) {
+              navigating = true;
               window.location.href = form.getAttribute('data-checkout-url') || '/checkout';
               return;
             }
@@ -728,17 +727,26 @@ import './app.css';
           })
           .finally(function () {
             submitButtons.forEach(function (btn) { btn.disabled = false; });
-            if (clicked && originalLabel !== null) {
-              clicked.innerHTML = originalLabel;
-            }
+            if (pageLoader && !navigating) pageLoader.classList.remove('is-active');
           });
       });
     });
 
+    window.addEventListener('pageshow', function () {
+      var pageLoader = $('[data-page-loader]');
+      if (pageLoader) pageLoader.classList.remove('is-active');
+    });
+
     // Delegate qty +/- and remove — the drawer body's HTML is replaced
     // wholesale on every update, so per-element listeners would go stale.
+    // `busy` blocks overlapping taps: render() below throws away and
+    // rebuilds this whole subtree anyway, so a closure flag is enough —
+    // no per-button disabled state to track or reset.
+    var busy = false;
     if (body) {
       body.addEventListener('click', function (e) {
+        if (busy) return;
+
         var decrement = e.target.closest('[data-cart-qty-decrement]');
         var increment = e.target.closest('[data-cart-qty-increment]');
         var remove    = e.target.closest('[data-cart-remove]');
@@ -753,21 +761,24 @@ import './app.css';
 
           if (next === current) return;
 
+          busy = true;
           request('/cart/items/' + itemId, {
             method: 'PATCH',
             body: new URLSearchParams({ quantity: next }),
           }).then(function (data) {
             if (data.success === false) return;
             render(data.html, data.cartCount);
-          });
+          }).finally(function () { busy = false; });
         }
 
         if (remove) {
+          busy = true;
           request('/cart/items/' + remove.getAttribute('data-item-id'), { method: 'DELETE' })
             .then(function (data) {
               if (data.success === false) return;
               render(data.html, data.cartCount);
-            });
+            })
+            .finally(function () { busy = false; });
         }
 
         var couponApply  = e.target.closest('[data-coupon-apply]');
@@ -820,10 +831,11 @@ import './app.css';
         }
 
         if (couponRemove) {
+          busy = true;
           request('/cart/coupon', { method: 'DELETE' }).then(function (data) {
             if (data.success === false) return;
             render(data.html, data.cartCount);
-          });
+          }).finally(function () { busy = false; });
         }
       });
 
@@ -939,11 +951,17 @@ import './app.css';
     var toTop  = $('[data-to-top]');
     if (!header && !toTop) return;
 
+    var lastY = window.scrollY;
+
     function onScroll() {
       var y = window.scrollY;
       if (header) {
         header.classList.toggle('shadow-[0_2px_12px_rgba(0,0,0,0.06)]', y > 4);
         header.classList.toggle('is-stuck', y > 4);
+        if (Math.abs(y - lastY) > 6) {
+          header.classList.toggle('is-hidden', y > lastY && y > 160);
+          lastY = y;
+        }
       }
       if (toTop) {
         toTop.classList.toggle('opacity-100', y > 500);
@@ -1455,7 +1473,7 @@ import './app.css';
 
       var card = btn.closest('article, li, [data-product-grid] > *');
       var img  = card && card.querySelector('img');
-      var key  = (img && (img.getAttribute('alt') || img.getAttribute('src'))) || btn;
+      var key  = btn.getAttribute('data-wishlist-key') || (img && (img.getAttribute('alt') || img.getAttribute('src'))) || btn;
       var idx  = saved.indexOf(key);
       var on   = idx === -1;
 
@@ -1628,20 +1646,271 @@ import './app.css';
      immediately so the page feels responsive during the round trip, and
      disables the button to block a double submit.
      ---------------------------------------------------------------------- */
-  $$('form[data-loading-submit]').forEach(function (form) {
-    form.addEventListener('submit', function () {
-      var btn = $('button[type="submit"]', form);
-      if (!btn || btn.disabled) return;
+  $$('[data-loop]').forEach(function (root) {
+    var stage = $('[data-loop-stage]', root);
+    var track = $('[data-loop-track]', root);
+    if (!stage || !track) return;
 
-      btn.disabled = true;
-      btn.setAttribute('aria-busy', 'true');
-      btn.dataset.originalLabel = btn.innerHTML;
-      btn.innerHTML = '<span class="btn-loading-dots" aria-hidden="true"><span></span><span></span><span></span></span><span class="sr-only-custom">Please wait</span>';
+    var originals = $$('.loop__item', track);
+    var count = originals.length;
+    if (count < 2) return;
+
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var step = 0;
+    var setWidth = 0;
+    var x = 0;
+    var vel = 0;
+    var target = null;
+    var dragging = false;
+    var startX = 0;
+    var startOffset = 0;
+    var moved = 0;
+    var lastX = 0;
+    var lastT = 0;
+    var nextAuto = performance.now() + 3500;
+    var hovering = false;
+    var last = performance.now();
+
+    function addSet() {
+      originals.forEach(function (item) {
+        var clone = item.cloneNode(true);
+        clone.setAttribute('aria-hidden', 'true');
+        clone.setAttribute('tabindex', '-1');
+        track.appendChild(clone);
+      });
+    }
+
+    function layout() {
+      var visible = window.innerWidth >= 768 ? 7 : 4;
+      var gap = parseFloat(getComputedStyle(stage).getPropertyValue('--loop-gap')) || 10;
+      var width = (stage.clientWidth - gap * (visible - 1)) / visible;
+      stage.style.setProperty('--loop-w', width + 'px');
+      root.style.setProperty('--loop-arrow-y', width / 2 + 'px');
+      step = width + gap;
+      setWidth = step * count;
+      while (track.children.length * step < stage.clientWidth + setWidth * 2) addSet();
+      x = Math.round(x / step) * step;
+      target = null;
+    }
+
+    addSet();
+    layout();
+    window.addEventListener('resize', layout);
+
+    function snapped() {
+      return Math.round((target !== null ? target : x) / step) * step;
+    }
+
+    function move(direction) {
+      vel = 0;
+      target = snapped() - direction * step;
+      nextAuto = performance.now() + 5000;
+    }
+
+    function frame(now) {
+      var dt = Math.min(now - last, 100);
+      last = now;
+      if (!dragging) {
+        if (vel) {
+          x += vel * dt;
+          vel *= Math.pow(0.92, dt / 16);
+          if (Math.abs(vel) < 0.05) {
+            vel = 0;
+            target = Math.round(x / step) * step;
+          }
+        } else if (target !== null) {
+          x += (target - x) * Math.min(1, dt / 110);
+          if (Math.abs(target - x) < 0.4) {
+            x = target;
+            target = null;
+          }
+        } else if (!hovering && !reduce && now > nextAuto) {
+          target = snapped() - step;
+          nextAuto = now + 3500;
+        }
+      }
+      if (setWidth) {
+        var wrapped = ((x % setWidth) + setWidth) % setWidth - setWidth;
+        if (target !== null) target += wrapped - x;
+        x = wrapped;
+      }
+      track.style.transform = 'translate3d(' + x.toFixed(2) + 'px,0,0)';
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+
+    var prev = $('[data-loop-prev]', root);
+    var next = $('[data-loop-next]', root);
+    if (prev) prev.addEventListener('click', function () { move(-1); });
+    if (next) next.addEventListener('click', function () { move(1); });
+
+    stage.addEventListener('pointerdown', function (e) {
+      if (e.button) return;
+      dragging = true;
+      vel = 0;
+      target = null;
+      startX = lastX = e.clientX;
+      startOffset = x;
+      moved = 0;
+      lastT = performance.now();
+    });
+    document.addEventListener('pointermove', function (e) {
+      if (!dragging) return;
+      var now = performance.now();
+      var dx = e.clientX - startX;
+      moved = Math.max(moved, Math.abs(dx));
+      x = startOffset + dx;
+      if (now - lastT > 0) vel = Math.max(-3, Math.min(3, (e.clientX - lastX) / (now - lastT)));
+      lastX = e.clientX;
+      lastT = now;
+    });
+    function release() {
+      if (!dragging) return;
+      dragging = false;
+      if (performance.now() - lastT > 80 || Math.abs(vel) < 0.05) {
+        vel = 0;
+        target = Math.round(x / step) * step;
+      }
+      nextAuto = performance.now() + 5000;
+    }
+    document.addEventListener('pointerup', release);
+    document.addEventListener('pointercancel', release);
+    root.addEventListener('mouseenter', function () { hovering = true; });
+    root.addEventListener('mouseleave', function () { hovering = false; });
+    stage.addEventListener('click', function (e) {
+      if (moved > 8) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }, true);
+  });
+
+  $$('[data-sheet-open]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var sheet = $('[data-sheet="' + btn.getAttribute('data-sheet-open') + '"]');
+      if (!sheet) return;
+      sheet.hidden = false;
+      document.body.classList.add('is-locked');
+    });
+  });
+  $$('[data-sheet-close]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var sheet = btn.closest('[data-sheet]');
+      if (sheet) sheet.hidden = true;
+      document.body.classList.remove('is-locked');
     });
   });
 
+  $$('[data-filter-open]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var panel = $('[data-filter-panel]');
+      if (!panel) return;
+      panel.open = true;
+      panel.classList.add('is-sheet-open');
+      document.body.classList.add('is-locked');
+    });
+  });
+  $$('[data-filter-close]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var panel = btn.closest('[data-filter-panel]');
+      if (panel) panel.classList.remove('is-sheet-open');
+      document.body.classList.remove('is-locked');
+    });
+  });
+
+  document.addEventListener('click', function (e) {
+    var link = e.target.closest('[data-page-loading]');
+    var pageLoader = $('[data-page-loader]');
+    if (link && pageLoader && !e.metaKey && !e.ctrlKey) pageLoader.classList.add('is-active');
+  });
+
+  $$('[data-phone-form]').forEach(function (form) {
+    var input = $('[data-phone-input]', form);
+    var submit = $('[data-phone-submit]', form);
+    if (!input || !submit) return;
+
+    function sync() {
+      input.value = input.value.replace(/\D/g, '').slice(0, 10);
+      submit.disabled = input.value.length !== 10;
+    }
+
+    input.addEventListener('input', sync);
+    sync();
+  });
+
+  $$('[data-otp-form]').forEach(function (form) {
+    var boxes = $$('[data-otp-box]', form);
+    var value = $('[data-otp-value]', form);
+    var submit = $('[data-otp-submit]', form);
+    if (!boxes.length || !value) return;
+
+    function sync() {
+      value.value = boxes.map(function (b) { return b.value; }).join('');
+      if (submit) submit.disabled = value.value.length !== boxes.length;
+    }
+
+    function fill(digits, from) {
+      digits.split('').forEach(function (d, i) {
+        if (boxes[from + i]) boxes[from + i].value = d;
+      });
+      var next = Math.min(from + digits.length, boxes.length - 1);
+      boxes[next].focus();
+      sync();
+      if (value.value.length === boxes.length && form.requestSubmit) form.requestSubmit();
+    }
+
+    boxes.forEach(function (box, index) {
+      box.addEventListener('input', function () {
+        var digits = box.value.replace(/\D/g, '');
+        box.value = '';
+        if (digits) fill(digits, index);
+        else sync();
+      });
+      box.addEventListener('keydown', function (e) {
+        if (e.key === 'Backspace' && !box.value && index > 0) {
+          boxes[index - 1].value = '';
+          boxes[index - 1].focus();
+          sync();
+        }
+      });
+      box.addEventListener('paste', function (e) {
+        var digits = ((e.clipboardData || window.clipboardData).getData('text') || '').replace(/\D/g, '');
+        if (!digits) return;
+        e.preventDefault();
+        fill(digits, 0);
+      });
+    });
+
+    sync();
+  });
+
+  // Sitewide double-submit guard — fires for every real <form> submission
+  // (capture phase, so it always runs before any per-form submit handler
+  // added elsewhere, including ones that call preventDefault()). Repeated
+  // taps on a submit button were firing multiple in-flight requests because
+  // most forms had no opt-in guard at all; this makes the guard the default
+  // instead of something each new form has to remember to add.
+  document.addEventListener('submit', function (e) {
+    var form = e.target;
+    if (!(form instanceof HTMLFormElement)) return;
+
+    var btn = e.submitter || $('button[type="submit"]', form);
+    if (!btn || btn.disabled) {
+      if (btn) e.preventDefault();
+      return;
+    }
+
+    btn.disabled = true;
+    btn.setAttribute('aria-busy', 'true');
+
+    if (form.hasAttribute('data-loading-submit')) {
+      btn.dataset.originalLabel = btn.innerHTML;
+      btn.innerHTML = '<span class="btn-loading-dots" aria-hidden="true"><span></span><span></span><span></span></span><span class="sr-only-custom">Please wait</span>';
+    }
+  }, true);
+
   // Back/forward cache restores the page exactly as it was mid-submit, so
-  // put the button back the way it was before the user pressed it.
+  // put every button back the way it was before the user pressed it.
   window.addEventListener('pageshow', function (e) {
     if (!e.persisted) return;
     $$('button[aria-busy="true"]').forEach(function (btn) {

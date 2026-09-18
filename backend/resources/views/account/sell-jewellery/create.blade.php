@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('meta_title', 'Submit Your Jewellery | '.($siteSettings['site_name'] ?? 'Estele'))
+@section('meta_title', 'Sell Your Jewellery | '.($siteSettings['site_name'] ?? 'Estele'))
 
 @section('content')
 
@@ -9,7 +9,7 @@
   </nav>
 
   <div class="mx-auto w-full max-w-2xl px-3 pb-10 md:px-4 md:pb-[60px]">
-    <h1 class="mb-1 text-[20px] uppercase tracking-[0.5px] md:text-[26px]">Submit Your Jewellery</h1>
+    <h1 class="mb-1 text-[20px] uppercase tracking-[0.5px] md:text-[26px]">Sell Your Jewellery</h1>
     <p class="mb-6 text-[13px] text-muted">Add a short video and a photo. Our vendors value your piece from what they see.</p>
 
     @if ($errors->any())
@@ -106,14 +106,6 @@
           <p class="mt-2 text-[11px] leading-snug text-muted">A clear, well-lit shot of the full piece.</p>
           <p class="mt-1.5 hidden text-[11px] font-medium text-salebadge" data-file-error></p>
         </div>
-      </div>
-
-      <div class="mb-6">
-        <label class="mb-1.5 flex items-baseline justify-between text-[12px] font-medium uppercase tracking-[0.3px] text-heading" for="description">
-          <span>Description</span>
-          <span class="text-[10px] font-normal normal-case tracking-normal text-muted">Optional</span>
-        </label>
-        <textarea class="w-full resize-none rounded-lg border border-line bg-paper p-3 text-[14px] leading-snug placeholder:text-muted/70 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20" id="description" name="description" rows="3" maxlength="2000" placeholder="Metal, weight, purity, age — anything that helps value it">{{ old('description') }}</textarea>
       </div>
 
       <button class="inline-flex w-full items-center justify-center gap-2 border border-accent bg-accent px-6 py-3.5 text-[13px] font-medium uppercase tracking-[0.5px] text-white transition-colors hover:border-accent-dark hover:bg-accent-dark disabled:cursor-not-allowed disabled:opacity-60" type="submit" data-submit>

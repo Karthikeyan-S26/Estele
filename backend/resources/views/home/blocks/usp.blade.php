@@ -11,25 +11,29 @@
   ];
 @endphp
 
-<section class="border-y border-line bg-white py-6 md:py-9">
+<section class="bg-white py-6 md:border-y md:border-line md:py-9">
   <div class="mx-auto w-full max-w-wrapper px-3 md:px-4">
     @if($block->title || $block->subtitle)
-      <x-section-header :eyebrow="$block->cta_label ?: 'Since 1989'" :title="$block->title ?: 'Why Indian Women Choose Estele'" :subtitle="$block->subtitle" />
+      <div class="hidden md:block">
+        <x-section-header :eyebrow="$block->cta_label ?: 'Since 1989'" :title="$block->title ?: 'Why Indian Women Choose Estele'" :subtitle="$block->subtitle" />
+      </div>
     @endif
-    <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:gap-4 lg:grid-cols-6">
+    <div class="carousel-track gap-6 px-2 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:px-0 lg:grid-cols-6">
       @foreach($block->items as $item)
-        <div class="flex flex-col items-center rounded-xl border border-line bg-paper px-3 py-5 text-center transition-all hover:-translate-y-0.5 hover:border-gold hover:shadow-md md:px-4 md:py-6">
+        <div class="flex items-center gap-2.5 md:flex-col md:rounded-xl md:border md:border-line md:bg-paper md:px-4 md:py-6 md:text-center md:transition-all md:hover:-translate-y-0.5 md:hover:border-gold md:hover:shadow-md">
           @if($item->hasMedia('image'))
-            <img class="mb-3 h-10 w-10" src="{{ $item->getFirstMediaUrl('image') }}" alt="" loading="lazy" width="40" height="40">
+            <img class="h-9 w-9 shrink-0 md:mb-3 md:h-10 md:w-10" src="{{ $item->getFirstMediaUrl('image') }}" alt="" loading="lazy" width="40" height="40">
           @else
-            <span class="mb-3 grid h-11 w-11 place-items-center rounded-full bg-pinksoft text-rose">
-              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="{{ $icons[$loop->index % count($icons)] }}"/></svg>
+            <span class="grid h-9 w-9 shrink-0 place-items-center text-heading md:mb-3 md:h-11 md:w-11 md:rounded-full md:bg-pinksoft md:text-rose">
+              <svg class="h-7 w-7 md:h-5 md:w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"><path d="{{ $icons[$loop->index % count($icons)] }}"/></svg>
             </span>
           @endif
-          <h3 class="font-serif text-[14px] font-semibold leading-snug text-heading md:text-[15px]">{{ $item->title }}</h3>
-          @if($item->body)
-            <p class="mt-1.5 text-[11.5px] leading-relaxed text-muted md:text-[12.5px]">{{ $item->body }}</p>
-          @endif
+          <div>
+            <h3 class="max-w-[92px] text-[13px] font-normal leading-[1.3] tracking-[0.04em] text-heading md:max-w-none md:text-[15px] md:font-bold">{{ $item->title }}</h3>
+            @if($item->body)
+              <p class="mt-1.5 hidden text-[12.5px] leading-relaxed text-muted md:block">{{ $item->body }}</p>
+            @endif
+          </div>
         </div>
       @endforeach
     </div>
