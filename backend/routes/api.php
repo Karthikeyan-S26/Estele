@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\FastrrWebhookController;
 use App\Http\Controllers\Api\OldJewelleryRequestController;
 use App\Http\Controllers\Api\VendorOldJewelleryController;
 use App\Http\Controllers\Api\WalletController;
+use App\Http\Controllers\Api\CatalogController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -48,3 +49,18 @@ Route::prefix('v1')->group(function () {
             Route::post('/decline', [VendorOldJewelleryController::class, 'decline']);
         });
 });
+
+/*
+|--------------------------------------------------------------------------
+| Mobile app catalog API (public, no auth) - serves the Flutter app.
+|--------------------------------------------------------------------------
+*/
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'service' => 'estele-api', 'time' => now()->toIso8601String()]));
+Route::get('/home', [CatalogController::class, 'home']);
+Route::get('/categories', [CatalogController::class, 'categories']);
+Route::get('/categories/{slug}/products', [CatalogController::class, 'categoryProducts']);
+Route::get('/collections', [CatalogController::class, 'collections']);
+Route::get('/collections/{slug}/products', [CatalogController::class, 'collectionProducts']);
+Route::get('/products/{slug}', [CatalogController::class, 'productShow']);
+Route::get('/search', [CatalogController::class, 'search']);
+Route::get('/search/suggest', [CatalogController::class, 'suggest']);
