@@ -1,9 +1,10 @@
 A-V REPORT: Estele Mobile App - Production API 404 Diagnosis & Fix
 ===================================================================
 
-STATUS: Root cause CONFIRMED. Production Hostinger runs an OLD backend
-that never received the mobile API. The API-capable code is proven working
-locally. Deployment + cache clear on production is required.
+STATUS: Root cause CONFIRMED. Production company/main was force-reverted
+from the mobile-API line (tag karthikeyan-mobile-api-2026-09-17), so the
+deployed main has only the old v1 Fastrr/old-jewellery routes. A validated,
+ADDITIVE port (branch mobile-api-port, commit 250b9af) is ready as PR #2.
 Flutter APK verified correct - does NOT need rebuilding.
 
 WARNING: Earlier versions of this report were WRONG on two points and have
@@ -12,8 +13,10 @@ been corrected here:
       That was FALSE. backend/.env contains REAL production credentials and
       WAS committed to git (commit f6a7ad5). Rotation is MANDATORY.
   (2) Section 4 previously blamed APP_URL for the 404. That is IMPOSSIBLE -
-      APP_URL does not control route registration. The real cause is that
-      the deployed backend lacks the /api route registration entirely.
+      APP_URL does not control route registration. The true cause (proven):
+      main was force-reverted off the mobile-API fork (tag
+      karthikeyan-mobile-api-2026-09-17), so the deployed backend registers
+      no /api routes.
 
 ===================================================================
 SECTION 1: APK PRODUCTION URL VERIFICATION
@@ -68,63 +71,78 @@ SECTION 3: SECURITY - .env WAS COMMITTED WITH REAL SECRETS (CRITICAL)
 - Do NOT print .env values into any report, chat, or commit message.
 
 ===================================================================
-SECTION 4: PRODUCTION ROUTING DIAGNOSIS (CORRECTED ROOT CAUSE)
+SECTION 4: PRODUCTION ROUTING DIAGNOSIS (DEFINITIVE ROOT CAUSE)
 ===================================================================
-Root Cause of 404:
+Root Cause of 404 (definitive - proven via GitHub Actions run history + tag):
 - Production returns Laravel's router 404 "The route api/home could not be
   found." (String originates in
   backend/vendor/laravel/framework/src/Illuminate/Routing/AbstractRouteCollection.php:44)
   -> Laravel IS running; the /api routes are simply NOT in the route table.
-- Evidence that production Laravel is alive and serving:
-  * GET /  -> 200 full storefront (web routes registered & working)
-  * GET /up -> 200 "Application up / HTTP request received /
-               Response rendered in 54ms." (health route registered)
-- Evidence that the /api group is missing on production:
-  * GET /api/health, /api/home, /api/categories, /api/collections,
-    /api/search  -> all 404 "The route api/* could not be found."
-- Framework analysis (ApplicationBuilder.php:196-265): web, api and health
-  routes are all registered inside ONE routing closure. A compiled route
-  cache containing /up MUST therefore also contain /api/*. The observed
-  mix (web+health OK, api 404) is therefore IMPOSSIBLE with the current
-  bootstrap/app.php - PROVING the production server is not running this code.
-- Conclusion: the Hostinger production backend is running an OLD Laravel
-  (stock bootstrap/app.php skeleton: web + commands + health, NO api:
-  entry). The mobile API backend (bootstrap/app.php with api: registration,
-  routes/api.php, Api controllers) exists only in git branches and was
-  NEVER deployed to production.
-- APP_URL is NOT a cause. It was ruled out definitively.
+- Winners of events:
+  * 16-Sep: the mobile-API/fork-sync work (4038327..dbfd440) WAS pushed to
+    tcongsinfotech/jewellery main and deployed (GitHub Actions run history
+    shows green deploys with those head commits).
+  * Then main was FORCE-REVERTED to the feat/admin-updates line
+    (fetch showed `+ dbfd440...05bbee9 main (forced update)`). The annotated
+    tag karthikeyan-mobile-api-2026-09-17 records it: "Safety checkpoint
+    before reverting main to feat/admin-updates-2026-09-17."
+  * The 18-Sep 12:57 UTC deploy (head=05bbee9 "update code") put the
+    reverted main LIVE. Current main's backend/routes/api.php = OLD Fastrr/v1
+    API only - no /home, /health, /categories, /collections, /search.
+  * Result: storefront (/) and /up work; every mobile /api/* returns 404.
+- NEVER an APP_URL problem and never a cache problem (web+api+health register
+  in ONE routing closure; a cache holding /up must hold /api/* too - the old
+  "stale cache" theory in earlier reports was impossible and is retracted).
 
-LOCAL PROOF THAT THE REPO CODE IS CORRECT (run today):
-- php artisan serve on port 8021:
-  * GET /api/health -> 200 {"status":"ok","service":"estele-api","time":"..."}
-  * GET /api/home    -> 200 JSON, 111,418 bytes
+FIX (built, validated, awaiting merge):
+- Branch mobile-api-port (commit 250b9af, parent = 05bbee9 = clean FF) ports
+  ONLY the 9 public catalog endpoints the app calls, additively:
+  /api/health, /api/home, /api/categories (+/{slug}/products),
+  /api/collections (+/{slug}/products), /api/products/{slug},
+  /api/search, /api/search/suggest.
+- Adds: Api/CatalogController, Api/ApiResponses, Api/ProductResource,
+  Models/ProductView + product_views table (new, non-destructive). v1
+  Fastrr/old-jewellery routes untouched.
+- Validated: clean `composer install` of main's lockfile, route:list shows
+  both groups, all endpoints 200 on sandboxed sqlite built from main's
+  migrations.
+- PR: https://github.com/tcongsinfotech/jewellery/pull/2 (open, awaiting merge)
+- NOTE: the full fork (auth/cart/checkout/sell) from tag
+  karthikeyan-mobile-api-2026-09-17 can be layered later in the same
+  additive pattern; it is preserved on the tag and recoverable.
+
+LOCAL PROOF (also carried out today):
+- php artisan serve on the ported main (port 8023, sandboxed sqlite):
+  * GET /api/health     -> 200 {"status":"ok","service":"estele-api",...}
+  * GET /api/home       -> 200 (816 bytes)
+  * GET /api/categories -> 200
+  * GET /api/collections-> 200
+  * GET /api/search?q=Earrings -> 200
 - php artisan about -> Laravel 13.21.1, Routes NOT cached
 
 ===================================================================
 SECTION 5: PRODUCTION DEPLOYED CODE VERIFICATION
 ===================================================================
-- Local repository: code verified correct and API-served (see Section 4) ✓
-- Git branch sync-company-main HEAD: f6a7ad5 (.env fix + APP_URL update) ✓
-- hostinger-mobile-deploy branch carries the shipped API-carrying backend
-  (commit 4038327 "feat(api): ship mobile-first REST backend to production") ✓
-- Deployment mechanism: NONE found in repo (no .github/workflows, no
-  deploy.sh, no cPanel/webhook scripts). GitHub repos tcongsinfotech/*
-  are private; no ci/gh access from this machine. Deploy appears to be a
-  MANUAL upload to Hostinger.
-- Hostinger production: running OLD backend WITHOUT /api routes ✗
-- Hostinger production document root: unknown - needs confirmation it maps
-  to the Laravel public/ directory of the deployed backend.
+- Local repository: ported main verified working (see Section 4) ✓
+- Git branch sync-company-main HEAD: 273ba4c (security fixes for .env) ✓
+- mobile-api-port branch (commit 250b9af) = the fix, backed by PR #2 ✓
+- Deployment mechanism FOUND: tcongsinfotech/jewellery has
+  `.github/workflows/deploy.yml` (sha 5bd01a593d68aecd3912d9b0a5e2229df7824c80).
+  Triggers on push to main or workflow_dispatch. Steps: run tests, rsync
+  ./backend/ over SSH (HOSTINGER_* secrets), composer install --no-dev,
+  `php artisan migrate --force`, `optimize:clear`, `optimize`, verify
+  vendor/autoload.php. Run history: many green runs; 18-Sep 12:57 UTC run
+  deployed the reverted main (05bbee9) - the source of the 404s.
+- Merging PR #2 -> main triggers this pipeline automatically. ✓
+- Hostinger production: running 05bbee9 WITHOUT /api routes ✗ (until merge)
 
 ===================================================================
 SECTION 6: PRODUCTION CACHE STATUS
 ===================================================================
 - Local route cache: NOT cached ✓
-- Production: once the new code is deployed, caches must be cleared:
-  * php artisan optimize:clear
-  * php artisan route:clear
-  * php artisan config:clear
-  * php artisan cache:clear
-  * php artisan view:clear
+- Production deploy pipeline already runs `php artisan optimize:clear`
+  followed by `php artisan optimize` on every deploy - caches are rebuilt
+  automatically when PR #2 merges. No manual cache clearing needed.
 
 ===================================================================
 SECTION 7: PRODUCTION DOCUMENT ROOT
@@ -137,7 +155,7 @@ SECTION 7: PRODUCTION DOCUMENT ROOT
 ===================================================================
 SECTION 8: REAL PUBLIC ENDPOINT VERIFICATION
 ===================================================================
-Current production API status (BEFORE deployment):
+Current production API status (BEFORE merging PR #2):
 - GET .../api/health     -> 404 ❌
 - GET .../api/home       -> 404 ❌
 - GET .../api/categories -> 404 ❌
@@ -146,7 +164,7 @@ Current production API status (BEFORE deployment):
 - GET .../                -> 200 (storefront) ✓
 - GET .../up              -> 200 (health) ✓
 
-After deployment + cache clear (required):
+After PR #2 is merged and the pipeline deploy completes (expected):
 - GET .../api/health     -> HTTP 200 JSON (pending)
 - GET .../api/home       -> HTTP 200 JSON (pending)
 - GET .../api/categories -> HTTP 200 JSON (pending)
@@ -176,29 +194,30 @@ SECTION 10: FLUTTER APK REBUILD STATUS
 ===================================================================
 SECTION 11: SUMMARY & NEXT STEPS
 ===================================================================
-1. Root cause: deployed Hostinger backend predates the mobile API; its
-   bootstrap/app.php registers web + health only, no /api routes.
-2. .env was committed with real secrets (f6a7ad5, pushed). Untracked now.
-   CREDENTIAL ROTATION IS MANDATORY (see Section 3). No values printed.
-3. Security status: file untracked + .gitignore updated; rotation pending.
-4. Code source to deploy: sync-company-main (HEAD f6a7ad5) or
-   hostinger-mobile-deploy (HEAD dbfd440) - both carry the complete API.
-5. Production document root: must point at Laravel public/ - VERIFY.
-6. route:list --path=api (local): all API routes confirmed registered.
-7. /api/health HTTP status: 404 (production - pending deploy + cache clear)
-8. /api/home HTTP status: 404 (production - pending deploy + cache clear)
-9. /api/categories HTTP status: 404 (production - pending deploy + cache clear)
-10. /api/collections HTTP status: 404 (production - pending deploy + cache clear)
-11. /api/search HTTP status: 404 (production - pending deploy + cache clear)
-12. Production database/media preserved: ✓ YES
-13. Flutter APK does NOT need rebuilding: ✓ YES
+1. Root cause: production main was force-reverted from the mobile-API fork
+   (dbfd440...05bbee9; tag karthikeyan-mobile-api-2026-09-17); deployed main
+   has only v1 Fastrr/old-jewellery routes, so mobile /api/* returns 404.
+2. Fix: additive port on branch mobile-api-port (250b9af, parent=05bbee9),
+   validated, ready as PR https://github.com/tcongsinfotech/jewellery/pull/2.
+   Merge triggers deploy.yml -> deploy + migrate (additive table) + optimize.
+3. .env was committed with real secrets (f6a7ad5, pushed). Untracked now
+   (273ba4c). CREDENTIAL ROTATION IS MANDATORY (see Section 3). No values
+   printed anywhere.
+4. Security status: file untracked + .gitignore updated; rotation pending.
+5. Code source to deploy: merge PR #2 (mobile-api-port) into main - the
+   recommended, additive path. Full fork recoverable from the tag.
+6. Document root: Laravel public/ already configured (storefront serves).
+7. route:list --path=api (ported main, local): all mobile + v1 routes ✓
+8. /api/health HTTP status: 404 (production now); 200 expected after merge
+9. /api/home HTTP status: 404 (production now); 200 expected after merge
+10. /api/categories HTTP status: 404 (production now); 200 expected after merge
+11. /api/collections HTTP status: 404 (production now); 200 expected after merge
+12. /api/search HTTP status: 404 (production now); 200 expected after merge
+13. Production database/media preserved: ✓ YES (fix is purely additive)
+14. Flutter APK does NOT need rebuilding: ✓ YES
 
-REQUIRED PRODUCTION ACTIONS (blocked - no SSH from this machine):
-- Deploy the full API-carrying backend to Hostinger (upload backend/ tree
-  OR wire up a working deploy pipeline from the GitHub repo).
-- Confirm document root points at the Laravel public/ directory.
-- Update backend/.env on server (APP_URL already = https://estele.ghrihum-realestate.com)
-- Run: php artisan optimize:clear (also route/config/cache/view:clear)
+REQUIRED PRODUCTION ACTIONS (after PR #2 merges):
+- Pipeline deploys backend, runs migrate --force + optimize automatically.
 - Rotate all credentials listed in Section 3.
 - Verify: GET https://estele.ghrihum-realestate.com/api/health -> 200
 - Verify: GET https://estele.ghrihum-realestate.com/api/home -> 200
