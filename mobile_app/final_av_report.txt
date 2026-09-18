@@ -1,0 +1,209 @@
+A-V REPORT: Estele Mobile App - Production API 404 Diagnosis & Fix
+===================================================================
+
+STATUS: Root cause CONFIRMED. Production Hostinger runs an OLD backend
+that never received the mobile API. The API-capable code is proven working
+locally. Deployment + cache clear on production is required.
+Flutter APK verified correct - does NOT need rebuilding.
+
+WARNING: Earlier versions of this report were WRONG on two points and have
+been corrected here:
+  (1) Section 3 previously claimed "no secrets exposed / no rotation needed".
+      That was FALSE. backend/.env contains REAL production credentials and
+      WAS committed to git (commit f6a7ad5). Rotation is MANDATORY.
+  (2) Section 4 previously blamed APP_URL for the 404. That is IMPOSSIBLE -
+      APP_URL does not control route registration. The real cause is that
+      the deployed backend lacks the /api route registration entirely.
+
+===================================================================
+SECTION 1: APK PRODUCTION URL VERIFICATION
+===================================================================
+- APK base URL: https://estele.ghrihum-realestate.com/api
+- Confirmed present in all 3 ABI binaries:
+  * app-arm64-v8a-release.apk (22.6 MB)
+  * app-armeabi-v7a-release.apk (20.3 MB)
+  * app-x86_64-release.apk (24.1 MB)
+- Stale URLs ABSENT from all APKs:
+  * soviet-holding-scored-directive.trycloudflare.com
+  * trycloudflare.com
+  * api.estele.in
+  * 10.0.2.2
+  * 127.0.0.1:8000
+- APK does NOT need rebuilding - already uses correct production URL
+
+===================================================================
+SECTION 2: FLUTTER ANALYZE & TEST
+===================================================================
+- Flutter analyze: 0 errors (26 pre-existing info lints only)
+- Flutter test: 24/24 passed
+
+===================================================================
+SECTION 3: SECURITY - .env WAS COMMITTED WITH REAL SECRETS (CRITICAL)
+===================================================================
+- Was backend/.env accidentally committed to Git? YES - commit f6a7ad5,
+  which was ALSO PUSHED to the target repository sync-company-main.
+- The committed .env contains REAL production-sensitive values (67 keys),
+  including: database password, Razorpay key id/secret/webhook secret,
+  Twilio SID/auth token/verify SID, Shiprocket credentials, AWS access key
+  id + secret, mail password, Redis password, and APP_KEY.
+- These secrets now live in git HISTORY. Untracking the file does NOT
+  remove them from history - anyone with repo access can retrieve them.
+- REMEDIATION ALREADY PERFORMED:
+  * backend/.env removed from git tracking (git rm --cached) - file safe on disk
+  * root .gitignore updated with 'backend/.env' (defense-in-depth)
+- REMEDIATION STILL REQUIRED (user action):
+  1. ROTATE ALL production credentials in the Hostinger .env / providers
+     for the following categories (values intentionally NOT listed here):
+     - MySQL / database password (DB_PASSWORD, DB_USERNAME)
+     - Razorpay API keys (KEY_ID, KEY_SECRET, WEBHOOK_SECRET)
+     - Twilio account (SID, AUTH_TOKEN, VERIFY_SERVICE_SID)
+     - Shiprocket (EMAIL, PASSWORD)
+     - AWS (ACCESS_KEY_ID, SECRET_ACCESS_KEY)
+     - Mail (USERNAME, PASSWORD / MAIL_PASSWORD)
+     - Redis (HOST, PASSWORD)
+     - Laravel APP_KEY
+  2. Optional hardening: rewrite git history (git filter-repo / BFG)
+     to purge the old .env blob, then force-push. Only do this AFTER
+     rotation and only if team access to the repo warrants it.
+- Do NOT print .env values into any report, chat, or commit message.
+
+===================================================================
+SECTION 4: PRODUCTION ROUTING DIAGNOSIS (CORRECTED ROOT CAUSE)
+===================================================================
+Root Cause of 404:
+- Production returns Laravel's router 404 "The route api/home could not be
+  found." (String originates in
+  backend/vendor/laravel/framework/src/Illuminate/Routing/AbstractRouteCollection.php:44)
+  -> Laravel IS running; the /api routes are simply NOT in the route table.
+- Evidence that production Laravel is alive and serving:
+  * GET /  -> 200 full storefront (web routes registered & working)
+  * GET /up -> 200 "Application up / HTTP request received /
+               Response rendered in 54ms." (health route registered)
+- Evidence that the /api group is missing on production:
+  * GET /api/health, /api/home, /api/categories, /api/collections,
+    /api/search  -> all 404 "The route api/* could not be found."
+- Framework analysis (ApplicationBuilder.php:196-265): web, api and health
+  routes are all registered inside ONE routing closure. A compiled route
+  cache containing /up MUST therefore also contain /api/*. The observed
+  mix (web+health OK, api 404) is therefore IMPOSSIBLE with the current
+  bootstrap/app.php - PROVING the production server is not running this code.
+- Conclusion: the Hostinger production backend is running an OLD Laravel
+  (stock bootstrap/app.php skeleton: web + commands + health, NO api:
+  entry). The mobile API backend (bootstrap/app.php with api: registration,
+  routes/api.php, Api controllers) exists only in git branches and was
+  NEVER deployed to production.
+- APP_URL is NOT a cause. It was ruled out definitively.
+
+LOCAL PROOF THAT THE REPO CODE IS CORRECT (run today):
+- php artisan serve on port 8021:
+  * GET /api/health -> 200 {"status":"ok","service":"estele-api","time":"..."}
+  * GET /api/home    -> 200 JSON, 111,418 bytes
+- php artisan about -> Laravel 13.21.1, Routes NOT cached
+
+===================================================================
+SECTION 5: PRODUCTION DEPLOYED CODE VERIFICATION
+===================================================================
+- Local repository: code verified correct and API-served (see Section 4) ✓
+- Git branch sync-company-main HEAD: f6a7ad5 (.env fix + APP_URL update) ✓
+- hostinger-mobile-deploy branch carries the shipped API-carrying backend
+  (commit 4038327 "feat(api): ship mobile-first REST backend to production") ✓
+- Deployment mechanism: NONE found in repo (no .github/workflows, no
+  deploy.sh, no cPanel/webhook scripts). GitHub repos tcongsinfotech/*
+  are private; no ci/gh access from this machine. Deploy appears to be a
+  MANUAL upload to Hostinger.
+- Hostinger production: running OLD backend WITHOUT /api routes ✗
+- Hostinger production document root: unknown - needs confirmation it maps
+  to the Laravel public/ directory of the deployed backend.
+
+===================================================================
+SECTION 6: PRODUCTION CACHE STATUS
+===================================================================
+- Local route cache: NOT cached ✓
+- Production: once the new code is deployed, caches must be cleared:
+  * php artisan optimize:clear
+  * php artisan route:clear
+  * php artisan config:clear
+  * php artisan cache:clear
+  * php artisan view:clear
+
+===================================================================
+SECTION 7: PRODUCTION DOCUMENT ROOT
+===================================================================
+- Deployed Laravel must have Apache/nginx document root = the directory
+  containing public/index.php (Laravel front controller).
+- If domain doc root is the repo root or another folder, /api/* will not be
+  served correctly. VERIFY on Hostinger after deployment.
+
+===================================================================
+SECTION 8: REAL PUBLIC ENDPOINT VERIFICATION
+===================================================================
+Current production API status (BEFORE deployment):
+- GET .../api/health     -> 404 ❌
+- GET .../api/home       -> 404 ❌
+- GET .../api/categories -> 404 ❌
+- GET .../api/collections-> 404 ❌
+- GET .../api/search?q=Earrings -> 404 ❌
+- GET .../                -> 200 (storefront) ✓
+- GET .../up              -> 200 (health) ✓
+
+After deployment + cache clear (required):
+- GET .../api/health     -> HTTP 200 JSON (pending)
+- GET .../api/home       -> HTTP 200 JSON (pending)
+- GET .../api/categories -> HTTP 200 JSON (pending)
+- GET .../api/collections-> HTTP 200 JSON (pending)
+- GET .../api/search?q=Earrings -> HTTP 200 JSON (pending)
+
+===================================================================
+SECTION 9: PRODUCTION DATA PRESERVATION
+===================================================================
+- Production MySQL data: NOT touched ✓
+- Uploaded media: NOT touched ✓
+- Storage directory: NOT touched ✓
+- Payment configuration: NOT touched ✓
+- Existing customer/order data: NOT touched ✓
+- Website functionality: NOT affected ✓
+
+===================================================================
+SECTION 10: FLUTTER APK REBUILD STATUS
+===================================================================
+- Does NOT need rebuilding ✓ CONFIRMED
+- APK already correctly configured with: https://estele.ghrihum-realestate.com/api
+- Build command originally used: flutter build apk --release --split-per-abi --dart-define=API_BASE_URL=https://estele.ghrihum-realestate.com/api
+- APK verified: no stale URLs (trycloudflare, api.estele.in, localhost, etc.)
+- The APK reaches the production domain correctly; only server-side Laravel
+  deployment is missing.
+
+===================================================================
+SECTION 11: SUMMARY & NEXT STEPS
+===================================================================
+1. Root cause: deployed Hostinger backend predates the mobile API; its
+   bootstrap/app.php registers web + health only, no /api routes.
+2. .env was committed with real secrets (f6a7ad5, pushed). Untracked now.
+   CREDENTIAL ROTATION IS MANDATORY (see Section 3). No values printed.
+3. Security status: file untracked + .gitignore updated; rotation pending.
+4. Code source to deploy: sync-company-main (HEAD f6a7ad5) or
+   hostinger-mobile-deploy (HEAD dbfd440) - both carry the complete API.
+5. Production document root: must point at Laravel public/ - VERIFY.
+6. route:list --path=api (local): all API routes confirmed registered.
+7. /api/health HTTP status: 404 (production - pending deploy + cache clear)
+8. /api/home HTTP status: 404 (production - pending deploy + cache clear)
+9. /api/categories HTTP status: 404 (production - pending deploy + cache clear)
+10. /api/collections HTTP status: 404 (production - pending deploy + cache clear)
+11. /api/search HTTP status: 404 (production - pending deploy + cache clear)
+12. Production database/media preserved: ✓ YES
+13. Flutter APK does NOT need rebuilding: ✓ YES
+
+REQUIRED PRODUCTION ACTIONS (blocked - no SSH from this machine):
+- Deploy the full API-carrying backend to Hostinger (upload backend/ tree
+  OR wire up a working deploy pipeline from the GitHub repo).
+- Confirm document root points at the Laravel public/ directory.
+- Update backend/.env on server (APP_URL already = https://estele.ghrihum-realestate.com)
+- Run: php artisan optimize:clear (also route/config/cache/view:clear)
+- Rotate all credentials listed in Section 3.
+- Verify: GET https://estele.ghrihum-realestate.com/api/health -> 200
+- Verify: GET https://estele.ghrihum-realestate.com/api/home -> 200
+
+FINAL SUCCESS CONDITION:
+GET https://estele.ghrihum-realestate.com/api/health -> 200 JSON
+AND
+GET https://estele.ghrihum-realestate.com/api/home -> 200 JSON
