@@ -510,12 +510,16 @@
   }
   @media (min-width: 768px) { .has-bottom-nav { padding-bottom: 0; } }
 
-  /* ---- Gradient surfaces ---- */
+  /* ---- Gradient surfaces ----
+     Same ramp and direction as .btn-cta, which every other page already uses
+     for its primary action — these screens must not read as a different brand
+     from the rest of the site. --color-pinksoft is likewise the tint the cart
+     and account surfaces already sit on. */
   .grad-brand {
-    background-image: linear-gradient(135deg, var(--color-accent-dark) 0%, var(--color-accent) 100%);
+    background-image: linear-gradient(270deg, var(--color-accent-dark) 7%, var(--color-accent) 100%);
   }
   .grad-soft {
-    background-image: linear-gradient(135deg, #FDEFF3 0%, #FBF1F4 55%, #FFF7FA 100%);
+    background-color: var(--color-pinksoft);
   }
 
   /* ---- App-style cards ---- */
@@ -539,11 +543,9 @@
   .menu-row-title { @apply text-[15px] font-bold leading-tight text-heading; }
   .menu-row-note { @apply mt-0.5 text-[12px] leading-tight text-muted; }
   .menu-row-chev { @apply ml-auto h-5 w-5 shrink-0 text-muted; }
-  /* The one highlighted row (Sell Your Jewellery) — tinted, brand-bordered. */
-  .menu-row-featured {
-    @apply border-accent/45;
-    background-image: linear-gradient(120deg, #FFF1F6 0%, #FDE9F0 100%);
-  }
+  /* The one highlighted row (Sell Your Jewellery) — tinted, brand-bordered,
+     on the same pinksoft the rest of the site tints with. */
+  .menu-row-featured { @apply border-accent/45 bg-pinksoft; }
   .menu-row-featured .menu-row-chev { @apply text-white; }
   .menu-row-featured-chev {
     @apply ml-auto grid h-7 w-7 shrink-0 place-items-center rounded-full text-white;

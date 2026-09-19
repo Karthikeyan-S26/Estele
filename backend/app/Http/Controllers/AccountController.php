@@ -8,6 +8,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class AccountController extends Controller
 {
@@ -35,8 +36,13 @@ class AccountController extends Controller
     {
         $user = Auth::user();
 
+        // Phone is deliberately not editable here: it's the identity the OTP
+        // login resolves an account by, so changing it without verifying the
+        // new number would lock the customer out of their own account. The
+        // form shows it read-only.
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
         ]);
 
         $user->update($validated);

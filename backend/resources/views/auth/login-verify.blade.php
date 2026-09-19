@@ -41,7 +41,7 @@
         </div>
         @error('code') <p class="mt-2 text-[12px] text-salebadge">{{ $message }}</p> @enderror
 
-        <button class="btn-cta mt-5 gap-2 rounded-full text-[15px] disabled:border-[#999] disabled:bg-[#999] disabled:bg-none disabled:opacity-100" type="submit" data-otp-submit>
+        <button class="btn-cta mt-5 gap-2 text-[15px] disabled:border-[#999] disabled:bg-[#999] disabled:bg-none disabled:opacity-100" type="submit" data-otp-submit>
           Verify &amp; Continue
           <svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
         </button>

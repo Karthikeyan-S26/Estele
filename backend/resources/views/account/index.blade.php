@@ -58,13 +58,13 @@
         </span>
 
         <div class="flex w-full shrink-0 flex-wrap gap-2 sm:w-auto">
-          <a class="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-line-strong bg-white px-5 py-3 text-[12px] font-bold uppercase tracking-[0.5px] text-heading transition-colors hover:border-heading sm:flex-none" href="#profile-details">
+          <a class="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-line-strong bg-white px-5 py-3 text-[12px] font-bold uppercase tracking-[0.5px] text-heading transition-colors hover:border-heading sm:flex-none" href="#profile-details">
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
             Edit Profile
           </a>
           <form class="flex-1 sm:flex-none" action="{{ route('logout') }}" method="post">
             @csrf
-            <button class="grad-brand inline-flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-[12px] font-bold uppercase tracking-[0.5px] text-white transition-opacity hover:opacity-90" type="submit">
+            <button class="grad-brand inline-flex w-full items-center justify-center gap-2 rounded-lg px-5 py-3 text-[12px] font-bold uppercase tracking-[0.5px] text-white transition-opacity hover:opacity-90" type="submit">
               <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
               Logout
             </button>
@@ -180,8 +180,15 @@
           </a>
         </section>
 
-        <details class="marker-pm rounded-lg border border-line p-4 sm:p-5" id="profile-details" open>
-          <summary class="cursor-pointer text-[13px] font-medium uppercase tracking-[0.4px] text-heading">Profile Details</summary>
+        {{-- Collapsed by default: the details it holds are already shown in the
+             identity card above, so this only needs to open when the customer
+             actually wants to edit. "Edit Profile" targets #profile-details,
+             and :target in the stylesheet opens it on that jump; a successful
+             save redirects to the bare account URL, so it closes again on its
+             own. It stays open on a validation error, which is the one case
+             where the form must come back visible with its message. --}}
+        <details class="marker-pm rounded-2xl border border-line p-4 sm:p-5" id="profile-details" @if($errors->hasAny(['name', 'email'])) open @endif>
+          <summary class="flex cursor-pointer items-center gap-2 text-[13px] font-medium uppercase tracking-[0.4px] text-heading">Profile Details</summary>
           <form class="mt-4" action="{{ route('account.profile') }}" method="post">
             @csrf
             @method('PATCH')
@@ -189,12 +196,26 @@
             <input class="w-full border border-line-strong bg-white px-4 py-3 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-heading mb-3.5" id="name" name="name" type="text" value="{{ old('name', auth()->user()->name) }}" required>
             @error('name') <p class="mb-3.5 -mt-2 text-[12px] text-salebadge">{{ $message }}</p> @enderror
 
-            <label class="mb-1.5 block text-[13px] font-medium text-heading" for="phone">Mobile number</label>
-            <input class="w-full border border-line-strong bg-pinksoft/40 px-4 py-3 text-[14px] text-muted mb-3.5 placeholder:text-muted" id="phone" type="text" value="{{ auth()->user()->phone }}" placeholder="Not added" disabled>
+            <label class="mb-1.5 block text-[13px] font-medium text-heading" for="email">Email address</label>
+            <input class="w-full border border-line-strong bg-white px-4 py-3 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-heading mb-3.5" id="email" name="email" type="email" value="{{ old('email', auth()->user()->email) }}" placeholder="Not added" autocomplete="email">
+            @error('email') <p class="mb-3.5 -mt-2 text-[12px] text-salebadge">{{ $message }}</p> @enderror
 
-            <button class="inline-flex w-full items-center justify-center gap-2 border border-accent bg-accent px-6 py-3 text-[12px] font-medium uppercase tracking-[0.5px] text-white transition-colors hover:border-accent-dark hover:bg-accent-dark" type="submit">
-              Save Changes
-            </button>
+            {{-- Read-only on purpose: the OTP login resolves an account by this
+                 number, so letting it be edited here — with no verification of
+                 the new one — would lock the customer out of their own account.
+                 Changing it needs its own OTP-verified flow. --}}
+            <label class="mb-1.5 block text-[13px] font-medium text-heading" for="phone">Mobile number</label>
+            <input class="w-full border border-line-strong bg-pinksoft/40 px-4 py-3 text-[14px] text-muted placeholder:text-muted" id="phone" type="text" value="{{ auth()->user()->phone }}" placeholder="Not added" disabled>
+            <p class="mb-3.5 mt-1.5 text-[11px] leading-snug text-muted">Your mobile number is how you sign in, so it can't be changed here. Contact support to update it.</p>
+
+            <div class="flex flex-wrap gap-2">
+              <button class="grad-brand inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-6 py-3 text-[12px] font-bold uppercase tracking-[0.5px] text-white transition-opacity hover:opacity-90" type="submit">
+                Save Changes
+              </button>
+              <button class="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-line-strong bg-white px-6 py-3 text-[12px] font-bold uppercase tracking-[0.5px] text-heading transition-colors hover:border-heading" type="button" data-profile-cancel>
+                Cancel
+              </button>
+            </div>
           </form>
         </details>
       </aside>
@@ -246,5 +267,50 @@
       @endif
     </section>
   </div>
+
+  @push('scripts')
+    <script>
+      (function () {
+        var panel = document.getElementById('profile-details');
+        if (!panel) return;
+
+        // "Edit Profile" (and the Account Settings menu row) are plain anchors
+        // to #profile-details. The jump alone won't open a closed <details>,
+        // so open it here and put the cursor in the first field.
+        function open(event) {
+          if (panel.open) return;
+          panel.open = true;
+          if (event) {
+            // Let the browser finish its own jump to the anchor first,
+            // otherwise focusing mid-scroll fights it.
+            requestAnimationFrame(function () {
+              var name = document.getElementById('name');
+              if (name) name.focus({ preventScroll: true });
+            });
+          }
+        }
+
+        document.querySelectorAll('a[href="#profile-details"]').forEach(function (link) {
+          link.addEventListener('click', open);
+        });
+
+        // Also covers a direct load of /account#profile-details.
+        if (window.location.hash === '#profile-details') open();
+
+        var cancel = panel.querySelector('[data-profile-cancel]');
+        if (cancel) {
+          cancel.addEventListener('click', function () {
+            var form = panel.querySelector('form');
+            if (form) form.reset();
+            panel.open = false;
+            // Drop the hash so a refresh doesn't reopen what was just closed.
+            if (window.location.hash === '#profile-details') {
+              history.replaceState(null, '', window.location.pathname + window.location.search);
+            }
+          });
+        }
+      })();
+    </script>
+  @endpush
 
 @endsection

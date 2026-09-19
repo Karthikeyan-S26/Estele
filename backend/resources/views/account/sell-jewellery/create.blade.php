@@ -70,7 +70,7 @@
               <span class="mt-1 text-[12px] text-muted">Tap to record or choose</span>
               {{-- Styled as a button but still just the label's own surface —
                    the whole label is the file-input trigger. --}}
-              <span class="grad-brand mt-3 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[12px] font-bold uppercase tracking-[0.4px] text-white">
+              <span class="grad-brand mt-3 inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-[12px] font-bold uppercase tracking-[0.4px] text-white">
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="12.5" r="3.5"/></svg>
                 Record / Choose
               </span>
@@ -137,7 +137,7 @@
               </span>
               <span class="text-[15px] font-bold uppercase tracking-[0.4px] text-heading">Add Photo</span>
               <span class="mt-1 text-[12px] text-muted">Tap to take or choose</span>
-              <span class="grad-brand mt-3 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[12px] font-bold uppercase tracking-[0.4px] text-white">
+              <span class="grad-brand mt-3 inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-[12px] font-bold uppercase tracking-[0.4px] text-white">
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="12.5" r="3.5"/></svg>
                 Choose Photo
               </span>
@@ -193,7 +193,7 @@
         </div>
       </div>
 
-      <button class="grad-brand inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-4 text-[14px] font-bold uppercase tracking-[0.5px] text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60" type="submit" data-submit>
+      <button class="grad-brand inline-flex w-full items-center justify-center gap-2 rounded-lg px-6 py-4 text-[14px] font-bold uppercase tracking-[0.5px] text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60" type="submit" data-submit>
         <svg class="hidden h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true" data-submit-spinner>
           <circle class="opacity-25" cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3"></circle>
           <path class="opacity-90" d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"></path>
