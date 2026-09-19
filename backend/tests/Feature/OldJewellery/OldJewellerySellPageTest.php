@@ -68,7 +68,10 @@ class OldJewellerySellPageTest extends TestCase
     {
         $user = User::factory()->create();
         $other = User::factory()->create();
+        // Two requests, because a user with exactly one is redirected
+        // straight to it and never sees the list at all.
         $mine = $this->makeRequest(['user_id' => $user->id, 'final_amount' => 12345]);
+        $alsoMine = $this->makeRequest(['user_id' => $user->id, 'final_amount' => 54321]);
         $otherRequest = $this->makeRequest(['user_id' => $other->id, 'final_amount' => 67890]);
 
         // The card no longer prints the request number, so distinguish the
@@ -77,7 +80,18 @@ class OldJewellerySellPageTest extends TestCase
             ->get(route('account.sell-jewellery.index'))
             ->assertOk()
             ->assertSee('12,345')
+            ->assertSee('54,321')
             ->assertDontSee('67,890');
+    }
+
+    public function test_index_redirects_to_the_only_request_when_there_is_just_one(): void
+    {
+        $user = User::factory()->create();
+        $only = $this->makeRequest(['user_id' => $user->id]);
+
+        $this->actingAs($user)
+            ->get(route('account.sell-jewellery.index'))
+            ->assertRedirect(route('account.sell-jewellery.show', $only));
     }
 
     public function test_wallet_page_shows_balance_and_credits(): void

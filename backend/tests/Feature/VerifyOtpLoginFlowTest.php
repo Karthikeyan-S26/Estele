@@ -99,7 +99,7 @@ class VerifyOtpLoginFlowTest extends TestCase
             ->assertRedirect(route('login.verify'));
 
         $this->post(route('login.verify.attempt'), ['code' => RecordingOtpGatewayForTests::$lastCode])
-            ->assertRedirect(route('account.index'));
+            ->assertRedirect(route('collections.index'));
 
         $this->assertAuthenticatedAs($user);
     }
@@ -209,7 +209,7 @@ class VerifyOtpLoginFlowTest extends TestCase
 
         $this->assertNotSame($first, $second);
         $this->post(route('login.verify.attempt'), ['code' => $first])->assertSessionHasErrors('code');
-        $this->post(route('login.verify.attempt'), ['code' => $second])->assertRedirect(route('account.index'));
+        $this->post(route('login.verify.attempt'), ['code' => $second])->assertRedirect(route('collections.index'));
     }
 
     public function test_verify_pages_without_a_pending_number_send_the_user_back_to_login(): void

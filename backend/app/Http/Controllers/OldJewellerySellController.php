@@ -49,13 +49,11 @@ class OldJewellerySellController extends Controller
 
     public function index(): View|RedirectResponse
     {
-        $latestRequest = Auth::user()->oldJewelleryRequests()->latest()->first();
-        
-        if ($latestRequest) {
-            return redirect()->route('account.sell-jewellery.show', $latestRequest);
-        }
-
         $requests = Auth::user()->oldJewelleryRequests()->latest()->paginate(10);
+
+        if ($requests->total() === 1) {
+            return redirect()->route('account.sell-jewellery.show', $requests->first());
+        }
 
         return view('account.sell-jewellery.index', ['requests' => $requests]);
     }
