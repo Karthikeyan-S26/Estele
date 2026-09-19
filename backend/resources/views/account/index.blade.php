@@ -5,6 +5,22 @@
 
 @section('content')
 
+  @php($initials = \Illuminate\Support\Str::of(auth()->user()->name)->trim()->explode(' ')->filter()->take(2)->map(fn ($part) => \Illuminate\Support\Str::substr($part, 0, 1))->implode('') ?: 'E')
+
+  {{-- Greeting banner, phones only. It repeats the name the identity card
+       below already carries, so on desktop — where both are in view at once —
+       it's dropped rather than shown twice. --}}
+  <div class="mx-auto w-full max-w-wrapper px-3 pt-3 md:hidden">
+    <div class="grad-soft flex items-center gap-3 rounded-2xl border border-accent/15 px-4 py-3.5">
+      <span class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-accent-dark text-[16px] font-bold uppercase text-white" aria-hidden="true">{{ $initials }}</span>
+      <div class="min-w-0 flex-1">
+        <p class="text-[16px] font-bold leading-tight text-heading">Welcome back!</p>
+        <p class="mt-0.5 truncate text-[12px] text-muted">Good to see you again</p>
+      </div>
+      <svg class="h-5 w-5 shrink-0 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21.2l7.7-7.7 1.1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+    </div>
+  </div>
+
   <nav class="mx-auto w-full max-w-wrapper px-3 md:px-4 flex flex-wrap items-center gap-1.5 py-4 text-[13px] text-muted" aria-label="Breadcrumb">
     <x-breadcrumb :items="[['label' => 'My Account']]" />
   </nav>
@@ -18,24 +34,38 @@
     {{-- Identity card. Avatar initials stand in for a photo we don't store.
          Stacks to centred-left on phones and keeps the logout control on the
          same row from sm up, so the card never grows a second wrapped line. --}}
-    <section class="mb-6 rounded-lg border border-line bg-pinksoft p-4 sm:p-6">
+    <section class="mb-6 rounded-2xl border border-line bg-pinksoft p-4 sm:p-6">
       <div class="flex flex-wrap items-center gap-4">
-        <span class="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-accent text-[18px] font-medium uppercase tracking-[0.5px] text-white sm:h-16 sm:w-16 sm:text-[20px]" aria-hidden="true">
-          {{ \Illuminate\Support\Str::of(auth()->user()->name)->trim()->explode(' ')->filter()->take(2)->map(fn ($part) => \Illuminate\Support\Str::substr($part, 0, 1))->implode('') ?: 'E' }}
+        <span class="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-accent-dark text-[18px] font-bold uppercase tracking-[0.5px] text-white sm:h-16 sm:w-16 sm:text-[20px]" aria-hidden="true">
+          {{ $initials }}
         </span>
 
         <div class="min-w-0 flex-1">
-          <h1 class="truncate text-[18px] uppercase tracking-[0.5px] text-heading md:text-[24px]">{{ auth()->user()->name }}</h1>
-          <p class="mt-0.5 truncate text-[13px] text-muted">{{ auth()->user()->email ?: auth()->user()->phone }}</p>
+          <h1 class="truncate text-[20px] font-bold uppercase tracking-[0.5px] text-heading md:text-[24px]">{{ auth()->user()->name }}</h1>
+          @if(auth()->user()->phone)
+            <p class="mt-1 flex items-center gap-1.5 truncate text-[13px] text-muted">
+              <svg class="h-3.5 w-3.5 shrink-0 text-accent-dark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1.1 1A16 16 0 0 1 4 5.1 1 1 0 0 1 5 4z"/></svg>
+              {{ auth()->user()->phone }}
+            </p>
+          @else
+            <p class="mt-1 truncate text-[13px] text-muted">{{ auth()->user()->email }}</p>
+          @endif
         </div>
 
+        <span class="pill pill-brand shrink-0">
+          <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7l4.5 3L12 4l4.5 6L21 7l-2 11H5z"/></svg>
+          Premium Member
+        </span>
+
         <div class="flex w-full shrink-0 flex-wrap gap-2 sm:w-auto">
-          <a class="inline-flex flex-1 items-center justify-center gap-2 border border-line-strong bg-white px-5 py-2.5 text-[12px] font-medium uppercase tracking-[0.5px] text-heading transition-colors hover:border-heading sm:flex-none" href="#profile-details">
+          <a class="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-line-strong bg-white px-5 py-3 text-[12px] font-bold uppercase tracking-[0.5px] text-heading transition-colors hover:border-heading sm:flex-none" href="#profile-details">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
             Edit Profile
           </a>
           <form class="flex-1 sm:flex-none" action="{{ route('logout') }}" method="post">
             @csrf
-            <button class="inline-flex w-full items-center justify-center gap-2 border border-accent bg-transparent px-5 py-2.5 text-[12px] font-medium uppercase tracking-[0.5px] text-accent transition-colors hover:bg-accent hover:text-white" type="submit">
+            <button class="grad-brand inline-flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-[12px] font-bold uppercase tracking-[0.5px] text-white transition-opacity hover:opacity-90" type="submit">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
               Logout
             </button>
           </form>
@@ -58,7 +88,10 @@
            addresses, sell, rewards, settings, help. Each row is one full-width
            link so the whole strip is tappable on a phone. --}}
       <section aria-label="Account menu">
-        <h2 class="mb-3 text-[14px] font-medium uppercase tracking-[0.4px] text-heading">Account Menu</h2>
+        <div class="mb-3 flex items-end justify-between gap-3">
+          <h2 class="inline-block border-b-2 border-accent-dark pb-1 text-[14px] font-bold uppercase tracking-[0.4px] text-heading">Account Menu</h2>
+          <span class="text-[11px] italic text-muted">Manage your orders, address &amp; more</span>
+        </div>
 
         @php($menu = [
           [
@@ -78,6 +111,8 @@
             'note' => 'Get an offer for old gold',
             'url' => route('account.sell-jewellery.landing'),
             'icon' => '<path d="M6 3h12l3 6-9 12L3 9z"/><path d="M3 9h18"/><path d="m12 3-3 6 3 12 3-12z"/>',
+            'featured' => true,
+            'badge' => 'Get an Offer',
           ],
           [
             'label' => 'Rewards & Wallet',
@@ -105,18 +140,29 @@
           ],
         ])
 
-        <ul class="divide-y divide-line overflow-hidden rounded-lg border border-line">
+        <ul class="space-y-2.5">
           @foreach($menu as $item)
             <li>
-              <a class="flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-pinksoft sm:gap-4" href="{{ $item['url'] }}">
-                <span class="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-pinksoft text-accent" aria-hidden="true">
-                  <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">{!! $item['icon'] !!}</svg>
+              <a class="menu-row @if($item['featured'] ?? false) menu-row-featured @endif" href="{{ $item['url'] }}">
+                <span class="icon-tile @if($item['featured'] ?? false) bg-white/70 @endif" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">{!! $item['icon'] !!}</svg>
                 </span>
                 <span class="min-w-0 flex-1">
-                  <span class="block truncate text-[14px] font-medium text-heading">{{ $item['label'] }}</span>
-                  <span class="block truncate text-[12px] text-muted">{{ $item['note'] }}</span>
+                  <span class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span class="menu-row-title truncate">{{ $item['label'] }}</span>
+                    @if($item['badge'] ?? false)
+                      <span class="pill pill-gold">{{ $item['badge'] }}</span>
+                    @endif
+                  </span>
+                  <span class="menu-row-note block truncate">{{ $item['note'] }}</span>
                 </span>
-                <svg class="h-4 w-4 shrink-0 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+                @if($item['featured'] ?? false)
+                  <span class="menu-row-featured-chev" aria-hidden="true">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
+                  </span>
+                @else
+                  <svg class="menu-row-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+                @endif
               </a>
             </li>
           @endforeach

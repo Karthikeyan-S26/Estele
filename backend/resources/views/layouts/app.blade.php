@@ -317,6 +317,12 @@
 </style>
 @include('partials.footer')
 
+{{-- Mobile tab bar. Rendered after the footer so it's the last fixed element
+     in the source order; it hides itself from md up. The spacer keeps the
+     footer's final row clear of the fixed bar on phones. --}}
+<div class="bottom-nav-spacer h-[calc(56px+env(safe-area-inset-bottom))] md:hidden" aria-hidden="true"></div>
+@include('partials.bottom-nav')
+
 <div class="fixed bottom-[74px] right-3 z-[120] flex items-center justify-end gap-2 md:bottom-[18px] md:right-[18px]" data-chat>
   <span class="relative hidden items-center gap-2.5 whitespace-nowrap rounded-[22px] bg-[#1f1f1f] px-4 py-2.5 text-[13px] text-white shadow-lg md:inline-flex" data-chat-tip>
     Need help?

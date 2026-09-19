@@ -213,8 +213,11 @@
   .field > input { @apply h-full w-full min-w-0 border-0 bg-transparent text-[16px] font-semibold text-heading outline-none placeholder:font-normal placeholder:text-muted; }
 
   .otp-box {
-    @apply h-[52px] w-full min-w-0 rounded-[4px] border border-line-strong bg-white text-center text-[20px] font-bold text-heading outline-none transition-colors focus:border-heading;
+    @apply h-[56px] w-full min-w-0 rounded-xl border-[1.5px] border-line-strong bg-white text-center text-[20px] font-bold text-heading outline-none transition-colors focus:border-accent-dark;
   }
+  /* A filled box stays brand-bordered after focus moves on, so the digits
+     entered so far read as a filled run rather than resetting to grey. */
+  .otp-box:not(:placeholder-shown) { @apply border-accent-dark; }
 
   .live-dot {
     @apply inline-block h-2.5 w-2.5 rounded-full bg-accent;
@@ -230,6 +233,12 @@
     @apply fixed inset-x-0 bottom-0 z-[115] flex items-center gap-2.5 bg-white px-2.5 py-[9px] pb-[calc(9px+env(safe-area-inset-bottom))];
     box-shadow: 0 -2px 9px 0 rgba(0, 0, 0, .08), 0 -1px 2px 0 rgba(0, 0, 0, .15);
   }
+  /* Product and cart pages pin their own action bar to the same edge. Two
+     stacked bars would eat half the viewport on a phone, and "Add to bag" is
+     the only action that matters there — so the buybar wins and the tab bar
+     (plus the spacer the layout reserves for it) stands down on those pages. */
+  body:has(.buybar) .bottom-nav { display: none; }
+  body:has(.buybar) .bottom-nav-spacer { display: none; }
 
   .bag-card { @apply rounded-xl bg-white p-4; }
 
@@ -458,4 +467,104 @@
   @media (prefers-reduced-motion: reduce) {
     .btn-loading-dots span { animation: none; opacity: 1; }
   }
+
+  /* ==========================================================================
+     MOBILE APP SHELL
+     The account/auth/sell screens are designed phone-first as an app-like
+     shell: a fixed tab bar, gradient cards, and icon-led menu rows. Everything
+     below is hidden or neutralised from md up, where the desktop header and
+     wider layouts already carry the same destinations.
+     ========================================================================== */
+
+  /* ---- Fixed bottom tab bar (mobile only) ---- */
+  .bottom-nav {
+    @apply fixed inset-x-0 bottom-0 z-[110] grid grid-cols-4 border-t border-line bg-white;
+    padding-bottom: env(safe-area-inset-bottom);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, .06);
+  }
+  .bottom-nav-item {
+    @apply relative flex min-h-[56px] flex-col items-center justify-center gap-1 px-1 py-2 text-muted transition-colors;
+  }
+  .bottom-nav-icon { @apply relative grid h-6 w-6 place-items-center; }
+  .bottom-nav-icon > svg { @apply h-[22px] w-[22px]; }
+  .bottom-nav-label {
+    @apply text-[10px] font-medium uppercase tracking-[0.06em] leading-none;
+  }
+  .bottom-nav-item.is-active { @apply text-accent-dark; }
+  /* The active tab is marked by an underline at the bar's top edge, matching
+     the rest of the site's underline-on-current treatment. */
+  .bottom-nav-item.is-active::before {
+    content: '';
+    @apply absolute inset-x-[22%] top-0 h-[3px] rounded-b-full bg-accent-dark;
+  }
+  .bottom-nav-badge {
+    @apply absolute -right-1.5 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-accent-dark px-1 text-[10px] font-bold leading-none text-white;
+  }
+  /* Desktop keeps the header nav; the bar would only duplicate it. */
+  @media (min-width: 768px) { .bottom-nav { display: none; } }
+
+  /* Page padding so fixed-bottom content never covers the last row. Pages that
+     already end in a .buybar opt out by setting the class on their own. */
+  .has-bottom-nav {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+  @media (min-width: 768px) { .has-bottom-nav { padding-bottom: 0; } }
+
+  /* ---- Gradient surfaces ---- */
+  .grad-brand {
+    background-image: linear-gradient(135deg, var(--color-accent-dark) 0%, var(--color-accent) 100%);
+  }
+  .grad-soft {
+    background-image: linear-gradient(135deg, #FDEFF3 0%, #FBF1F4 55%, #FFF7FA 100%);
+  }
+
+  /* ---- App-style cards ---- */
+  .app-card {
+    @apply rounded-2xl border border-line bg-white p-4;
+    box-shadow: 0 1px 2px rgba(31, 29, 29, .04), 0 4px 16px rgba(31, 29, 29, .05);
+  }
+  .app-card-flat { @apply rounded-2xl border border-line bg-white p-4; }
+
+  /* ---- Icon tile that fronts a menu row or an upload card ---- */
+  .icon-tile {
+    @apply grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-pinksoft text-accent-dark;
+  }
+  .icon-tile > svg { @apply h-[22px] w-[22px]; }
+  .icon-tile-gold { @apply bg-gold-light text-gold-hover; }
+
+  /* ---- Tappable menu row: icon, label + note, chevron ---- */
+  .menu-row {
+    @apply flex min-h-[64px] w-full items-center gap-3 rounded-2xl border border-line bg-white px-3.5 py-3 text-left transition-colors active:bg-pinksoft;
+  }
+  .menu-row-title { @apply text-[15px] font-bold leading-tight text-heading; }
+  .menu-row-note { @apply mt-0.5 text-[12px] leading-tight text-muted; }
+  .menu-row-chev { @apply ml-auto h-5 w-5 shrink-0 text-muted; }
+  /* The one highlighted row (Sell Your Jewellery) — tinted, brand-bordered. */
+  .menu-row-featured {
+    @apply border-accent/45;
+    background-image: linear-gradient(120deg, #FFF1F6 0%, #FDE9F0 100%);
+  }
+  .menu-row-featured .menu-row-chev { @apply text-white; }
+  .menu-row-featured-chev {
+    @apply ml-auto grid h-7 w-7 shrink-0 place-items-center rounded-full text-white;
+    background-color: var(--color-accent-dark);
+  }
+
+  /* ---- Small pill used for badges like "Premium Member" / "Get an Offer" ---- */
+  .pill {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold leading-none;
+  }
+  .pill-brand { @apply bg-pinksoft text-accent-dark; }
+  .pill-gold { @apply bg-gold-light text-gold-hover; }
+
+  /* ---- Trust strip: three short reassurance columns under a form ---- */
+  .trust-strip {
+    @apply grid grid-cols-3 gap-2 rounded-2xl border border-line bg-white px-2 py-3.5;
+  }
+  .trust-strip > * + * { @apply border-l border-line; }
+  .trust-col { @apply flex flex-col items-center px-1.5 text-center; }
+  .trust-col-icon { @apply mb-1.5 grid h-9 w-9 place-items-center rounded-full bg-pinksoft text-accent-dark; }
+  .trust-col-icon > svg { @apply h-[18px] w-[18px]; }
+  .trust-col-title { @apply text-[11px] font-bold leading-tight text-heading; }
+  .trust-col-note { @apply mt-0.5 text-[10px] leading-tight text-muted; }
 }
