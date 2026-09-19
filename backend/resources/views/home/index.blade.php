@@ -80,8 +80,8 @@
                 @if($banner->hasMedia('image'))
                   <img class="hidden md:block h-full w-full object-cover" src="{{ $banner->getFirstMediaUrl('image', 'desktop') }}" alt="{{ $banner->image_alt_text ?: $banner->title }}" loading="{{ $index === 0 ? 'eager' : 'lazy' }}" fetchpriority="{{ $index === 0 ? 'high' : 'auto' }}">
                 @endif
-                @if($banner->hasMedia('mobile_image'))
-                  <img class="block md:hidden h-full w-full object-cover" src="{{ $banner->getFirstMediaUrl('mobile_image') }}" alt="{{ $banner->image_alt_text ?: $banner->title }}" loading="{{ $index === 0 ? 'eager' : 'lazy' }}" fetchpriority="{{ $index === 0 ? 'high' : 'auto' }}">
+                @if($banner->getMobileImageUrl())
+                  <img class="block md:hidden h-full w-full object-cover" src="{{ $banner->getMobileImageUrl() }}" alt="{{ $banner->image_alt_text ?: $banner->title }}" loading="{{ $index === 0 ? 'eager' : 'lazy' }}" fetchpriority="{{ $index === 0 ? 'high' : 'auto' }}">
                 @endif
               @endif
             </a>
