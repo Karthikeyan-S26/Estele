@@ -47,8 +47,14 @@ class OldJewellerySellController extends Controller
             ->with('success', 'Your jewellery has been submitted.');
     }
 
-    public function index(): View
+    public function index(): View|RedirectResponse
     {
+        $latestRequest = Auth::user()->oldJewelleryRequests()->latest()->first();
+        
+        if ($latestRequest) {
+            return redirect()->route('account.sell-jewellery.show', $latestRequest);
+        }
+
         $requests = Auth::user()->oldJewelleryRequests()->latest()->paginate(10);
 
         return view('account.sell-jewellery.index', ['requests' => $requests]);

@@ -90,7 +90,7 @@ class OtpAuthController extends Controller
         $request->session()->regenerate();
         Cart::transferSession($oldSessionId, $request->session()->getId());
 
-        return redirect()->intended(route('account.index'))->with('success', 'Welcome back!');
+        return redirect()->intended(route('collections.index'))->with('success', 'Welcome back!');
     }
 
     public function resend(Request $request): RedirectResponse

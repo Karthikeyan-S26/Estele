@@ -35,8 +35,7 @@ class BannerForm
                     ->conversion('desktop')
                     ->image()
                     ->maxSize(1024) // 1MB
-                    ->required()
-                    ->helperText('Shown on tablet/desktop widths. Used as the mobile fallback too if no Mobile Banner is uploaded below.')
+                    ->helperText('Shown strictly on tablet/desktop widths (Recommended size: 1800x700px).')
                     ->columnSpanFull(),
                 SpatieMediaLibraryFileUpload::make('mobile_image')
                     ->label('Mobile Banner')
@@ -44,7 +43,7 @@ class BannerForm
                     ->conversion('mobile')
                     ->image()
                     ->maxSize(1024) // 1MB
-                    ->helperText('Optional — upload a separately cropped/composed image for mobile widths. Falls back to the Desktop Banner if left empty.')
+                    ->helperText('Shown strictly on mobile widths. Recommended size: 750x1000px (or similar 3:4 portrait ratio) to naturally cover 50% of the mobile screen.')
                     ->columnSpanFull(),
                 TextInput::make('image_alt_text')
                     ->label('Image alt text')

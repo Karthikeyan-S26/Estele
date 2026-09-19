@@ -1759,7 +1759,7 @@
               throw new Error(data.message || "OTP verification failed.");
             }
 
-            window.location.href = data.redirect || "/account";
+            window.location.href = data.redirect || "/collection.html";
           } catch (error) {
             console.error("Login OTP verification error:", error);
             showError(otpError, error.message || "OTP verification failed.");

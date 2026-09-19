@@ -72,17 +72,17 @@
         corners, so the banner sits as a card instead of running full-bleed.
       --}}
       <style>@media (min-width: 768px) { .hero-banner-shortened { aspect-ratio: 1800 / 420 !important; } }</style>
-      <section class="hero-fade hero-banner-shortened skeleton relative overflow-hidden md:mx-4 md:mt-4 md:rounded-2xl" style="aspect-ratio: 768 / 320" aria-label="Featured collections" data-carousel data-autoplay="5000" data-fade>
+      <section class="hero-fade hero-banner-shortened skeleton relative overflow-hidden h-[50vh] md:h-auto md:mx-4 md:mt-4 md:rounded-2xl" aria-label="Featured collections" data-carousel data-autoplay="5000" data-fade>
         @foreach($banners as $index => $banner)
           <div class="hero-slide {{ $index === 0 ? 'is-active' : '' }}" data-carousel-slide>
             <a href="{{ $banner->link_url ?? '#' }}" aria-label="{{ $banner->title }}">
-              @if($banner->hasMedia('image'))
-                <picture>
-                  @if($banner->getMobileImageUrl())
-                    <source media="(max-width: 767px)" srcset="{{ $banner->getMobileImageUrl() }}">
-                  @endif
-                  <img class="h-full w-full object-cover" src="{{ $banner->getFirstMediaUrl('image', 'desktop') }}" alt="{{ $banner->image_alt_text ?: $banner->title }}" loading="{{ $index === 0 ? 'eager' : 'lazy' }}" fetchpriority="{{ $index === 0 ? 'high' : 'auto' }}">
-                </picture>
+              @if($banner->hasMedia('image') || $banner->hasMedia('mobile_image'))
+                @if($banner->hasMedia('image'))
+                  <img class="hidden md:block h-full w-full object-cover" src="{{ $banner->getFirstMediaUrl('image', 'desktop') }}" alt="{{ $banner->image_alt_text ?: $banner->title }}" loading="{{ $index === 0 ? 'eager' : 'lazy' }}" fetchpriority="{{ $index === 0 ? 'high' : 'auto' }}">
+                @endif
+                @if($banner->hasMedia('mobile_image'))
+                  <img class="block md:hidden h-full w-full object-cover" src="{{ $banner->getFirstMediaUrl('mobile_image') }}" alt="{{ $banner->image_alt_text ?: $banner->title }}" loading="{{ $index === 0 ? 'eager' : 'lazy' }}" fetchpriority="{{ $index === 0 ? 'high' : 'auto' }}">
+                @endif
               @endif
             </a>
           </div>

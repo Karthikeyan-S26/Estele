@@ -45,7 +45,7 @@ class Banner extends Model implements HasMedia
     public function getMobileImageUrl(): ?string
     {
         if ($this->hasMedia('mobile_image')) {
-            return $this->getFirstMediaUrl('mobile_image', 'mobile');
+            return $this->getFirstMediaUrl('mobile_image');
         }
 
         return $this->hasMedia('image') ? $this->getFirstMediaUrl('image', 'mobile') : null;
