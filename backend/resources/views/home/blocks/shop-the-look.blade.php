@@ -4,7 +4,7 @@
 
 @if($products->isNotEmpty())
   <section class="bg-ivory py-7 md:py-10">
-    <div class="mx-auto w-full max-w-wrapper px-3 md:px-4">
+    <div class="mx-auto w-full max-w-wrapper px-3 md:px-10 xl:px-14">
       <x-section-header :eyebrow="$block->subtitle ?: '@estele.co'" :title="$block->title ?: 'Styled by You #EsteleQueens'" />
       <div class="grid grid-cols-4 gap-1.5 md:grid-cols-8 md:gap-2.5">
         @foreach($products as $product)

@@ -4,7 +4,7 @@
 
 @section('content')
 
-<div class="grad-soft min-h-[calc(100vh-220px)] md:bg-bagsurface md:bg-none md:py-16">
+<div class="bg-white md:bg-bagsurface md:py-16">
   <div class="mx-auto w-full max-w-[450px] md:px-4">
     <div class="px-5 pb-8 pt-7 md:rounded-[20px] md:bg-white md:p-8 md:shadow-md">
 
@@ -62,26 +62,6 @@
         <svg class="h-5 w-5 text-success" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
         Secure login with OTP
       </p>
-
-      {{-- Reassurance strip, mobile only — on desktop the card sits in a page
-           that already carries the same guarantees in the footer. --}}
-      <div class="trust-strip mt-6 md:hidden">
-        <div class="trust-col">
-          <span class="trust-col-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1.5" y="7" width="13" height="9" rx="1.5"/><path d="M14.5 10H18l3.5 3v3h-7z"/><circle cx="6" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></svg></span>
-          <span class="trust-col-title">100% Anti-Tarnish</span>
-          <span class="trust-col-note">Plating that stays bright</span>
-        </div>
-        <div class="trust-col">
-          <span class="trust-col-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 1 2.5 5.8"/><path d="M4 8v4h4"/></svg></span>
-          <span class="trust-col-title">7-Day Easy Return</span>
-          <span class="trust-col-note">Hassle-free exchange</span>
-        </div>
-        <div class="trust-col">
-          <span class="trust-col-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span>
-          <span class="trust-col-title">Trusted by 10,000+</span>
-          <span class="trust-col-note">Quality you can count on</span>
-        </div>
-      </div>
 
     </div>
   </div>

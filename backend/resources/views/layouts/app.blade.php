@@ -263,6 +263,13 @@
           Contact Us
         </a>
       </div>
+      <div class="pt-4 text-center">
+        <p class="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.18em] text-muted">Download the app</p>
+        <div class="flex justify-center gap-2.5">
+          <img src="{{ asset('assets/images/badges/app-store.svg') }}" class="h-8" alt="App Store" width="100" height="32">
+          <img src="{{ asset('assets/images/badges/google-play.svg') }}" class="h-8" alt="Google Play" width="100" height="32">
+        </div>
+      </div>
     </div>
   </nav>
 </div>
