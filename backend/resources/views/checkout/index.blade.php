@@ -143,7 +143,7 @@
 
         <div class="field-set">
           <label class="mb-1.5 block text-[13px] font-medium text-heading" for="order_note">Order note (optional)</label>
-          <textarea class="w-full border border-line-strong bg-white px-4 py-3 text-base outline-none transition-colors placeholder:text-muted focus:border-heading" id="order_note" name="order_note" rows="3">{{ old('order_note') }}</textarea>
+          <textarea class="w-full border border-line-strong bg-white px-4 py-3 text-base outline-none transition-colors placeholder:text-muted focus:border-heading" id="order_note" name="order_note" rows="3" data-order-note>{{ old('order_note') }}</textarea>
         </div>
 
         @auth

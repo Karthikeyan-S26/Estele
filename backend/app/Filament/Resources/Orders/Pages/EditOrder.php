@@ -106,7 +106,8 @@ class EditOrder extends EditRecord
                 ->label('Refund')
                 ->icon(Heroicon::OutlinedArrowUturnLeft)
                 ->color('danger')
-                ->visible(fn (Order $record) => in_array($record->payment_status, ['paid', 'partially_refunded'], true))
+                ->visible(fn (Order $record) => in_array($record->payment_status, ['paid', 'partially_refunded'], true)
+                    && $record->maxRefundableAmount() - (float) ($record->refunded_amount ?? 0) > 0)
                 ->schema([
                     TextInput::make('amount')
                         ->label('Refund amount (₹)')
@@ -119,7 +120,7 @@ class EditOrder extends EditRecord
                 ])
                 ->action(function (array $data, Order $record) {
                     $alreadyRefunded = (float) ($record->refunded_amount ?? 0);
-                    $maxRefundable = (float) $record->total - (float) $record->wallet_amount_used - $alreadyRefunded;
+                    $maxRefundable = $record->maxRefundableAmount() - $alreadyRefunded;
                     $amount = (float) $data['amount'];
 
                     if ($amount > $maxRefundable) {

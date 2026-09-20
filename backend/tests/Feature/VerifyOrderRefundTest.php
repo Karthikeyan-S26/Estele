@@ -61,6 +61,21 @@ class VerifyOrderRefundTest extends TestCase
         $this->assertSame('refunded', $order->fresh()->payment_status);
     }
 
+    public function test_wallet_paid_order_is_fully_refunded_at_the_gateway_refundable_amount(): void
+    {
+        // 200 of the 1000 came out of the customer's wallet, so only 800 is
+        // refundable through the gateway. Measuring completion against the
+        // full total left such orders stuck on 'partially_refunded' forever.
+        $order = $this->makePaidOrder(1000);
+        $order->update(['wallet_amount_used' => 200]);
+
+        $this->assertSame(800.0, $order->maxRefundableAmount());
+
+        $order->applyRefund(800, 'Order cancelled by customer.');
+
+        $this->assertSame('refunded', $order->fresh()->payment_status);
+    }
+
     private function makePaidOrder(float $total): Order
     {
         return Order::create([

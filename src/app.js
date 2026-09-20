@@ -1168,6 +1168,37 @@ import './app.css';
   });
 
   /* ------------------------------------------------------------------------
+     ORDER NOTE — the bag page's note box sits outside any form, so what the
+     shopper typed there used to be discarded on the way to checkout. Carry it
+     across and prefill checkout's real order_note field (which does submit).
+     ---------------------------------------------------------------------- */
+  (function () {
+    var KEY = 'estele:order-note';
+    $$('[data-order-note]').forEach(function (el) {
+      var submits = !!el.name;
+      if (!submits) {
+        try { if (!el.value) el.value = sessionStorage.getItem(KEY) || ''; } catch (err) {}
+        el.addEventListener('input', function () {
+          try { sessionStorage.setItem(KEY, el.value); } catch (err) {}
+        });
+        return;
+      }
+      try {
+        if (!el.value) {
+          var carried = sessionStorage.getItem(KEY);
+          if (carried) el.value = carried;
+        }
+      } catch (err) {}
+      var form = el.form;
+      if (form) {
+        form.addEventListener('submit', function () {
+          try { sessionStorage.removeItem(KEY); } catch (err) {}
+        });
+      }
+    });
+  })();
+
+  /* ------------------------------------------------------------------------
      CART PAGE QTY FORMS — the full /cart page has no visible "Update"
      button (matching the original design); the stepper commits the change
      straight to the server as soon as it fires a `change` event.
@@ -1861,6 +1892,36 @@ import './app.css';
       if (panel) panel.classList.remove('is-sheet-open');
       document.body.classList.remove('is-locked');
     });
+  });
+
+  // Both mobile sheets used to be dismissible only by their small X. The sort
+  // sheet has a real backdrop element, but the filter panel's dim is a
+  // box-shadow spread and so cannot be clicked — tapping outside it did
+  // nothing. Escape closes either, and a tap outside the filter form closes it.
+  function closeMobileSheets() {
+    var closed = false;
+    $$('[data-sheet]').forEach(function (sheet) {
+      if (!sheet.hidden) { sheet.hidden = true; closed = true; }
+    });
+    $$('[data-filter-panel].is-sheet-open').forEach(function (panel) {
+      panel.classList.remove('is-sheet-open');
+      closed = true;
+    });
+    if (closed) document.body.classList.remove('is-locked');
+    return closed;
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeMobileSheets();
+  });
+
+  document.addEventListener('click', function (e) {
+    var panel = $('[data-filter-panel].is-sheet-open');
+    if (!panel) return;
+    var form = $('form', panel);
+    if (!form || form.contains(e.target)) return;
+    if (e.target.closest('[data-filter-open]')) return;
+    closeMobileSheets();
   });
 
   document.addEventListener('click', function (e) {

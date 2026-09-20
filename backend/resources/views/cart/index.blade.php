@@ -96,7 +96,7 @@
 
             <div class="bag-card">
               <label class="mb-1.5 block text-[13px] font-bold text-[#454545]" for="order-note">Order note</label>
-              <textarea class="w-full rounded border border-line-strong bg-white px-3 py-2.5 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-heading" id="order-note" rows="2" placeholder="Add a note to your order"></textarea>
+              <textarea class="w-full rounded border border-line-strong bg-white px-3 py-2.5 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-heading" id="order-note" rows="2" placeholder="Add a note to your order" data-order-note></textarea>
             </div>
           </div>
 

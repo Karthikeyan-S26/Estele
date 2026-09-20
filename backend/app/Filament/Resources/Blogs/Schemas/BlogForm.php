@@ -38,8 +38,18 @@ class BlogForm
                         'published' => 'Published',
                     ])
                     ->required()
-                    ->default('draft'),
-                DateTimePicker::make('published_at'),
+                    ->default('draft')
+                    ->live(),
+                // Blog::scopePublished() needs status='published' AND a
+                // published_at in the past, so saving as Published with the
+                // date left blank used to succeed in the admin while the post
+                // stayed invisible and its own URL 404'd, with nothing to say why.
+                DateTimePicker::make('published_at')
+                    ->label('Publish date')
+                    ->seconds(false)
+                    ->default(now())
+                    ->required(fn (Get $get) => $get('status') === 'published')
+                    ->helperText('Must be in the past for the post to appear on the site.'),
                 Toggle::make('is_featured'),
                 Textarea::make('excerpt')
                     ->columnSpanFull(),

@@ -224,6 +224,15 @@ class Order extends Model
      * method only applies the already-validated amount and flips
      * payment_status accordingly.
      */
+    /**
+     * The gateway-refundable total: everything except the part the customer
+     * paid out of their wallet balance.
+     */
+    public function maxRefundableAmount(): float
+    {
+        return max(0.0, (float) $this->total - (float) $this->wallet_amount_used);
+    }
+
     public function applyRefund(float $amount, string $reason): void
     {
         $newRefunded = (float) $this->refunded_amount + $amount;
@@ -231,7 +240,11 @@ class Order extends Model
         $this->update([
             'refunded_amount' => $newRefunded,
             'refund_reason' => $reason,
-            'payment_status' => $newRefunded >= (float) $this->total ? 'refunded' : 'partially_refunded',
+            // Compare against what is actually refundable through the gateway,
+            // not the full total: the wallet-paid portion was never charged, so
+            // measuring against total left every wallet-paid order stuck on
+            // 'partially_refunded' even once it was refunded in full.
+            'payment_status' => $newRefunded >= $this->maxRefundableAmount() ? 'refunded' : 'partially_refunded',
         ]);
     }
 }

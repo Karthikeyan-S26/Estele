@@ -31,7 +31,6 @@ class HomepageBlockForm
                         'collection_carousel' => 'Collection grid',
                         'price_tiers' => 'Price tiers (Your Budget, Your Bling)',
                         'celebrities' => 'Celebrities / As Seen On',
-                        'promo_banner' => 'Promo banner grid',
                         'usp' => 'USP / trust badges',
                         'testimonials' => 'Testimonials',
                         'journal' => 'Journal / blog posts',

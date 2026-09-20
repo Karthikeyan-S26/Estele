@@ -71,6 +71,25 @@
           }
         }
         document.addEventListener('mouseleave', onMouseLeave);
+
+        // A phone never fires mouseleave, so an exit-intent popup was simply
+        // dead on the site's primary traffic. Approximate the same "about to
+        // leave" moment with a decisive upward scroll toward the browser
+        // chrome, after the visitor has actually engaged with the page.
+        if (!window.matchMedia('(hover: hover)').matches) {
+          var lastY = window.scrollY;
+          var armed = false;
+          function onTouchScroll() {
+            var y = window.scrollY;
+            if (!armed && y > 400) armed = true;
+            if (armed && y < lastY - 60 && y < 200) {
+              show();
+              window.removeEventListener('scroll', onTouchScroll);
+            }
+            lastY = y;
+          }
+          window.addEventListener('scroll', onTouchScroll, { passive: true });
+        }
       } else {
         var delaySeconds = parseInt(root.getAttribute('data-popup-delay'), 10) || 4;
         setTimeout(show, delaySeconds * 1000);
