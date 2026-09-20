@@ -36,7 +36,13 @@ class WalletService
             ]);
         });
 
-        Mail::to($user->email)->queue(new WalletCredited($transaction->fresh(['user'])));
+        // Phone-OTP customers have no email (users.email is nullable since
+        // make_email_nullable_on_users_table) — Mail::to(null) throws, and the
+        // credit above has already committed, so the caller would see a 500 on
+        // a wallet that was in fact credited and be tempted to credit it twice.
+        if (filled($user->email)) {
+            Mail::to($user->email)->queue(new WalletCredited($transaction->fresh(['user'])));
+        }
 
         return $transaction;
     }

@@ -704,7 +704,17 @@ import './app.css';
         }
         e.preventDefault();
         var buyNow = e.submitter && e.submitter.name === 'buy_now';
+        // Buttons can belong to the form by the `form=` attribute instead of
+        // by nesting — the PDP's mobile buy bar is rendered outside <form> by
+        // @yield('sticky_bar'), and is the only way to buy at phone widths.
+        // Scoping the re-enable to descendants left it disabled by the
+        // sitewide capture guard below, dead until a reload.
         var submitButtons = $$('button[type="submit"]', form);
+        if (form.id) {
+          $$('button[type="submit"][form="' + form.id + '"]').forEach(function (btn) {
+            if (submitButtons.indexOf(btn) === -1) submitButtons.push(btn);
+          });
+        }
 
         var navigating = false;
 
@@ -726,7 +736,10 @@ import './app.css';
             open();
           })
           .finally(function () {
-            submitButtons.forEach(function (btn) { btn.disabled = false; });
+            submitButtons.forEach(function (btn) {
+              btn.disabled = false;
+              btn.removeAttribute('aria-busy');
+            });
             if (pageLoader && !navigating) pageLoader.classList.remove('is-active');
           });
       });

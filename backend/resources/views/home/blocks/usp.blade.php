@@ -22,7 +22,7 @@
       @foreach($block->items as $item)
         <div class="flex items-center gap-2.5 md:flex-col md:rounded-xl md:border md:border-line md:bg-paper md:px-4 md:py-6 md:text-center md:transition-all md:hover:-translate-y-0.5 md:hover:border-gold md:hover:shadow-md">
           @if($item->hasMedia('image'))
-            <img class="h-9 w-9 shrink-0 md:mb-3 md:h-10 md:w-10" src="{{ $item->getFirstMediaUrl('image') }}" alt="" loading="lazy" width="40" height="40">
+            <img class="h-9 w-9 shrink-0 md:mb-3 md:h-10 md:w-10" src="{{ $item->getFirstMediaUrl('image', 'icon') }}" alt="" loading="lazy" width="40" height="40">
           @else
             <span class="grid h-9 w-9 shrink-0 place-items-center text-heading md:mb-3 md:h-11 md:w-11 md:rounded-full md:bg-pinksoft md:text-rose">
               <svg class="h-7 w-7 md:h-5 md:w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"><path d="{{ $icons[$loop->index % count($icons)] }}"/></svg>

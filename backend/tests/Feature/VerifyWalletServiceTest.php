@@ -59,4 +59,17 @@ class VerifyWalletServiceTest extends TestCase
 
         $this->assertCount(1, $user->walletTransactions);
     }
+
+    public function test_credit_succeeds_for_a_phone_only_user_with_no_email(): void
+    {
+        // Phone-OTP signups leave users.email null. The credit commits in its
+        // own transaction before the notification is sent, so an unguarded
+        // Mail::to(null) surfaced as a 500 on an already-credited wallet.
+        $user = User::create(['name' => 'OTP Customer', 'phone' => '9876543210']);
+
+        $transaction = app(WalletService::class)->credit($user, 100, 'reward_approved');
+
+        $this->assertSame('100.00', $user->fresh()->wallet_balance);
+        $this->assertSame('100.00', $transaction->balance_after);
+    }
 }

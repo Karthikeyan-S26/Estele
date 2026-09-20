@@ -11,6 +11,11 @@
 @source '../*.html';
 @source '../pages/*.html';
 @source '../backend/resources/views/**/*.blade.php';
+/* Laravel renders pagination from its own packaged Blade view (pagination::tailwind),
+   which lives outside resources/views. Without this glob Tailwind never sees
+   sm:flex / sm:flex-1 / sm:gap-2 / sm:justify-between, so the desktop page-number
+   block keeps its base `hidden` and pagination vanishes from 640px up. */
+@source '../backend/vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 
 /* --------------------------------------------------------------------------
    DESIGN TOKENS
@@ -137,6 +142,35 @@
    COMPONENTS
    -------------------------------------------------------------------------- */
 @layer components {
+  /* ---- CMS rich text (blog posts, policy pages) ----
+     The admin RichEditor emits headings, lists, links and blockquotes, but
+     Tailwind's preflight resets heading sizes to `inherit` and strips list
+     markers, and @tailwindcss/typography is not a dependency here — so
+     .prose was styling nothing and long articles rendered as one flat wall
+     of 14px text. These rules restore the semantics the editor produces. */
+  .prose h1 { @apply mb-3 mt-7 text-[20px] font-bold leading-snug text-heading; }
+  .prose h2 { @apply mb-2.5 mt-7 text-[18px] font-bold leading-snug text-heading; }
+  .prose h3 { @apply mb-2 mt-6 text-[16px] font-bold leading-snug text-heading; }
+  .prose h4 { @apply mb-2 mt-5 text-[15px] font-bold leading-snug text-heading; }
+  .prose p { @apply mb-4; }
+  .prose ul { @apply mb-4 list-disc space-y-1.5 pl-5; }
+  .prose ol { @apply mb-4 list-decimal space-y-1.5 pl-5; }
+  .prose li { @apply pl-1; }
+  .prose li::marker { color: var(--color-accent-dark); }
+  .prose a { @apply text-accent-dark underline underline-offset-2; }
+  .prose strong { @apply font-bold text-heading; }
+  .prose em { @apply italic; }
+  .prose blockquote { @apply my-5 border-l-[3px] border-accent/40 pl-4 italic text-muted; }
+  .prose img { @apply my-5 h-auto max-w-full rounded-lg; }
+  .prose hr { @apply my-7 border-t border-line; }
+  .prose table { @apply my-5 w-full border-collapse text-[13px]; }
+  .prose th, .prose td { @apply border border-line px-2.5 py-1.5 text-left; }
+  .prose th { @apply bg-paper font-bold text-heading; }
+  /* Keep the first block flush with whatever sits above it (featured image,
+     page title) rather than inheriting a heading's top margin. */
+  .prose > :first-child { @apply mt-0; }
+  .prose > :last-child { @apply mb-0; }
+
 
   /* ---- Header: warm white with a hairline rule ---- */
   .header-gradient {
@@ -239,6 +273,19 @@
      (plus the spacer the layout reserves for it) stands down on those pages. */
   body:has(.buybar) .bottom-nav { display: none; }
   body:has(.buybar) .bottom-nav-spacer { display: none; }
+  /* Listing pages (category, collection, search) pin a Sort/Filter bar to the
+     same edge via @section('sticky_bar'). It arbitrates identically: the bar
+     is the page's primary action, so the tab bar and its spacer stand down
+     rather than stacking a second row over the last product tile. */
+  body:has(.listing-bar) .bottom-nav { display: none; }
+  body:has(.listing-bar) .bottom-nav-spacer { display: none; }
+  /* The bar is 52px plus the home-indicator inset. The listing pages end in
+     pb-10 (40px), which the bar would otherwise cover along with the last row
+     of product tiles, so top up the shortfall here instead of hardcoding the
+     bar's height into each page's padding. */
+  @media (max-width: 767px) {
+    body:has(.listing-bar) main { padding-bottom: calc(52px + env(safe-area-inset-bottom)); }
+  }
 
   .bag-card { @apply rounded-xl bg-white p-4; }
 

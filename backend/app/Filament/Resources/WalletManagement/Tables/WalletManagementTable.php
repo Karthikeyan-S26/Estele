@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\WalletManagement\Tables;
 
+use App\Filament\Resources\WalletManagement\WalletManagementResource;
 use App\Models\User;
 use App\Services\WalletService;
 use Filament\Actions\Action;
@@ -65,6 +66,7 @@ class WalletManagementTable
     public static function creditAction(): Action
     {
         return Action::make('credit')
+            ->visible(fn (): bool => WalletManagementResource::canAdjustWallet())
             ->label('Credit')
             ->icon(Heroicon::OutlinedPlusCircle)
             ->color('success')
@@ -97,6 +99,7 @@ class WalletManagementTable
     public static function debitAction(): Action
     {
         return Action::make('debit')
+            ->visible(fn (): bool => WalletManagementResource::canAdjustWallet())
             ->label('Debit')
             ->icon(Heroicon::OutlinedMinusCircle)
             ->color('danger')

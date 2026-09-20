@@ -44,11 +44,15 @@ class Banner extends Model implements HasMedia
      */
     public function getMobileImageUrl(): ?string
     {
+        // Must name the conversion: the collections store originals on the
+        // private 'original_images' disk and only conversions on 'public', so
+        // an unqualified URL points into the public tree where the original
+        // was never written — a broken hero on every phone.
         if ($this->hasMedia('mobile_image')) {
-            return $this->getFirstMediaUrl('mobile_image');
+            return $this->getFirstMediaUrl('mobile_image', 'mobile') ?: null;
         }
 
-        return $this->hasMedia('image') ? $this->getFirstMediaUrl('image', 'mobile') : null;
+        return $this->hasMedia('image') ? ($this->getFirstMediaUrl('image', 'mobile') ?: null) : null;
     }
 
     protected $fillable = [

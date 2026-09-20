@@ -345,6 +345,8 @@ class CheckoutController extends Controller
         }
 
         if ($order->payment_status === 'paid' || $order->payment_method !== 'razorpay') {
+            self::rememberPlacedOrder($request, $order);
+
             return redirect()->route('checkout.confirmation', $order)->with('success', 'Order placed successfully.');
         }
 
@@ -365,8 +367,17 @@ class CheckoutController extends Controller
         return redirect()->route('payment.show', $order);
     }
 
-    public function confirmation(Order $order)
+    /**
+     * Reachable by order_number alone, so it must prove the caller owns the
+     * order before rendering the customer's name and full shipping address.
+     * Express checkout is a genuine guest flow (routes/web.php has no auth on
+     * checkout.express.*), so a just-placed order is also allowed through via
+     * a session marker — see rememberPlacedOrder().
+     */
+    public function confirmation(Request $request, Order $order)
     {
+        abort_unless(self::mayViewOrder($request, $order), 404);
+
         if ($order->payment_method === 'razorpay' && $order->payment_status === 'pending') {
             return redirect()->route('payment.show', $order);
         }
@@ -388,5 +399,27 @@ class CheckoutController extends Controller
         } while (Order::where('order_number', $number)->exists());
 
         return $number;
+    }
+
+    /**
+     * A just-placed order is remembered against the session so the guest
+     * express-checkout flow can land on its own confirmation page. Stored as a
+     * list because the Razorpay hop returns through here a second time, and a
+     * later order in the same session must not evict the earlier one.
+     */
+    public static function rememberPlacedOrder(Request $request, Order $order): void
+    {
+        $ids = (array) $request->session()->get('placed_order_ids', []);
+        $ids[] = $order->id;
+        $request->session()->put('placed_order_ids', array_values(array_unique(array_slice($ids, -10))));
+    }
+
+    public static function mayViewOrder(Request $request, Order $order): bool
+    {
+        if ($order->user_id !== null && $order->user_id === auth()->id()) {
+            return true;
+        }
+
+        return in_array($order->id, (array) $request->session()->get('placed_order_ids', []), true);
     }
 }

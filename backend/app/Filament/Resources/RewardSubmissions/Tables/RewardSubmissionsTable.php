@@ -149,7 +149,12 @@ class RewardSubmissionsTable
                         return;
                     }
 
-                    Mail::to($record->user->email)->queue(new RewardSubmissionRejected($record->fresh()));
+                    // Phone-OTP customers have no email; the rejection is
+                    // already persisted above, so a Mail::to(null) throw would
+                    // only surface as a 500 on an action that in fact succeeded.
+                    if (filled($record->user?->email)) {
+                        Mail::to($record->user->email)->queue(new RewardSubmissionRejected($record->fresh()));
+                    }
                 });
             });
     }

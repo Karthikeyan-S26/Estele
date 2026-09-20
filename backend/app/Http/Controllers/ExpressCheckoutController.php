@@ -172,7 +172,10 @@ class ExpressCheckoutController extends Controller
         $order = null;
 
         if ($reference !== '') {
-            $order = Order::where('payment_method', 'fastrr')->where('payment_reference', $reference)->first();
+            $order = Order::where('payment_method', 'fastrr')
+                ->where('payment_reference', $reference)
+                ->when(auth()->check(), fn ($q) => $q->where('user_id', auth()->id()))
+                ->first();
         }
 
         if (! $order && auth()->check()) {
@@ -184,6 +187,8 @@ class ExpressCheckoutController extends Controller
         }
 
         if ($order) {
+            CheckoutController::rememberPlacedOrder($request, $order);
+
             return redirect()->route('checkout.confirmation', $order)->with('success', 'Payment received. Your order is confirmed.');
         }
 

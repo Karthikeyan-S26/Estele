@@ -60,4 +60,22 @@ class WalletManagementResource extends Resource
     {
         return false;
     }
+
+    /**
+     * Without this the resource falls back to CustomerPolicy::viewAny(), i.e.
+     * read-only 'ViewAny:Customer' — which would hand the Credit/Debit actions
+     * (real money in and out of a customer's wallet) to any role granted only
+     * a look at the customer list. Adjusting a balance is a write, so the
+     * screen requires the write permission too.
+     */
+    public static function canViewAny(): bool
+    {
+        return (bool) auth()->user()?->can('ViewAny:Customer')
+            && static::canAdjustWallet();
+    }
+
+    public static function canAdjustWallet(): bool
+    {
+        return (bool) auth()->user()?->can('Update:Customer');
+    }
 }

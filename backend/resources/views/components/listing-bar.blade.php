@@ -1,6 +1,6 @@
 @props(['sort' => null, 'options' => ['featured' => 'Featured', 'price_asc' => 'Price: Low to High', 'price_desc' => 'Price: High to Low', 'newest' => 'Newest'], 'filtered' => false])
 
-<div class="fixed inset-x-0 bottom-0 z-[115] grid grid-cols-2 border-t border-line bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-2px_9px_rgba(0,0,0,0.08)] md:hidden">
+<div class="listing-bar fixed inset-x-0 bottom-0 z-[115] grid grid-cols-2 border-t border-line bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-2px_9px_rgba(0,0,0,0.08)] md:hidden">
   <button class="relative flex h-[52px] items-center justify-center gap-2 border-r border-line text-[13px] font-bold uppercase tracking-[0.12em] text-heading" type="button" data-sheet-open="sort">
     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16M7 20l-3-3M7 20l3-3M17 20V4M17 4l-3 3M17 4l3 3"/></svg>
     Sort By

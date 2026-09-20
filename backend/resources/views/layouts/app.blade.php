@@ -375,24 +375,6 @@
 
 @yield('sticky_bar')
 
-<nav class="fixed inset-x-0 bottom-0 z-[110] border-t border-line bg-white pb-[env(safe-area-inset-bottom)] md:hidden {{ $__env->hasSection('sticky_bar') ? 'hidden' : 'flex' }}" aria-label="Quick navigation">
-  <a class="flex flex-1 flex-col items-center gap-0.5 px-0.5 py-2 text-[10px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent" href="{{ route('home') }}">
-    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2h-4v-7H9v7H5a2 2 0 0 1-2-2z"/></svg>
-    <span>Home</span>
-  </a>
-  <a class="flex flex-1 flex-col items-center gap-0.5 px-0.5 py-2 text-[10px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent" href="{{ route('search') }}">
-    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-    <span>Categories</span>
-  </a>
-  <a class="flex flex-1 flex-col items-center gap-0.5 px-0.5 py-2 text-[10px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent" href="{{ route('wishlist') }}">
-    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21.2l7.7-7.7 1.1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
-    <span>Wishlist</span>
-  </a>
-  <a class="flex flex-1 flex-col items-center gap-0.5 px-0.5 py-2 text-[10px] uppercase tracking-[0.3px] text-heading transition-colors hover:text-accent" href="{{ auth()->check() ? route('account.index') : route('login') }}">
-    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 7-7h2a7 7 0 0 1 7 7v1"/></svg>
-    <span>Account</span>
-  </a>
-</nav>
 
 {{--
   Back-to-top used to sit at the exact same fixed coordinates as the chat
