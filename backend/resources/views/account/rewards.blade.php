@@ -92,7 +92,27 @@
       @if($walletTransactions->isEmpty())
         <p class="text-[13px] text-muted">No wallet activity yet.</p>
       @else
-        <div class="overflow-x-auto">
+        {{-- The table is min-w-[480px], which pushes Amount and Balance — the two
+             columns that matter — off-screen on a phone. Stacked rows below sm,
+             the table from sm up where it fits. --}}
+        <ul class="space-y-2.5 sm:hidden">
+          @foreach($walletTransactions as $transaction)
+            <li class="rounded-lg border border-line px-3 py-2.5">
+              <div class="flex items-baseline justify-between gap-3">
+                <span class="text-[13px] font-bold text-heading">{{ str_replace('_', ' ', ucfirst($transaction->reason)) }}</span>
+                <span class="shrink-0 text-[14px] font-bold {{ $transaction->type === 'credit' ? 'text-price' : 'text-salebadge' }}">
+                  {{ $transaction->type === 'credit' ? '+' : '-' }}₹{{ number_format((float) $transaction->amount, 2) }}
+                </span>
+              </div>
+              <div class="mt-1 flex items-baseline justify-between gap-3 text-[12px] text-muted">
+                <span>{{ $transaction->created_at->format('d M Y') }}</span>
+                <span>Balance ₹{{ number_format((float) $transaction->balance_after, 2) }}</span>
+              </div>
+            </li>
+          @endforeach
+        </ul>
+
+        <div class="hidden overflow-x-auto sm:block">
           <table class="w-full min-w-[480px] text-left text-[13px]">
             <thead>
               <tr class="border-b border-line text-[11px] uppercase tracking-[0.3px] text-muted">

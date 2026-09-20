@@ -17,12 +17,12 @@
                     <tr>
                         <td class="px-4 py-2 whitespace-nowrap">{{ $transaction->created_at->format('d M Y, h:i A') }}</td>
                         <td class="px-4 py-2">
-                            <span class="{{ $transaction->type === 'credit' ? 'text-success-600' : 'text-danger-600' }}">
+                            <x-filament::badge :color="$transaction->type === 'credit' ? 'success' : 'danger'">
                                 {{ ucfirst($transaction->type) }}
-                            </span>
+                            </x-filament::badge>
                         </td>
                         <td class="px-4 py-2">{{ str_replace('_', ' ', ucfirst($transaction->reason)) }}</td>
-                        <td class="px-4 py-2 text-right whitespace-nowrap {{ $transaction->type === 'credit' ? 'text-success-600' : 'text-danger-600' }}">
+                        <td class="px-4 py-2 text-right font-medium whitespace-nowrap" style="color: {{ $transaction->type === 'credit' ? 'var(--success-600)' : 'var(--danger-600)' }}">
                             {{ $transaction->type === 'credit' ? '+' : '-' }}₹{{ number_format((float) $transaction->amount, 2) }}
                         </td>
                         <td class="px-4 py-2 text-right whitespace-nowrap">₹{{ number_format((float) $transaction->balance_after, 2) }}</td>

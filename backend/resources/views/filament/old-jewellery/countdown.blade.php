@@ -20,10 +20,11 @@
             }"
             x-init="tick(); setInterval(() => tick(), 1000)"
             x-text="text"
-            class="font-mono text-lg font-semibold text-warning-600 dark:text-warning-400"
+            class="font-mono text-lg font-semibold"
+            style="color: var(--warning-600)"
         ></span>
     @elseif ($record->status === 'bidding_active')
-        <span class="text-sm text-danger-600">Deadline passed — awaiting scheduler close</span>
+        <span class="text-sm font-medium" style="color: var(--danger-600)">Deadline passed — awaiting scheduler close</span>
     @else
         <span class="text-sm text-gray-500 dark:text-gray-400">Bidding closed</span>
     @endif
