@@ -8,4 +8,9 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateHomepageBlock extends CreateRecord
 {
     protected static string $resource = HomepageBlockResource::class;
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }

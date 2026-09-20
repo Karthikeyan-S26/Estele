@@ -63,4 +63,9 @@ class CreateVendor extends CreateRecord
             ->danger()
             ->send();
     }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }
