@@ -55,6 +55,8 @@ class CategoryController extends Controller
 
                 $query = Product::query()
                     ->with('media')
+                    ->withCount('approvedReviews')
+                    ->withAvg('approvedReviews', 'rating')
                     ->whereHas('categories', fn ($q) => $q->whereIn('categories.id', $categoryIds))
                     ->where('is_active', true);
 
@@ -78,7 +80,9 @@ class CategoryController extends Controller
                     'price_asc' => $query->orderBy('price'),
                     'price_desc' => $query->orderBy('price', 'desc'),
                     'newest' => $query->latest('products.created_at'),
-                    default => $query->orderBy('products.id'),
+                    // 'featured' is the default sort and the storefront offers it by name,
+                    // but it used to be indistinguishable from insertion order.
+                    default => $query->orderByDesc('products.is_featured')->orderBy('products.id'),
                 };
 
                 return $query->paginate(24)->withQueryString();

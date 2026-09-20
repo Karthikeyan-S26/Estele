@@ -10,12 +10,15 @@ use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\PaginationMode;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class ProductsTable
 {
     public static function configure(Table $table): Table
     {
         return $table
+            // The Categories badge column reads a belongsToMany per row.
+            ->modifyQueryUsing(fn (Builder $query) => $query->with('categories'))
             ->paginationMode(PaginationMode::Simple)
             ->disabledSelection(! extension_loaded('intl'))
             ->columns([

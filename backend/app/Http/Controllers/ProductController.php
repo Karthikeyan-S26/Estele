@@ -20,6 +20,8 @@ class ProductController extends Controller
                 return Product::where('is_active', true)
                     ->where('id', '!=', $product->id)
                     ->with('media')
+                    ->withCount('approvedReviews')
+                    ->withAvg('approvedReviews', 'rating')
                     ->whereHas('categories', function ($query) use ($product) {
                         $query->whereIn('categories.id', $product->categories->pluck('id'));
                     })
@@ -47,6 +49,8 @@ class ProductController extends Controller
     {
         $products = Product::where('is_active', true)
             ->with('media')
+            ->withCount('approvedReviews')
+            ->withAvg('approvedReviews', 'rating')
             ->latest()
             ->get();
 

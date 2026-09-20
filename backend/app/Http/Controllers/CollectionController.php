@@ -23,7 +23,11 @@ class CollectionController extends Controller
         $maxPrice = $request->query('max_price');
         $inStock = $request->boolean('in_stock');
 
-        $query = $collection->products()->with('media')->where('is_active', true);
+        $query = $collection->products()
+            ->with('media')
+            ->withCount('approvedReviews')
+            ->withAvg('approvedReviews', 'rating')
+            ->where('is_active', true);
 
         if ($minPrice !== null && $minPrice !== '') {
             $query->where('price', '>=', (float) $minPrice);
@@ -45,7 +49,9 @@ class CollectionController extends Controller
             'price_asc' => $query->orderBy('price'),
             'price_desc' => $query->orderBy('price', 'desc'),
             'newest' => $query->latest('products.created_at'),
-            default => $query->orderBy('products.id'),
+            // 'featured' is the default sort and the storefront offers it by name,
+            // but it used to be indistinguishable from insertion order.
+            default => $query->orderByDesc('products.is_featured')->orderBy('products.id'),
         };
 
         $products = $query->paginate(24)->withQueryString();

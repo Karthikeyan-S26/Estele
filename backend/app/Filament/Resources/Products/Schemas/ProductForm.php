@@ -49,7 +49,7 @@ class ProductForm
                 Toggle::make('is_active')
                     ->required(),
                 Toggle::make('is_featured')
-                    ->helperText('Show this product in the homepage featured carousel.'),
+                    ->helperText('Adds a Featured badge on the product card and lifts the product to the top of the default "Featured" sort on category and collection pages.'),
 
                 CheckboxList::make('categories')
                     ->relationship('categories', 'name')
