@@ -11,8 +11,11 @@ class BlogController extends Controller
 {
     public function index(Request $request)
     {
-        $categorySlug = $request->query('category');
-        $page = $request->query('page', 1);
+        // Both land in an interpolated cache key, and ?category[]=a / ?page[]=1
+        // parse to arrays — which a crawler or a tampered link produces and
+        // which used to raise "Array to string conversion" and 500 the page.
+        $categorySlug = is_string($category = $request->query('category')) ? $category : null;
+        $page = (int) (is_numeric($p = $request->query('page', 1)) ? $p : 1);
         $cacheKey = "blog.index.{$categorySlug}.{$page}";
 
         $posts = Cache::tags(['blog'])->remember($cacheKey, now()->addMinutes(15), function () use ($categorySlug) {

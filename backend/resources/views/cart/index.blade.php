@@ -78,9 +78,9 @@
                     @csrf
                     @method('patch')
                     <div class="inline-flex items-center gap-2" data-qty>
-                      <button class="grid h-7 w-7 place-items-center rounded-sm bg-[#ECECEC] text-[18px] leading-none text-heading" type="button" data-qty-minus aria-label="Decrease quantity">&minus;</button>
-                      <input class="h-7 w-9 rounded border border-line-strong bg-white text-center !text-[14px] text-heading" type="number" name="quantity" value="{{ $item->quantity }}" min="1" max="{{ $item->availableStock() }}" aria-label="Quantity">
-                      <button class="grid h-7 w-7 place-items-center rounded-sm bg-[#ECECEC] text-[18px] leading-none text-heading" type="button" data-qty-plus aria-label="Increase quantity">+</button>
+                      <button class="grid h-11 w-11 place-items-center rounded-sm bg-[#ECECEC] text-[18px] leading-none text-heading md:h-7 md:w-7" type="button" data-qty-minus aria-label="Decrease quantity">&minus;</button>
+                      <input class="h-11 w-11 rounded border border-line-strong bg-white text-center !text-[14px] text-heading md:h-7 md:w-9" type="number" name="quantity" value="{{ $item->quantity }}" min="1" max="{{ $item->availableStock() }}" aria-label="Quantity">
+                      <button class="grid h-11 w-11 place-items-center rounded-sm bg-[#ECECEC] text-[18px] leading-none text-heading md:h-7 md:w-7" type="button" data-qty-plus aria-label="Increase quantity">+</button>
                     </div>
                   </form>
                 </div>

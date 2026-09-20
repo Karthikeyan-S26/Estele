@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  {{-- Zoom stays enabled: the PDP's lens/magnifier is desktop-only (products/show
+       gates it behind innerWidth >= 1024), so pinch is the only way a phone shopper
+       can inspect a piece — and blocking it fails WCAG 2.1 SC 1.4.4. --}}
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>@yield('meta_title', ($siteSettings['site_name'] ?? 'Estele').' — '.($siteSettings['site_tagline'] ?? ''))</title>
   <meta name="description" content="@yield('meta_description', $siteSettings['site_tagline'] ?? '')">

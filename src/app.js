@@ -14,6 +14,39 @@ import './app.css';
   // Shared by the cart drawer and the available-coupons modal — both call
   // the same JSON cart/coupon endpoints, so the fetch+CSRF plumbing lives
   // once at this outer scope instead of being duplicated per widget.
+  // Count badges are hidden three different ways across the markup: a `hidden`
+  // class (header icons), the `hidden` attribute (bottom-nav tab bar) and an
+  // inline display:none (cart). Toggling only the class left the tab bar's
+  // wishlist badge permanently invisible, so clear all three here.
+  function setBadge(el, count) {
+    el.textContent = count;
+    var empty = !count;
+    el.classList.toggle('hidden', empty);
+    if (empty) {
+      el.setAttribute('hidden', '');
+      el.style.display = 'none';
+    } else {
+      el.removeAttribute('hidden');
+      el.style.display = '';
+    }
+  }
+
+  // Four overlays (mobile nav, cart drawer, search, coupons modal) all used to
+  // write document.body.style.overflow directly. The coupons modal opens from
+  // inside the cart drawer, so closing it unlocked scrolling while the drawer
+  // was still covering the screen. Keyed locks: the page only scrolls again
+  // once every holder has released.
+  var scrollLocks = [];
+  function lockScroll(key) {
+    if (scrollLocks.indexOf(key) === -1) scrollLocks.push(key);
+    document.body.style.overflow = 'hidden';
+  }
+  function unlockScroll(key) {
+    var i = scrollLocks.indexOf(key);
+    if (i !== -1) scrollLocks.splice(i, 1);
+    if (!scrollLocks.length) document.body.style.overflow = '';
+  }
+
   function csrfToken() {
     var meta = $('meta[name="csrf-token"]');
     return meta ? meta.getAttribute('content') : '';
@@ -581,7 +614,7 @@ import './app.css';
         if (backdrop) backdrop.classList.add('opacity-100');
         if (panel) panel.classList.remove('-translate-x-full');
       });
-      document.body.style.overflow = 'hidden';
+      lockScroll('nav');
       if (burger) burger.setAttribute('aria-expanded', 'true');
       isOpen = true;
     }
@@ -589,7 +622,7 @@ import './app.css';
     function close() {
       if (backdrop) backdrop.classList.remove('opacity-100');
       if (panel) panel.classList.add('-translate-x-full');
-      document.body.style.overflow = '';
+      unlockScroll('nav');
       if (burger) burger.setAttribute('aria-expanded', 'false');
       isOpen = false;
       setTimeout(function () { drawer.hidden = true; }, 300);
@@ -624,14 +657,14 @@ import './app.css';
         if (backdrop) backdrop.classList.add('opacity-100');
         if (panel) panel.classList.remove('translate-x-full');
       });
-      document.body.style.overflow = 'hidden';
+      lockScroll('cart');
       isOpen = true;
     }
 
     function close() {
       if (backdrop) backdrop.classList.remove('opacity-100');
       if (panel) panel.classList.add('translate-x-full');
-      document.body.style.overflow = '';
+      unlockScroll('cart');
       isOpen = false;
       setTimeout(function () { drawer.hidden = true; }, 300);
     }
@@ -874,11 +907,11 @@ import './app.css';
       overlay.hidden = false;
       var input = $('input', overlay);
       if (input) input.focus();
-      document.body.style.overflow = 'hidden';
+      lockScroll('search');
     }
     function close() {
       overlay.hidden = true;
-      document.body.style.overflow = '';
+      unlockScroll('search');
     }
 
     $$('[data-search-open]').forEach(function (el) { el.addEventListener('click', open); });
@@ -907,11 +940,11 @@ import './app.css';
 
     function open() {
       modal.hidden = false;
-      document.body.style.overflow = 'hidden';
+      lockScroll('coupons');
     }
     function close() {
       modal.hidden = true;
-      document.body.style.overflow = '';
+      unlockScroll('coupons');
     }
 
     // Delegated on document, not attached directly to each opener element:
@@ -1115,9 +1148,14 @@ import './app.css';
       var min = parseInt(input.getAttribute('min'), 10) || 1;
       var maxAttr = input.getAttribute('max');
       var max = maxAttr ? parseInt(maxAttr, 10) : null;
-      var val = (parseInt(input.value, 10) || min) + by;
+      var current = parseInt(input.value, 10) || min;
+      var val = current + by;
       val = Math.max(min, val);
       if (max !== null) val = Math.min(max, val);
+      // Clamped to where it already was (minus at 1, plus at max): firing
+      // change anyway made the cart page submit and do a full reload that
+      // changed nothing.
+      if (val === current) return;
       input.value = val;
       input.dispatchEvent(new Event('input', { bubbles: true }));
       input.dispatchEvent(new Event('change', { bubbles: true }));
@@ -1471,10 +1509,7 @@ import './app.css';
     try { saved = JSON.parse(localStorage.getItem('estele-wishlist') || '[]'); } catch (e) {}
 
     function render() {
-      countEls.forEach(function (el) {
-        el.textContent = saved.length;
-        el.classList.toggle('hidden', saved.length === 0);
-      });
+      countEls.forEach(function (el) { setBadge(el, saved.length); });
     }
     render();
 
@@ -1516,10 +1551,7 @@ import './app.css';
     try { count = parseInt(localStorage.getItem('estele-cart-count'), 10) || 0; } catch (e) {}
 
     function render() {
-      countEls.forEach(function (el) {
-        el.textContent = count;
-        el.classList.toggle('hidden', count === 0);
-      });
+      countEls.forEach(function (el) { setBadge(el, count); });
     }
     render();
 

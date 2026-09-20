@@ -5,10 +5,15 @@
 @section('content')
 
   @php
-    $pipeline = ['placed' => 'Placed', 'packed' => 'Packed', 'shipped' => 'Shipped', 'delivered' => 'Delivered'];
+    // 'accepted' is a real stage every order passes through (Order::ALLOWED_TRANSITIONS
+    // goes placed -> accepted -> packed), and the admin labels it "Accepted". Omitting it
+    // here left the bar frozen on "Placed" the whole time the store had already accepted.
+    $pipeline = ['placed' => 'Placed', 'accepted' => 'Accepted', 'packed' => 'Packed', 'shipped' => 'Shipped', 'delivered' => 'Delivered'];
     $pipelineKeys = array_keys($pipeline);
     $isTerminalOffPipeline = in_array($order->status, ['cancelled', 'returned'], true);
-    $currentStep = array_search($order->status, $pipelineKeys, true);
+    // array_search returns false for an unknown status, which compares as 0 and would
+    // silently light up step 1; -1 leaves the whole bar inactive instead.
+    $currentStep = ($found = array_search($order->status, $pipelineKeys, true)) === false ? -1 : $found;
   @endphp
 
   <nav class="mx-auto w-full max-w-wrapper px-3 md:px-4 flex flex-wrap items-center gap-1.5 py-4 text-[13px] text-muted" aria-label="Breadcrumb">

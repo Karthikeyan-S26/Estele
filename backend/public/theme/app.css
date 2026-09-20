@@ -1303,7 +1303,21 @@
     box-shadow: 0 -2px 9px #00000014, 0 -1px 2px #00000026;
   }
 
-  body:has(.buybar) .bottom-nav, body:has(.buybar) .bottom-nav-spacer, body:has(.listing-bar) .bottom-nav, body:has(.listing-bar) .bottom-nav-spacer {
+  body:has(.buybar) .bottom-nav, body:has(.buybar) .bottom-nav-spacer {
+    display: none;
+  }
+
+  @media (max-width: 767px) {
+    body:has(.buybar) [data-chat] {
+      bottom: calc(79px + env(safe-area-inset-bottom));
+    }
+
+    body:has(.buybar) .back-to-top-btn {
+      bottom: calc(139px + env(safe-area-inset-bottom)) !important;
+    }
+  }
+
+  body:has(.listing-bar) .bottom-nav, body:has(.listing-bar) .bottom-nav-spacer {
     display: none;
   }
 
@@ -6994,6 +7008,10 @@
       height: calc(var(--spacing) * 5);
     }
 
+    .md\:h-7 {
+      height: calc(var(--spacing) * 7);
+    }
+
     .md\:h-10 {
       height: calc(var(--spacing) * 10);
     }
@@ -7024,6 +7042,14 @@
 
     .md\:w-5 {
       width: calc(var(--spacing) * 5);
+    }
+
+    .md\:w-7 {
+      width: calc(var(--spacing) * 7);
+    }
+
+    .md\:w-9 {
+      width: calc(var(--spacing) * 9);
     }
 
     .md\:w-10 {

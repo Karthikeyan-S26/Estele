@@ -273,6 +273,14 @@
      (plus the spacer the layout reserves for it) stands down on those pages. */
   body:has(.buybar) .bottom-nav { display: none; }
   body:has(.buybar) .bottom-nav-spacer { display: none; }
+  /* The floating chat bubble and back-to-top are pinned at 74px/134px, which
+     clears the 56px tab bar but not a .buybar — that is 67px tall before the
+     home-indicator inset and ~101px with it, so on a notched phone the bubble
+     sat on top of the primary checkout CTA. Lift both above the bar instead. */
+  @media (max-width: 767px) {
+    body:has(.buybar) [data-chat] { bottom: calc(79px + env(safe-area-inset-bottom)); }
+    body:has(.buybar) .back-to-top-btn { bottom: calc(139px + env(safe-area-inset-bottom)) !important; }
+  }
   /* Listing pages (category, collection, search) pin a Sort/Filter bar to the
      same edge via @section('sticky_bar'). It arbitrates identically: the bar
      is the page's primary action, so the tab bar and its spacer stand down
