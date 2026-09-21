@@ -107,12 +107,14 @@
             'icon' => '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/>',
           ],
           [
-            'label' => 'Sell Your Jewellery',
-            'note' => 'Get an offer for old gold',
-            'url' => route('account.sell-jewellery.landing'),
+            // Falls back to the "no request yet" copy so the row still
+            // renders if the view is built without the controller's state.
+            'label' => ($sellJewellery ?? [])['label'] ?? 'Sell Your Jewellery',
+            'note' => ($sellJewellery ?? [])['note'] ?? 'Get an offer for old gold',
+            'url' => ($sellJewellery ?? [])['url'] ?? route('account.sell-jewellery.create'),
             'icon' => '<path d="M6 3h12l3 6-9 12L3 9z"/><path d="M3 9h18"/><path d="m12 3-3 6 3 12 3-12z"/>',
             'featured' => true,
-            'badge' => 'Get an Offer',
+            'badge' => ($sellJewellery ?? [])['badge'] ?? 'Get an Offer',
           ],
           [
             'label' => 'Rewards & Wallet',

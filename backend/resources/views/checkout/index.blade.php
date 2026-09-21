@@ -171,14 +171,24 @@
             </div>
           @endforeach
         </div>
-        <dl class="mb-4.5 space-y-2 text-[14px]">
-          <div class="flex justify-between"><dt class="text-muted">Subtotal</dt><dd>₹{{ number_format($subtotal, 0) }}</dd></div>
+        @php
+          // Prices are stored tax-inclusive, so the GST row states that
+          // rather than adding an amount that would double-count.
+          $youSave = $discount + max(0, $items->sum(fn ($i) => (($i->product->compare_at_price ?? 0) > $i->unitPrice() ? $i->product->compare_at_price - $i->unitPrice() : 0) * $i->quantity));
+        @endphp
+        <dl class="mb-4.5 space-y-2.5 text-[14px]">
+          <div class="flex justify-between"><dt>Item Total (inclusive of Taxes)</dt><dd class="font-bold">₹{{ number_format($subtotal, 0) }}</dd></div>
           @if($discount > 0)
-            <div class="flex justify-between text-[#1a7d3f]"><dt>Discount ({{ $couponCode }})</dt><dd>&minus;₹{{ number_format($discount, 0) }}</dd></div>
+            <div class="flex justify-between"><dt>Discount</dt><dd class="font-bold text-salebadge">&minus;₹{{ number_format($discount, 0) }}</dd></div>
           @endif
-          <div class="flex justify-between"><dt class="text-muted">Shipping{{ ($shipping['estimated'] ?? false) ? ' (estimated)' : '' }}</dt><dd>{{ $shipping['fee'] > 0 ? '₹'.number_format($shipping['fee'], 0) : 'Free' }}</dd></div>
-          <div class="flex justify-between border-t border-line-strong pt-3.5 text-[16px] font-medium"><dt class="text-heading">Total</dt><dd>₹{{ number_format($subtotal - $discount + $shipping['fee'], 0) }}</dd></div>
+          <div class="flex justify-between"><dt>Shipping{{ ($shipping['estimated'] ?? false) ? ' (estimated)' : '' }}</dt><dd class="font-bold {{ $shipping['fee'] > 0 ? '' : 'text-salebadge' }}">{{ $shipping['fee'] > 0 ? '₹'.number_format($shipping['fee'], 0) : 'FREE' }}</dd></div>
+          <div class="flex justify-between"><dt>GST</dt><dd class="text-muted">Included</dd></div>
+          <div class="flex justify-between border-t border-line-strong pt-3.5 text-[16px] font-bold"><dt class="text-heading">Total Payable</dt><dd>₹{{ number_format($subtotal - $discount + $shipping['fee'], 0) }}</dd></div>
         </dl>
+        @if($youSave > 0)
+          <p class="mb-4.5 rounded bg-[#D9F2E3] py-2.5 text-center text-[14px] font-bold text-[#1a7d3f]">You Save ₹{{ number_format($youSave, 0) }} In This Order</p>
+        @endif
+        <p class="mb-4.5 text-center text-[13px] text-[#454545]">UPI, Cards | Secure Checkout</p>
         @if($shipping['estimated'] ?? false)
           <p class="-mt-3 mb-4.5 text-[11.5px] text-muted">Final shipping cost is confirmed once you enter your delivery address below.</p>
         @endif
@@ -206,6 +216,10 @@
               <button class="w-[72px] shrink-0 rounded-lg bg-success text-[12px] font-bold text-white" type="submit">Apply</button>
             </form>
           @endif
+        </div>
+
+        <div class="-mx-5 -mb-5 mt-5">
+          @include('partials.trust-badges')
         </div>
       </aside>
     </div>

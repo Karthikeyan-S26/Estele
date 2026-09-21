@@ -13,7 +13,11 @@
         Secure
       </span>
     </div>
-    <div class="grid flex-1 grid-rows-[minmax(0,1fr)_auto] overflow-hidden" data-cart-body>
+    {{-- One scroll region for the whole drawer body: the items list used to
+         scroll inside this box while the box itself also scrolled, which put
+         two scrollbars side by side. The summary/CTA block scrolls up with
+         the items now instead of being pinned. --}}
+    <div class="flex flex-1 flex-col overflow-y-auto" data-cart-body>
       @include('partials.cart-drawer-items', ['items' => $cartItems, 'subtotal' => $cartSubtotal, 'discount' => $cartDiscount, 'couponCode' => $cartCouponCode, 'freeShippingThreshold' => $cartFreeShippingThreshold])
     </div>
   </aside>

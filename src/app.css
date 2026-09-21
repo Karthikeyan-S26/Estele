@@ -123,6 +123,16 @@
   summary { list-style: none; cursor: pointer; }
   summary::-webkit-details-marker { display: none; }
 
+  /* Tailwind's preflight resets buttons to `cursor: default`, so every
+     button/label/role=button on the site showed an arrow rather than the
+     hand pointer on hover. Disabled controls keep the not-allowed cursor. */
+  button, label, select, [role="button"], [type="button"], [type="submit"], [type="reset"] {
+    cursor: pointer;
+  }
+  button:disabled, [type="button"]:disabled, [type="submit"]:disabled, [disabled] {
+    cursor: not-allowed;
+  }
+
   [hidden] { display: none !important; }
 
   /* iOS Safari auto-zooms the whole page in when a focused input's
@@ -394,6 +404,33 @@
     .product-card__img { transition: none; }
     .product-card:hover .product-card__img { transform: none; }
   }
+
+  /* ---- Card image scroller: swipe through a product's photos from the
+     grid, with dots showing position. The frame is a link, so horizontal
+     panning is handled by native scroll-snap rather than JS drag. ---- */
+  .card-scroller {
+    @apply flex h-full w-full;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .card-scroller::-webkit-scrollbar { display: none; }
+  .card-scroller__img {
+    @apply h-full w-full shrink-0;
+    scroll-snap-align: center;
+  }
+  /* The zoom-on-hover would fight the snap offsets mid-scroll. */
+  .product-card:hover .card-scroller__img { transform: none; }
+
+  .card-dots {
+    @apply absolute bottom-1.5 left-1/2 z-[2] flex -translate-x-1/2 items-center gap-1 rounded-full bg-black/45 px-1.5 py-1;
+  }
+  .card-dot {
+    @apply block h-[5px] w-[5px] rounded-full bg-white/55;
+    transition: width .2s ease, background-color .2s ease;
+  }
+  .card-dot.is-active { @apply w-3 bg-white; }
 
   /* ---- Category tile: circular frame, the shape Indian jewellery retail
      uses to show a piece rather than a packshot ---- */

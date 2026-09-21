@@ -14,25 +14,28 @@
     $remaining = $threshold !== null ? max(0, $threshold - $netSubtotal) : 0;
   @endphp
 
-  @if($threshold !== null)
-    <div class="rounded-b-xl bg-white px-4 pb-4 pt-3.5" data-free-shipping-bar data-threshold="{{ $threshold }}" data-net-subtotal="{{ $netSubtotal }}">
-      <div class="mb-2 flex items-center gap-2 text-[13px] font-bold text-[#454545]">
-        <svg class="h-4 w-4 shrink-0 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-        <span data-free-shipping-message>
-          @if($unlocked)
-            You've unlocked <strong>free shipping</strong>! 🎉
-          @else
-            Add <strong>₹{{ number_format($remaining, 0) }}</strong> more for free shipping
-          @endif
-        </span>
-      </div>
-      <div class="h-1.5 w-full overflow-hidden rounded-full bg-line">
-        <div class="h-full rounded-full bg-gradient-to-r from-[#00B65E] to-success transition-[width] duration-700 ease-out" data-free-shipping-fill style="width: {{ $progressPercent }}%"></div>
-      </div>
+  {{-- No threshold configured means shipping is free on every order (the site
+       runs "Free delivery pan India"), so the bar shows the unlocked state
+       outright rather than disappearing and leaving the drawer with no
+       shipping reassurance at all. --}}
+  @php $alwaysFree = $threshold === null; @endphp
+  <div class="flex items-center gap-3 bg-white px-4 pb-3.5 pt-3" data-free-shipping-bar @if(! $alwaysFree) data-threshold="{{ $threshold }}" data-net-subtotal="{{ $netSubtotal }}" @endif>
+    <svg class="h-6 w-6 shrink-0 text-heading" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 6h11v9H3zM14 9h4l3 3v3h-7zM7 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM17.5 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></svg>
+    <div class="min-w-0 flex-1">
+      <p class="mb-1.5 text-[13px] font-bold text-[#454545]" data-free-shipping-message>
+        @if($alwaysFree || $unlocked)
+          Free shipping unlocked for this order
+        @else
+          Add <strong>₹{{ number_format($remaining, 0) }}</strong> more for free shipping
+        @endif
+      </p>
+      <span class="block h-1.5 w-full overflow-hidden rounded-full bg-line">
+        <span class="block h-full rounded-full bg-gradient-to-r from-[#00B65E] to-success transition-[width] duration-700 ease-out" data-free-shipping-fill style="width: {{ ($alwaysFree || $unlocked) ? 100 : $progressPercent }}%"></span>
+      </span>
     </div>
-  @endif
+  </div>
 
-  <div class="space-y-2.5 overflow-y-auto px-2.5 py-2.5">
+  <div class="space-y-2.5 px-2.5 py-2.5">
     @foreach($items as $item)
       <div class="bag-card flex gap-3 p-3" data-cart-drawer-item="{{ $item->id }}">
         <a class="skeleton block aspect-square w-[84px] shrink-0 overflow-hidden rounded-md" href="{{ route('products.show', $item->product) }}">
@@ -78,20 +81,6 @@
           @endforeach
         </ul>
       </div>
-    @endif
-
-    @if(! ($couponCode ?? null) && ($publicCoupons ?? []) !== [])
-      @php $featuredCoupon = $publicCoupons[0] @endphp
-      <div class="mb-3 flex items-center justify-between gap-3 rounded border border-dashed border-line-strong bg-pinksoft/40 px-3 py-2.5">
-        <div class="min-w-0">
-          <p class="truncate text-[12px] font-medium tracking-[0.3px] text-heading">{{ $featuredCoupon['summary'] }}</p>
-          <p class="text-[11px] text-muted">Code: <span class="font-medium text-heading">{{ $featuredCoupon['code'] }}</span></p>
-        </div>
-        <button class="h-[30px] w-[68px] shrink-0 rounded-lg bg-success text-[12px] font-bold text-white disabled:opacity-50" type="button" data-featured-coupon-apply="{{ $featuredCoupon['code'] }}">Apply</button>
-      </div>
-      @if(count($publicCoupons) > 1)
-        <button class="mb-3 block text-[11px] text-muted underline transition-colors hover:text-accent" type="button" data-coupons-modal-open>View all coupons &rarr;</button>
-      @endif
     @endif
 
     <div class="mb-3" data-cart-coupon-box>

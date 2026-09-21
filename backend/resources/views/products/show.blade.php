@@ -9,7 +9,9 @@
 
 @section('sticky_bar')
   <div class="buybar md:hidden">
-    <button class="grid h-[49px] w-11 shrink-0 place-items-center text-heading" type="button" aria-label="Add to wishlist" onclick="var b=document.querySelector('[data-pdp-wishlist]');b.click();this.querySelector('svg').setAttribute('fill',b.querySelector('svg').getAttribute('fill'));this.classList.toggle('text-accent-dark',b.classList.contains('text-accent'))">
+    {{-- The real wishlist toggle now that the duplicate heart beside the
+         title is gone — it used to proxy its click through to that one. --}}
+    <button class="grid h-[49px] w-11 shrink-0 place-items-center text-heading" type="button" aria-label="Add to wishlist" data-wishlist-toggle data-pdp-wishlist data-wishlist-key="{{ $product->title }}">
       <svg class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21.2l7.7-7.7 1.1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
     </button>
     @if($product->stock_quantity > 0)
@@ -100,15 +102,23 @@
   --}}
   <style>
     .pdp-gallery { display: flex; flex-direction: column; gap: 10px; }
-    .pdp-thumbs { display: flex; flex-direction: row; gap: 10px; overflow-x: auto; order: 2; }
-    .pdp-thumbs .pdp-thumb { flex: 0 0 72px; width: 72px; }
-    .pdp-image-wrap { position: relative; order: 1; }
-    @media (min-width: 768px) {
-      .pdp-gallery { flex-direction: row; align-items: flex-start; }
-      .pdp-thumbs { flex-direction: column; overflow-x: visible; overflow-y: auto; order: 1; max-height: 600px; width: 84px; flex: 0 0 84px; }
-      .pdp-thumbs .pdp-thumb { width: 100%; flex: 0 0 auto; }
-      .pdp-image-wrap { order: 2; flex: 1 1 auto; min-width: 0; }
+    .pdp-image-wrap { position: relative; }
+
+    /* Swipeable slider — one image per scroll-snap slide, dots below. */
+    .pdp-slider {
+      display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
+      scrollbar-width: none; -ms-overflow-style: none;
     }
+    .pdp-slider::-webkit-scrollbar { display: none; }
+    .pdp-slide { flex: 0 0 100%; width: 100%; scroll-snap-align: center; }
+
+    .pdp-dots { display: flex; justify-content: center; gap: 6px; padding-top: 10px; }
+    .pdp-dot {
+      height: 6px; width: 6px; padding: 0; border: 0; border-radius: 999px;
+      background: var(--color-line-strong); cursor: pointer;
+      transition: width .2s ease, background-color .2s ease;
+    }
+    .pdp-dot.is-active { width: 18px; background: var(--color-accent); }
 
     .pdp-icon-btn {
       display: flex; align-items: center; justify-content: center;
@@ -125,6 +135,15 @@
       background: var(--color-white); border: 0;
       box-shadow: 0 1px 4px rgba(0, 0, 0, .18);
     }
+
+    /* Share sits in the image's top-right, stacked under the expand icon. */
+    .pdp-share-float {
+      position: absolute; top: 54px; right: 10px; z-index: 5;
+      height: 30px; width: 30px;
+      background: var(--color-white); border: 0;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .18);
+    }
+    .pdp-share-float svg { height: 14px; width: 14px; }
 
     /* Hover-to-zoom lens + magnified side panel, matching estele.co's PDP gallery. */
     .pdp-zoom-lens {
@@ -178,6 +197,13 @@
       .pdp-main { padding: 0 !important; border-radius: 0; }
       [data-chat] { bottom: 84px !important; }
       .back-to-top-btn { bottom: 144px !important; }
+
+      /* The page ends at the content on mobile — the full footer is hidden
+         so the product page doesn't scroll on past the purchase actions
+         into site-wide links, and the gap the sticky bar used to leave
+         above itself goes with it. */
+      .footer-mobile, footer { display: none; }
+      body:has(.buybar) { padding-bottom: 0; }
     }
   </style>
 
@@ -189,30 +215,45 @@
   --}}
   <article class="mx-auto w-full max-w-wrapper px-4 grid grid-cols-1 gap-8 pb-10 md:grid-cols-2 md:gap-[46px] md:pb-[60px]">
 
+    {{--
+      Swipeable slider instead of a thumbnail strip: each gallery image is a
+      full-width scroll-snap slide with dots underneath, and tapping the
+      current slide opens it full-screen (the lightbox below). This replaces
+      the old vertical thumbnail rail per the client's reference.
+    --}}
     <div class="pdp-gallery">
-      @if($galleryImages->count() > 1)
-        <div class="pdp-thumbs">
+      <div class="pdp-image-wrap">
+        <div class="pdp-slider" id="pdp-slider">
           @foreach($galleryImages as $index => $media)
-            <button class="pdp-thumb aspect-square overflow-hidden rounded border bg-placeholder transition-colors {{ $index === 0 ? 'border-accent' : 'border-transparent hover:border-accent' }}" type="button"
-                    data-gallery-thumb data-full="{{ $media->getUrl('detail') }}">
-              <img class="h-full w-full object-cover" src="{{ $media->getUrl('card') }}" alt="{{ $product->title }} view {{ $index + 1 }}" loading="lazy" width="160" height="160">
-            </button>
+            <div class="pdp-slide">
+              {{-- Image area reduced ~20% via inline padding — see product-card.blade.php for why this isn't a Tailwind p-[...] class. --}}
+              <div class="pdp-main aspect-square overflow-hidden rounded bg-placeholder" style="padding: 5.3%" @if($index === 0) id="pdp-zoom-frame" @endif>
+                <img class="h-full w-full object-cover" @if($index === 0) id="pdp-main-img" @endif
+                     data-slide-full="{{ $media->getUrl('detail') }}"
+                     src="{{ $media->getUrl('detail') }}"
+                     srcset="{{ $media->getUrl('mobile') }} 768w, {{ $media->getUrl('tablet') }} 1024w, {{ $media->getUrl('detail') }} 1600w"
+                     sizes="(max-width: 768px) 100vw, 50vw"
+                     alt="{{ $product->title }} view {{ $index + 1 }}" width="1000" height="1000"
+                     @if($index === 0) fetchpriority="high" @else loading="lazy" @endif>
+                @if($index === 0)<div class="pdp-zoom-lens" id="pdp-zoom-lens"></div>@endif
+              </div>
+            </div>
           @endforeach
         </div>
-      @endif
-      <div class="pdp-image-wrap">
-        {{-- Image area reduced ~20% via inline padding — see product-card.blade.php for why this isn't a Tailwind p-[...] class. --}}
-        <div class="pdp-main aspect-square overflow-hidden rounded bg-placeholder" style="padding: 5.3%" id="pdp-zoom-frame">
-          @if($mainMedia)
-            <img class="h-full w-full object-cover" id="pdp-main-img"
-                 src="{{ $mainMedia->getUrl('detail') }}"
-                 srcset="{{ $mainMedia->getUrl('mobile') }} 768w, {{ $mainMedia->getUrl('tablet') }} 1024w, {{ $mainMedia->getUrl('detail') }} 1600w"
-                 sizes="(max-width: 768px) 100vw, 50vw"
-                 alt="{{ $product->title }}" width="1000" height="1000" fetchpriority="high">
-          @endif
-          <div class="pdp-zoom-lens" id="pdp-zoom-lens"></div>
-        </div>
+
+        @if($galleryImages->count() > 1)
+          <div class="pdp-dots" id="pdp-dots" role="tablist" aria-label="Product images">
+            @foreach($galleryImages as $index => $media)
+              <button class="pdp-dot{{ $index === 0 ? ' is-active' : '' }}" type="button" data-pdp-dot="{{ $index }}" aria-label="Go to image {{ $index + 1 }}"></button>
+            @endforeach
+          </div>
+        @endif
+
         @if($mainMedia)
+          {{-- Share moved here from beside the title, per the client's reference. --}}
+          <button class="pdp-icon-btn pdp-share-float" type="button" id="pdp-share-btn" aria-label="Share">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="18" cy="5" r="2.4"/><circle cx="6" cy="12" r="2.4"/><circle cx="18" cy="19" r="2.4"/><path d="M8.1 10.7l7.8-4.4M8.1 13.3l7.8 4.4"/></svg>
+          </button>
           <button class="pdp-icon-btn pdp-expand-btn" type="button" id="pdp-expand-btn" aria-label="View full image">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6"/></svg>
           </button>
@@ -222,16 +263,10 @@
     </div>
 
     <div>
+      {{-- Wishlist lives only in the sticky buy bar now; the duplicate heart
+           and the share icon that sat here have moved (share to the image). --}}
       <div class="pdp-title-row mb-1.5">
-        <h1 class="text-[20px] font-normal leading-tight text-black md:text-[30px] md:font-bold md:text-heading">{{ $product->title }}</h1>
-        <div class="pdp-icon-group">
-          <button class="pdp-icon-btn" type="button" aria-label="Add to wishlist" data-wishlist-toggle data-pdp-wishlist data-wishlist-key="{{ $product->title }}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21.2l7.7-7.7 1.1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
-          </button>
-          <button class="pdp-icon-btn" type="button" id="pdp-share-btn" aria-label="Share">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="18" cy="5" r="2.4"/><circle cx="6" cy="12" r="2.4"/><circle cx="18" cy="19" r="2.4"/><path d="M8.1 10.7l7.8-4.4M8.1 13.3l7.8 4.4"/></svg>
-          </button>
-        </div>
+        <h1 class="text-[20px] font-bold leading-tight text-black md:text-[30px] md:text-heading">{{ $product->title }}</h1>
       </div>
       @if($product->sku)
         <p class="mb-2.5 text-[12px] font-medium tracking-wider text-muted uppercase">SKU: {{ $product->sku }}</p>
@@ -245,9 +280,9 @@
 
       <span class="block text-[10px] font-bold leading-3 text-black">MRP</span>
       <div class="flex flex-wrap items-baseline gap-2.5">
-        <span class="text-[24px] font-normal leading-8 text-black md:text-[30px] md:font-bold md:text-price">₹ {{ number_format($product->price, 0) }}</span>
+        <span class="text-[24px] font-bold leading-8 text-black md:text-[30px] md:text-price">₹ {{ number_format($product->price, 0) }}</span>
         @if($product->compare_at_price)
-          <span class="text-[15px] text-muted line-through">₹ {{ number_format($product->compare_at_price, 0) }}</span>
+          <span class="text-[15px] font-bold text-muted line-through">₹ {{ number_format($product->compare_at_price, 0) }}</span>
           <span class="text-[15px] font-bold text-accent-dark">{{ $discountPercent }}% off</span>
         @endif
       </div>
@@ -427,11 +462,14 @@
     </div>
   </section>
 
-  <section class="border-t border-line py-10 md:py-[60px]" id="reviews">
+  {{-- Hidden entirely until a product has at least one review: an empty
+       star row with "be the first to write a review" reads as a negative
+       signal on a PDP, so it isn't shown at all. --}}
+  <section class="border-t border-line py-10 md:py-[60px] {{ $ratingCount > 0 ? '' : 'hidden' }}" id="reviews">
     <div class="mx-auto w-full max-w-[760px] px-4">
       <x-section-header
         title="Customer Reviews"
-        :subtitle="$ratingCount > 0 ? number_format($ratingAverage, 1).' out of 5, based on '.$ratingCount.' review'.($ratingCount === 1 ? '' : 's') : 'No reviews yet — be the first to write one'"
+        :subtitle="number_format($ratingAverage, 1).' out of 5, based on '.$ratingCount.' review'.($ratingCount === 1 ? '' : 's')"
       />
 
       @if(session('success'))
@@ -543,6 +581,33 @@
       var canZoom = frame && mainImg && lens && pane;
       var hoverCapable = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
       var ZOOM = 2.4;
+
+      // Slider: track which slide is centred so the dots, the lightbox and
+      // the zoom pane all act on the image the shopper is actually looking
+      // at rather than always on the first one.
+      var slider = document.getElementById('pdp-slider');
+      var dots = [].slice.call(document.querySelectorAll('[data-pdp-dot]'));
+      var slides = slider ? [].slice.call(slider.querySelectorAll('.pdp-slide img')) : [];
+      var activeIndex = 0;
+
+      function currentImage() {
+        return slides[activeIndex] || mainImg;
+      }
+
+      if (slider && slides.length) {
+        slider.addEventListener('scroll', function () {
+          var index = Math.round(slider.scrollLeft / slider.clientWidth);
+          if (index === activeIndex || !slides[index]) return;
+          activeIndex = index;
+          dots.forEach(function (dot, i) { dot.classList.toggle('is-active', i === index); });
+        }, { passive: true });
+
+        dots.forEach(function (dot, i) {
+          dot.addEventListener('click', function () {
+            slider.scrollTo({ left: slider.clientWidth * i, behavior: 'smooth' });
+          });
+        });
+      }
 
       function syncPaneImage() {
         pane.style.backgroundImage = 'url("' + (mainImg.currentSrc || mainImg.src) + '")';

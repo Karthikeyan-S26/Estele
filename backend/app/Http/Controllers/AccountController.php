@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Address;
+use App\Models\OldJewelleryRequest;
 use App\Models\Order;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
@@ -29,7 +30,61 @@ class AccountController extends Controller
             'orders' => $orders,
             'statusCounts' => $statusCounts,
             'walletBalance' => $user->wallet_balance,
+            // Drives the "Sell Your Jewellery" row, which reports the state of
+            // the shopper's most recent request rather than always inviting a
+            // new one.
+            'sellJewellery' => $this->sellJewelleryRow(
+                $user->oldJewelleryRequests()->latest()->first()
+            ),
         ]);
+    }
+
+    /**
+     * The "Sell Your Jewellery" account row has three states: no request yet
+     * (invite one, straight to the upload form), one still in flight (report
+     * it and link to it), or a credited payout (show the amount and send them
+     * shopping).
+     *
+     * @return array{label: string, note: string, url: string, badge: string}
+     */
+    private function sellJewelleryRow(?OldJewelleryRequest $request): array
+    {
+        if ($request === null) {
+            return [
+                'label' => 'Sell Your Jewellery',
+                'note' => 'Get an offer for old gold',
+                'url' => route('account.sell-jewellery.create'),
+                'badge' => 'Get an Offer',
+            ];
+        }
+
+        $credited = in_array($request->status, ['wallet_credited', 'completed'], true)
+            && $request->credited_amount > 0;
+
+        if ($credited) {
+            return [
+                'label' => 'Jewellery Offer Approved',
+                'note' => '₹'.number_format((float) $request->credited_amount, 0).' approved offer — shop now',
+                'url' => route('account.sell-jewellery.show', $request),
+                'badge' => 'Approved',
+            ];
+        }
+
+        if (! in_array($request->status, ['completed', 'cancelled', 'wallet_expired'], true)) {
+            return [
+                'label' => 'Jewellery Request Submitted',
+                'note' => "We've received your request. We'll review it and get back to you.",
+                'url' => route('account.sell-jewellery.show', $request),
+                'badge' => 'View Request',
+            ];
+        }
+
+        return [
+            'label' => 'Sell Your Jewellery',
+            'note' => 'Get an offer for old gold',
+            'url' => route('account.sell-jewellery.create'),
+            'badge' => 'Get an Offer',
+        ];
     }
 
     public function updateProfile(Request $request)

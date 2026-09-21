@@ -829,27 +829,6 @@ import './app.css';
 
         var couponApply  = e.target.closest('[data-coupon-apply]');
         var couponRemove = e.target.closest('[data-coupon-remove]');
-        var featuredApply = e.target.closest('[data-featured-coupon-apply]');
-
-        if (featuredApply) {
-          var code = featuredApply.getAttribute('data-featured-coupon-apply');
-          var original = featuredApply.textContent;
-          featuredApply.disabled = true;
-          featuredApply.textContent = 'Applying...';
-
-          request('/cart/coupon', {
-            method: 'POST',
-            body: new URLSearchParams({ code: code }),
-          }).then(function (data) {
-            if (data.success === false) {
-              featuredApply.disabled = false;
-              featuredApply.textContent = original;
-              alert(data.message || 'Could not apply this coupon.');
-              return;
-            }
-            render(data.html, data.cartCount);
-          });
-        }
 
         if (couponApply) {
           var box   = e.target.closest('[data-cart-coupon-box]');
@@ -1466,6 +1445,35 @@ import './app.css';
         swatches.forEach(function (s) { setActive(s, false); });
         setActive(sw, true);
       });
+    });
+  });
+
+  /* ------------------------------------------------------------------------
+     PRODUCT CARD IMAGE SCROLLER — keeps the dot indicator in step with the
+     snapped image. Delegated via one listener per scroller (scroll doesn't
+     bubble, so it can't be delegated from the document).
+     --------------------------------------------------------------------- */
+  $$('[data-card-scroller]').forEach(function (scroller) {
+    var dots = scroller.parentElement && $('[data-card-dots]', scroller.parentElement);
+    if (!dots) return;
+    var items = [].slice.call(dots.children);
+    var active = 0;
+
+    scroller.addEventListener('scroll', function () {
+      var index = Math.round(scroller.scrollLeft / scroller.clientWidth);
+      if (index === active || !items[index]) return;
+      items[active].classList.remove('is-active');
+      items[index].classList.add('is-active');
+      active = index;
+    }, { passive: true });
+
+    // A horizontal swipe should page the images, not follow the card's link.
+    var startX = 0;
+    scroller.addEventListener('touchstart', function (e) {
+      startX = e.touches[0].clientX;
+    }, { passive: true });
+    scroller.addEventListener('click', function (e) {
+      if (Math.abs(e.clientX - startX) > 10) e.preventDefault();
     });
   });
 

@@ -18,7 +18,13 @@ class HomeController extends Controller
         $data = Cache::tags(['home'])->remember('home.page', now()->addHour(), function () {
             $data = [
                 'categories' => Category::orderBy('sort_order')->with('media')->get(),
-                'banners' => Banner::active()->ordered()->with('media')->get(),
+                // A banner row with no image file still rendered as an empty
+                // slide (a blank grey box with a broken-image alt), so rows
+                // carrying neither a desktop nor a mobile image are dropped
+                // here rather than reaching the slider.
+                'banners' => Banner::active()->ordered()->with('media')->get()
+                    ->filter(fn (Banner $banner) => $banner->hasMedia('image') || $banner->hasMedia('mobile_image'))
+                    ->values(),
                 'homepageBlocks' => HomepageBlock::active()
                     ->ordered()
                     ->with(['items.media', 'items.itemable' => function ($morphTo) {

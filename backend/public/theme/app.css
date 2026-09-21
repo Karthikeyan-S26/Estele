@@ -776,6 +776,14 @@
     display: none;
   }
 
+  button, label, select, [role="button"], [type="button"], [type="submit"], [type="reset"] {
+    cursor: pointer;
+  }
+
+  button:disabled, [type="button"]:disabled, [type="submit"]:disabled, [disabled] {
+    cursor: not-allowed;
+  }
+
   [hidden] {
     display: none !important;
   }
@@ -1502,6 +1510,79 @@
     .product-card:hover .product-card__img {
       transform: none;
     }
+  }
+
+  .card-scroller {
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    overflow-x: auto;
+  }
+
+  .card-scroller::-webkit-scrollbar {
+    display: none;
+  }
+
+  .card-scroller__img {
+    scroll-snap-align: center;
+    flex-shrink: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .product-card:hover .card-scroller__img {
+    transform: none;
+  }
+
+  .card-dots {
+    bottom: calc(var(--spacing) * 1.5);
+    z-index: 2;
+    --tw-translate-x: calc(calc(1 / 2 * 100%) * -1);
+    translate: var(--tw-translate-x) var(--tw-translate-y);
+    align-items: center;
+    gap: var(--spacing);
+    background-color: #00000073;
+    border-radius: 3.40282e38px;
+    display: flex;
+    position: absolute;
+    left: 50%;
+  }
+
+  @supports (color: color-mix(in lab, red, red)) {
+    .card-dots {
+      background-color: color-mix(in oklab, var(--color-black) 45%, transparent);
+    }
+  }
+
+  .card-dots {
+    padding-inline: calc(var(--spacing) * 1.5);
+    padding-block: var(--spacing);
+  }
+
+  .card-dot {
+    background-color: #ffffff8c;
+    border-radius: 3.40282e38px;
+    width: 5px;
+    height: 5px;
+    display: block;
+  }
+
+  @supports (color: color-mix(in lab, red, red)) {
+    .card-dot {
+      background-color: color-mix(in oklab, var(--color-white) 55%, transparent);
+    }
+  }
+
+  .card-dot {
+    transition: width .2s, background-color .2s;
+  }
+
+  .card-dot.is-active {
+    width: calc(var(--spacing) * 3);
+    background-color: var(--color-white);
   }
 
   .cat-tile__frame {
@@ -2657,6 +2738,10 @@
     margin-inline: calc(var(--spacing) * -4);
   }
 
+  .-mx-5 {
+    margin-inline: calc(var(--spacing) * -5);
+  }
+
   .mx-0 {
     margin-inline: 0;
   }
@@ -2747,6 +2832,10 @@
 
   .mr-2 {
     margin-right: calc(var(--spacing) * 2);
+  }
+
+  .-mb-5 {
+    margin-bottom: calc(var(--spacing) * -5);
   }
 
   .-mb-px {
@@ -3711,10 +3800,6 @@
     grid-template-columns: 1fr auto 1fr;
   }
 
-  .grid-rows-\[minmax\(0\,1fr\)_auto\] {
-    grid-template-rows: minmax(0, 1fr) auto;
-  }
-
   .flex-col {
     flex-direction: column;
   }
@@ -4357,6 +4442,10 @@
     background-color: #232323;
   }
 
+  .bg-\[\#D9F2E3\] {
+    background-color: #d9f2e3;
+  }
+
   .bg-\[\#ECECEC\] {
     background-color: #ececec;
   }
@@ -4508,6 +4597,16 @@
   @supports (color: color-mix(in lab, red, red)) {
     .bg-gold\/15 {
       background-color: color-mix(in oklab, var(--color-gold) 15%, transparent);
+    }
+  }
+
+  .bg-gold\/85 {
+    background-color: #d4af37d9;
+  }
+
+  @supports (color: color-mix(in lab, red, red)) {
+    .bg-gold\/85 {
+      background-color: color-mix(in oklab, var(--color-gold) 85%, transparent);
     }
   }
 
@@ -5145,6 +5244,10 @@
     padding-bottom: calc(var(--spacing) * 3);
   }
 
+  .pb-3\.5 {
+    padding-bottom: calc(var(--spacing) * 3.5);
+  }
+
   .pb-4 {
     padding-bottom: calc(var(--spacing) * 4);
   }
@@ -5583,6 +5686,10 @@
     color: #1b1b18;
   }
 
+  .text-\[\#8A6A32\] {
+    color: #8a6a32;
+  }
+
   .text-\[\#706f6c\] {
     color: #706f6c;
   }
@@ -5671,10 +5778,6 @@
     .text-black\/80 {
       color: color-mix(in oklab, var(--color-black) 80%, transparent);
     }
-  }
-
-  .text-deepwine {
-    color: var(--color-deepwine);
   }
 
   .text-emerald-800 {
@@ -6276,16 +6379,6 @@
 
   .placeholder\:text-muted::placeholder {
     color: var(--color-muted);
-  }
-
-  .placeholder\:text-white\/40::placeholder {
-    color: #fff6;
-  }
-
-  @supports (color: color-mix(in lab, red, red)) {
-    .placeholder\:text-white\/40::placeholder {
-      color: color-mix(in oklab, var(--color-white) 40%, transparent);
-    }
   }
 
   .placeholder\:normal-case::placeholder {

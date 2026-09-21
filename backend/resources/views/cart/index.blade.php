@@ -56,6 +56,13 @@
           </div>
         @endif
 
+        @php
+          // Prices are stored tax-inclusive, so "Item Total" already carries
+          // GST and the summary states that rather than adding a line that
+          // would double-count it.
+          $youSave = $discount + max(0, $items->sum(fn ($i) => (($i->product->compare_at_price ?? 0) > $i->unitPrice() ? $i->product->compare_at_price - $i->unitPrice() : 0) * $i->quantity));
+        @endphp
+
         <div class="grid grid-cols-1 gap-2.5 px-2.5 md:grid-cols-[1fr_340px] md:gap-[34px] md:px-0">
           <div class="space-y-2.5">
             @foreach($items as $item)
@@ -128,19 +135,25 @@
             @include('partials.offers-banner')
 
             <div class="bag-card px-[18px] py-5">
-              <h2 class="mb-4 text-[14px] font-bold tracking-[0.04em] text-[#454545]">Order Summary</h2>
-              <dl class="space-y-2 text-[14px] tracking-[0.04em] text-[#454545]">
-                <div class="flex justify-between"><dt>Item Total</dt><dd class="font-bold">₹ {{ number_format($subtotal, 0) }}</dd></div>
+              <h2 class="mb-4 text-[16px] font-bold tracking-[0.04em] text-[#454545]">Order Summary</h2>
+              <dl class="space-y-2.5 text-[14px] tracking-[0.04em] text-[#454545]">
+                <div class="flex justify-between"><dt>Item Total (inclusive of Taxes)</dt><dd class="font-bold">₹ {{ number_format($subtotal, 0) }}</dd></div>
                 @if($discount > 0)
-                  <div class="flex justify-between text-success"><dt>Discount ({{ $couponCode }})</dt><dd class="font-bold">&minus; ₹ {{ number_format($discount, 0) }}</dd></div>
+                  <div class="flex justify-between"><dt>Discount</dt><dd class="font-bold text-salebadge">&minus;₹ {{ number_format($discount, 0) }}</dd></div>
                 @endif
-                <div class="flex justify-between"><dt>Shipping{{ ($shipping['estimated'] ?? false) ? ' (estimated)' : '' }}</dt><dd class="font-bold {{ $shipping['fee'] > 0 ? '' : 'text-accent-dark' }}">{{ $shipping['fee'] > 0 ? '₹ '.number_format($shipping['fee'], 0) : 'FREE' }}</dd></div>
-                <div class="flex justify-between border-t border-line-strong pt-3 font-bold"><dt>Total Payable</dt><dd>₹ {{ number_format($bagTotal, 0) }}</dd></div>
+                <div class="flex justify-between"><dt>Shipping{{ ($shipping['estimated'] ?? false) ? ' (estimated)' : '' }}</dt><dd class="font-bold {{ $shipping['fee'] > 0 ? '' : 'text-salebadge' }}">{{ $shipping['fee'] > 0 ? '₹ '.number_format($shipping['fee'], 0) : 'FREE' }}</dd></div>
+                <div class="flex justify-between"><dt>GST</dt><dd class="text-muted">Included</dd></div>
+                <div class="flex justify-between border-t border-line-strong pt-3 text-[16px] font-bold"><dt>Total Payable</dt><dd>₹ {{ number_format($bagTotal, 0) }}</dd></div>
               </dl>
-              <p class="mt-3 text-center text-[13px] text-[#454545]">Cash on Delivery available | Secure Checkout</p>
+              @if($youSave > 0)
+                <p class="mt-4 rounded bg-[#D9F2E3] py-2.5 text-center text-[14px] font-bold text-[#1a7d3f]">You Save ₹ {{ number_format($youSave, 0) }} In This Order</p>
+              @endif
+              <p class="mt-3 text-center text-[13px] text-[#454545]">UPI, Cards | Secure Checkout</p>
               <a class="btn-cta mt-4 hidden md:inline-flex" href="{{ route('checkout.index') }}">Go To Checkout</a>
               <a class="mx-auto mt-3.5 hidden w-fit border-b border-current text-[13px] text-muted md:block" href="{{ route('home') }}">Continue Shopping</a>
             </div>
+
+            @include('partials.trust-badges')
           </aside>
         </div>
       @endif

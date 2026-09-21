@@ -6,15 +6,27 @@
   $discount = $product->compare_at_price
     ? (int) round((($product->compare_at_price - $product->price) / $product->compare_at_price) * 100)
     : 0;
+  $cardImages = $product->getMedia('gallery');
 @endphp
 
 <article class="product-card group">
   <a class="product-card__frame skeleton block" href="{{ route('products.show', $product) }}" aria-label="{{ $product->title }}">
-    @if($product->hasMedia('gallery'))
+    {{-- Swipeable image scroller with dots, so a shopper can flip through a
+         product's photos from the listing grid instead of only seeing the
+         second one on desktop hover. --}}
+    @if($cardImages->count() > 1)
+      <span class="card-scroller" data-card-scroller>
+        @foreach($cardImages as $index => $media)
+          <img class="product-card__img card-scroller__img" src="{{ $media->getUrl('card') }}" alt="{{ $index === 0 ? $product->title : '' }}" loading="lazy" width="600" height="600">
+        @endforeach
+      </span>
+      <span class="card-dots" data-card-dots aria-hidden="true">
+        @foreach($cardImages as $index => $media)
+          <span class="card-dot{{ $index === 0 ? ' is-active' : '' }}"></span>
+        @endforeach
+      </span>
+    @elseif($product->hasMedia('gallery'))
       <img class="product-card__img" src="{{ $product->getFirstMediaUrl('gallery', 'card') }}" alt="{{ $product->title }}" loading="lazy" width="600" height="600">
-      @if($product->getMedia('gallery')->count() > 1)
-        <img class="product-card__img absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100" src="{{ $product->getMedia('gallery')[1]->getUrl('card') }}" alt="" loading="lazy" width="600" height="600">
-      @endif
     @endif
 
     @if($product->is_featured)
