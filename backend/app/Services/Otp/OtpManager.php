@@ -22,6 +22,7 @@ class OtpManager
         private readonly LogOtpGateway $logGateway,
         private readonly VasMultimediaOtpGateway $vasGateway,
         private readonly TwilioOtpGateway $twilioGateway,
+        private readonly MailOtpGateway $mailGateway,
     ) {}
 
     /**
@@ -55,32 +56,48 @@ class OtpManager
      * code for the same number first (so only the most recently sent code
      * ever verifies).
      */
-    public function issue(string $phone): bool
+    public function issue(string $phone): void
     {
         $code = (string) random_int(10 ** (self::CODE_LENGTH - 1), (10 ** self::CODE_LENGTH) - 1);
 
         OtpCode::where('phone', $phone)
+            ->where('channel', 'sms')
             ->whereNull('consumed_at')
             ->update(['consumed_at' => now()]);
 
-        $otp = OtpCode::create([
+        OtpCode::create([
             'phone' => $phone,
+            'channel' => 'sms',
             'code_hash' => Hash::make($code),
             'expires_at' => now()->addMinutes(self::EXPIRY_MINUTES),
         ]);
 
-        if ($this->gateway()->send($phone, $code)) {
-            return true;
-        }
-
-        $otp->update(['consumed_at' => now()]);
-
-        return false;
+        $this->gateway()->send($phone, $code);
     }
 
-    public static function normalisePhone(string $phone): string
+    /**
+     * Email channel twin of issue() — same lifecycle, keyed by email address
+     * instead of phone, delivered through the framework mail transport.
+     */
+    public function issueEmail(string $email): void
     {
-        return substr(preg_replace('/\D/', '', $phone), -10);
+        $email = $this->normalizeEmail($email);
+
+        $code = (string) random_int(10 ** (self::CODE_LENGTH - 1), (10 ** self::CODE_LENGTH) - 1);
+
+        OtpCode::where('email', $email)
+            ->where('channel', 'email')
+            ->whereNull('consumed_at')
+            ->update(['consumed_at' => now()]);
+
+        OtpCode::create([
+            'email' => $email,
+            'channel' => 'email',
+            'code_hash' => Hash::make($code),
+            'expires_at' => now()->addMinutes(self::EXPIRY_MINUTES),
+        ]);
+
+        $this->mailGateway->send($email, $code);
     }
 
     /**
@@ -89,10 +106,52 @@ class OtpManager
      * either way — success marks it consumed immediately after verifying;
      * repeated failed attempts against the same code are capped instead of
      * consuming it outright, so a mistyped-but-correct-next-try code still works.
+     *
+     * Gateways that own verification remotely (see OtpVerifier — today Twilio
+     * Verify, which generates and checks the code itself, so a locally
+     * generated plaintext is never compared) are asked directly; every other
+     * gateway keeps the local code_hash check exactly as before.
      */
     public function verify(string $phone, string $code): bool
     {
         $otp = OtpCode::where('phone', $phone)
+            ->where('channel', 'sms')
+            ->whereNull('consumed_at')
+            ->where('expires_at', '>=', now())
+            ->latest('id')
+            ->first();
+
+        if (! $otp || $otp->attempts >= self::MAX_ATTEMPTS) {
+            return false;
+        }
+
+        $otp->increment('attempts');
+
+        $gateway = $this->gateway();
+
+        $correct = $gateway instanceof OtpVerifier
+            ? $gateway->verify($phone, $code)
+            : Hash::check($code, $otp->code_hash);
+
+        if (! $correct) {
+            return false;
+        }
+
+        $otp->update(['consumed_at' => now()]);
+
+        return true;
+    }
+
+    /**
+     * Email channel twin of verify() — single-use, attempt-capped, expired
+     * codes never verify, wrong codes count toward the attempt cap.
+     */
+    public function verifyEmail(string $email, string $code): bool
+    {
+        $email = $this->normalizeEmail($email);
+
+        $otp = OtpCode::where('email', $email)
+            ->where('channel', 'email')
             ->whereNull('consumed_at')
             ->where('expires_at', '>=', now())
             ->latest('id')
@@ -111,5 +170,10 @@ class OtpManager
         $otp->update(['consumed_at' => now()]);
 
         return true;
+    }
+
+    private function normalizeEmail(string $email): string
+    {
+        return mb_strtolower(trim($email));
     }
 }

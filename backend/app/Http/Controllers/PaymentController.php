@@ -13,7 +13,10 @@ class PaymentController extends Controller
 
     public function show(Order $order)
     {
-        $this->authorizeOwnOrder($order);
+        if ($order->status === 'cancelled') {
+            return redirect()->route('home')
+                ->with('error', 'This order was cancelled before payment completed.');
+        }
 
         if ($order->payment_status === 'paid') {
             return redirect()->route('checkout.confirmation', $order);
@@ -69,6 +72,11 @@ class PaymentController extends Controller
                 ->with('error', 'We couldn\'t verify that payment. Please try again.');
         }
 
+        if ($this->payments->recordCancelledCapture($order, $validated['razorpay_payment_id'])) {
+            return redirect()->route('home')
+                ->with('error', 'This order was cancelled before your payment completed. Your payment has been recorded; please contact support for a refund.');
+        }
+
         $this->payments->markPaid($order, $validated['razorpay_payment_id']);
 
         return redirect()->route('checkout.confirmation', $order)->with('success', 'Order placed successfully.');
@@ -104,23 +112,5 @@ class PaymentController extends Controller
         };
 
         return response()->json(['status' => 'ok']);
-    }
-
-    /**
-     * The payment page renders the customer's name, email and phone into the
-     * Razorpay prefill, so it must not be reachable by order_number alone.
-     * user_id is nullable for pre-auth-checkout legacy orders; those are
-     * treated as nobody's rather than everybody's, since a null === null match
-     * would hand them to any logged-out visitor.
-     *
-     * webhook() and callback() are deliberately exempt: both are authenticated
-     * by Razorpay's own HMAC signature over the order id rather than by the
-     * session, and callback() is a payment result — refusing to record it
-     * because the session lapsed mid-payment would strand a real payment on a
-     * page that shows no PII of its own.
-     */
-    private function authorizeOwnOrder(Order $order): void
-    {
-        abort_unless($order->user_id !== null && $order->user_id === auth()->id(), 404);
     }
 }

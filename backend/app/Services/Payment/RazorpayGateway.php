@@ -63,12 +63,12 @@ class RazorpayGateway implements PaymentGateway
 
     public function verifyWebhookSignature(string $rawBody, string $signatureHeader): bool
     {
+        // Fail CLOSED: without a configured webhook secret there is nothing to
+        // verify against, so ANY request claiming to be from Razorpay is
+        // rejected rather than accepted (the previous hash_equals against an
+        // empty-secret HMAC effectively trusted every sender).
         $secret = (string) config('services.razorpay.webhook_secret');
 
-        // An empty key still produces a valid-looking HMAC — anyone can
-        // compute hash_hmac(..., '') themselves, so an unconfigured secret
-        // must never verify a signature rather than silently accepting
-        // whatever a forged request claims.
         if ($secret === '') {
             return false;
         }

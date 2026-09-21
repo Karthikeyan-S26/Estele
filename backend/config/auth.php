@@ -43,6 +43,12 @@ return [
             'provider' => 'users',
         ],
 
+        'api-token' => [
+            'driver' => 'api-token',
+            'provider' => 'users',
+        ],
+
+        // Legacy sanctum guard retained for backward compatibility.
         'api' => [
             'driver' => 'sanctum',
             'provider' => 'users',

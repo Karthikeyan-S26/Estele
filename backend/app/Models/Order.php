@@ -2,13 +2,8 @@
 
 namespace App\Models;
 
-use App\Mail\OrderPacked;
-use App\Services\WalletService;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 
 class Order extends Model
@@ -110,7 +105,7 @@ class Order extends Model
         return $this->hasMany(OrderItem::class);
     }
 
-    public function user(): BelongsTo
+    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(User::class);
     }
@@ -120,18 +115,13 @@ class Order extends Model
         return $this->hasMany(CouponUsage::class);
     }
 
-    public function rewardSubmission(): HasOne
+    public function rewardSubmission(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
         return $this->hasOne(RewardSubmission::class);
     }
 
     protected static function booted(): void
     {
-        // Same reason as User::booted(): the submission's video must go with it.
-        static::deleting(function (Order $order) {
-            $order->rewardSubmission?->delete();
-        });
-
         static::updating(function (Order $order) {
             if (! $order->isDirty('status')) {
                 return;
@@ -156,6 +146,8 @@ class Order extends Model
                 $order->restock();
             }
 
+            $order->releaseCouponUsageIfCancelledUnpaid();
+
             if ($to === 'delivered' && $order->payment_method === 'cod' && $order->payment_status === 'pending') {
                 $order->payment_status = 'paid';
             }
@@ -167,7 +159,15 @@ class Order extends Model
         // transition guard above rejects the move.
         static::updated(function (Order $order) {
             if ($order->wasChanged('status') && $order->status === 'accepted' && filled($order->customer_email)) {
-                Mail::to($order->customer_email)->queue(new OrderPacked($order));
+                \Illuminate\Support\Facades\Mail::to($order->customer_email)->queue(new \App\Mail\OrderPacked($order));
+            }
+
+            if ($order->wasChanged('status') && $order->status === 'accepted' && filled($order->customer_phone)) {
+                app(\App\Services\WhatsApp\WhatsAppManager::class)->send(
+                    $order->customer_phone,
+                    "Your Estele order {$order->order_number} is packed and heading to shipping — you can track it from your account. Order total: ₹".number_format((float) $order->total, 2),
+                    ['order_id' => $order->id, 'order_number' => $order->order_number],
+                );
             }
         });
 
@@ -188,7 +188,7 @@ class Order extends Model
                 && (float) $order->wallet_amount_used > 0
                 && $order->user_id
             ) {
-                app(WalletService::class)->credit(
+                app(\App\Services\WalletService::class)->credit(
                     $order->user,
                     (float) $order->wallet_amount_used,
                     'order_refund',
@@ -196,6 +196,38 @@ class Order extends Model
                 );
             }
         });
+    }
+
+    /**
+     * A cancelled order that was never paid for frees its coupon slot: the
+     * order is dead and no revenue ever landed, so counting it against the
+     * coupon's usage_limit would let abandoned carts exhaust a promo the
+     * store never profited from (and an auto-cancelled customer who reorders
+     * would find the code "maxed out"). Paid cancellations and returns keep
+     * their usage — the coupon genuinely helped close that sale.
+     *
+     * Runs inside the same `updating` hook as restock(), so it only fires on
+     * the single live status transition (cancelled/returned are terminal, so
+     * it can never fire twice for the same order). Idempotent and floor-safe:
+     * it never pushes used_count below zero. Fires `updated` on the coupon
+     * (which clears the storefront's public-coupon cache, same as the
+     * increment at checkout).
+     */
+    protected function releaseCouponUsageIfCancelledUnpaid(): void
+    {
+        if ($this->status !== 'cancelled' || ! in_array($this->payment_status, ['pending', 'failed'], true)) {
+            return;
+        }
+
+        $usage = $this->couponUsages()->first();
+
+        if (! $usage) {
+            return;
+        }
+
+        Coupon::whereKey($usage->coupon_id)
+            ->where('used_count', '>', 0)
+            ->decrement('used_count');
     }
 
     /**

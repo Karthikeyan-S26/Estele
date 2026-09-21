@@ -9,9 +9,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Cart extends Model
 {
     protected $fillable = [
+        'user_id',
         'session_id',
         'coupon_id',
     ];
+
+    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function items(): HasMany
     {
@@ -21,6 +27,28 @@ class Cart extends Model
     public function coupon(): BelongsTo
     {
         return $this->belongsTo(Coupon::class);
+    }
+
+    /**
+     * Merge quantity of every line item from $source into $target, then delete
+     * $source. Used to fold a guest cart (keyed by a device cart-token) into a
+     * user's cart on login/registration — same merge-firstOrNew shape as
+     * CartController::store().
+     */
+    public static function mergeCarts(Cart $source, Cart $target): void
+    {
+        foreach ($source->items as $item) {
+            $existing = $target->items()->firstOrNew([
+                'product_id' => $item->product_id,
+                'product_variant_id' => $item->product_variant_id,
+            ]);
+
+            $stock = $item->availableStock();
+            $existing->quantity = min($stock, ($existing->exists ? $existing->quantity : 0) + $item->quantity);
+            $existing->save();
+        }
+
+        $source->delete();
     }
 
     /**
