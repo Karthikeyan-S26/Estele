@@ -214,3 +214,29 @@ SECTION 11: SUMMARY & NEXT STEPS
 REMAINING USER ACTION:
 - ROTATE production credentials per Section 3 (DB, Razorpay, Twilio,
   Shiprocket, AWS, mail, Redis, APP_KEY). API is now live; rotate ASAP.
+===================================================================
+SECTION 12: PRODUCTION-API APK BUILD (18-Sep-2026)
+===================================================================
+- Production API verified live: /api/health, /api/home, /api/categories,
+  /api/collections all 200. No production changes made.
+- flutter pub get OK | flutter analyze 0 errors (26 info lints) |
+  flutter test 24/24 passed.
+- Signing: RELEASE (android/app/upload-keystore.jks, PKCS12; key.properties
+  present). apksigner cert = CN=Estele, OU=Mobile, O=Estele, ... IN.
+- Build: flutter build apk --release --dart-define=API_BASE_URL=https://estele.ghrihum-realestate.com/api
+- APK: build/app/outputs/flutter-apk/app-release.apk (57.6 MB)
+- applicationId com.estele.estele, version 1.0.0+1
+- Embedded API verified: lib/arm64-v8a/libapp.so contains
+  https://estele.ghrihum-realestate.com/api (byte scan).
+- No device connected (adb devices empty) -> install + on-device tests
+  NOT performed. APK ready for manual install.
+- Credential exposure (from git history blob f6a7ad5:backend/.env):
+  AFFECTED (real values leaked): DB_PASSWORD, TWILIO_* (3 keys),
+  MAIL_PASSWORD, REDIS_PASSWORD, APP_KEY.
+  NOT AFFECTED (empty/placeholder in blob): RAZORPAY_*, SHIPROCKET_*,
+  AWS_*, VAS_SMS_API_KEY, SENTRY_LARAVEL_DSN.
+  Deploy pipeline excludes /.env (server env separate); whether leaked
+  values equal the LIVE prod .env = UNKNOWN. Rotate AFFECTED categories.
+  APP_KEY rotation impact: no encrypted-at-rest columns (no Crypt casts),
+  SESSION_ENCRYPT=false, Sanctum tokens survive -> forces global re-login
+  only; safe to rotate in a maintenance window. Not changed automatically.
