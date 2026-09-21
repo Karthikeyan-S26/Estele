@@ -38,8 +38,8 @@
     </div>
   </div>
 
-  <div class="mx-auto w-full max-w-wrapper px-4 pb-8 pt-10 md:px-8 md:pt-12">
-    <div class="grid grid-cols-2 gap-x-6 gap-y-8 border-b border-white/10 pb-8 md:grid-cols-4 lg:grid-cols-12">
+  <div class="mx-auto w-full max-w-wrapper px-4 pb-5 pt-5 md:px-8 md:pt-6">
+    <div class="grid grid-cols-2 gap-x-6 gap-y-4 border-b border-white/10 pb-4 md:grid-cols-4 lg:grid-cols-12">
 
       <div class="col-span-2 md:col-span-4 lg:col-span-4">
         <p class="wordmark text-[22px] text-white">{{ $siteSettings['site_name'] ?? 'Estele' }}</p>
@@ -109,7 +109,7 @@
       </div>
     </div>
 
-    <div class="flex flex-wrap items-center gap-x-2 gap-y-2 py-5 text-[11.5px]">
+    <div class="flex flex-wrap items-center gap-x-2 gap-y-2 py-3 text-[11.5px]">
       <span class="mr-1 font-semibold uppercase tracking-[0.14em] text-white/55">Popular searches</span>
       @foreach($popularSearches as $term)
         <a class="rounded-full border border-white/15 px-3 py-1 text-white/75 transition-colors hover:border-gold hover:text-gold" href="{{ route('search', ['q' => $term]) }}">{{ $term }}</a>
@@ -117,7 +117,7 @@
     </div>
   </div>
 
-  <div class="bg-black/25 pb-[160px] pt-4 text-[12px] text-white/55 md:pb-20">
+  <div class="bg-black/25 pb-4 pt-3 text-[12px] text-white/55 md:pb-4">
     <div class="mx-auto flex w-full max-w-wrapper flex-col items-center justify-between gap-3 px-4 md:px-8 lg:flex-row">
       <p>{{ $siteSettings['footer_copyright'] ?? 'Copyright © 2026 ESTELE Accessories Pvt. Ltd. All rights reserved.' }}</p>
       <div class="flex flex-wrap items-center justify-center gap-1.5">

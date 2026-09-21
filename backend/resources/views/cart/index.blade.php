@@ -18,7 +18,7 @@
 
 @section('content')
 
-  <div class="bg-bagsurface pb-24 md:pb-[60px]">
+  <div class="bg-bagsurface pb-6 md:pb-8">
     <div class="flex h-[53px] items-center justify-between bg-white px-3 shadow-[0_1px_4px_rgba(0,0,0,0.1)] md:hidden">
       <div class="flex items-center gap-1">
         <a class="grid h-10 w-9 place-items-center text-heading" href="{{ url()->previous() === url()->current() ? route('home') : url()->previous() }}" aria-label="Back">

@@ -1,21 +1,26 @@
 @extends('layouts.app')
 
-@section('meta_title', ($product->seoMeta?->title ?? $product->title).' | '.($siteSettings['site_name'] ?? 'Estele'))
+@section('meta_title', ($product->seoMeta?->title ?? $product->title) . ' | ' . ($siteSettings['site_name'] ?? 'Estele'))
 @section('meta_description', $product->seoMeta?->description ?: ($product->description ?: $product->title))
 @section('og_type', 'product')
 @if($product->seoMeta?->og_image || $product->hasMedia('gallery'))
-  @section('og_image', $product->seoMeta?->og_image ?? $product->getFirstMediaUrl('gallery', 'detail'))
+@section('og_image', $product->seoMeta?->og_image ?? $product->getFirstMediaUrl('gallery', 'detail'))
 @endif
 
 @section('sticky_bar')
   <div class="buybar md:hidden">
     {{-- The real wishlist toggle now that the duplicate heart beside the
-         title is gone — it used to proxy its click through to that one. --}}
-    <button class="grid h-[49px] w-11 shrink-0 place-items-center text-heading" type="button" aria-label="Add to wishlist" data-wishlist-toggle data-pdp-wishlist data-wishlist-key="{{ $product->title }}">
-      <svg class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21.2l7.7-7.7 1.1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+    title is gone — it used to proxy its click through to that one. --}}
+    <button class="grid h-[49px] w-11 shrink-0 place-items-center text-heading" type="button" aria-label="Add to wishlist"
+      data-wishlist-toggle data-pdp-wishlist data-wishlist-key="{{ $product->title }}">
+      <svg class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
+        <path
+          d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21.2l7.7-7.7 1.1-1.1a5.5 5.5 0 0 0 0-7.8z" />
+      </svg>
     </button>
     @if($product->stock_quantity > 0)
-      <button class="btn-cta-outline h-[49px] flex-1 text-[18px]" type="submit" form="pdp-form" name="express" value="1" formaction="{{ route('checkout.express.start', $product) }}" data-express-submit>Buy Now</button>
+      <button class="btn-cta-outline h-[49px] flex-1 text-[18px]" type="submit" form="pdp-form" name="express" value="1"
+        formaction="{{ route('checkout.express.start', $product) }}" data-express-submit>Buy Now</button>
       <button class="btn-cta h-[49px] flex-1 text-[18px]" type="submit" form="pdp-form">Add to Bag</button>
     @else
       <button class="btn-cta h-[49px] flex-1 text-[18px]" type="button" disabled>Out of Stock</button>
@@ -41,661 +46,895 @@
   @endphp
 
   <script type="application/ld+json">
-    {!! json_encode(array_filter([
-      '@context' => 'https://schema.org',
-      '@type' => 'Product',
-      'name' => $product->title,
-      'image' => $galleryImages->map(fn ($media) => $media->getUrl('detail'))->all(),
-      'description' => $product->description,
-      'sku' => $product->sku,
-      'brand' => ['@type' => 'Brand', 'name' => $siteSettings['site_name'] ?? 'Estele'],
-      'offers' => [
-        '@type' => 'Offer',
-        'url' => route('products.show', $product),
-        'priceCurrency' => 'INR',
-        'price' => (string) $product->price,
-        'availability' => $product->stock_quantity > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      {!! json_encode(array_filter([
+    '@context' => 'https://schema.org',
+    '@type' => 'Product',
+    'name' => $product->title,
+    'image' => $galleryImages->map(fn($media) => $media->getUrl('detail'))->all(),
+    'description' => $product->description,
+    'sku' => $product->sku,
+    'brand' => ['@type' => 'Brand', 'name' => $siteSettings['site_name'] ?? 'Estele'],
+    'offers' => [
+      '@type' => 'Offer',
+      'url' => route('products.show', $product),
+      'priceCurrency' => 'INR',
+      'price' => (string) $product->price,
+      'availability' => $product->stock_quantity > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+    ],
+    'aggregateRating' => $ratingCount > 0 ? [
+      '@type' => 'AggregateRating',
+      'ratingValue' => $ratingAverage,
+      'reviewCount' => $ratingCount,
+    ] : null,
+    'review' => $reviews->isNotEmpty() ? $reviews->map(fn($review) => [
+      '@type' => 'Review',
+      'author' => ['@type' => 'Person', 'name' => $review->customer_name],
+      'datePublished' => $review->displayDate()->toIso8601String(),
+      'reviewBody' => $review->body,
+      'reviewRating' => [
+        '@type' => 'Rating',
+        'ratingValue' => $review->rating,
+        'bestRating' => 5,
+        'worstRating' => 1,
       ],
-      'aggregateRating' => $ratingCount > 0 ? [
-        '@type' => 'AggregateRating',
-        'ratingValue' => $ratingAverage,
-        'reviewCount' => $ratingCount,
-      ] : null,
-      'review' => $reviews->isNotEmpty() ? $reviews->map(fn ($review) => [
-        '@type' => 'Review',
-        'author' => ['@type' => 'Person', 'name' => $review->customer_name],
-        'datePublished' => $review->displayDate()->toIso8601String(),
-        'reviewBody' => $review->body,
-        'reviewRating' => [
-          '@type' => 'Rating',
-          'ratingValue' => $review->rating,
-          'bestRating' => 5,
-          'worstRating' => 1,
-        ],
-      ])->all() : null,
-    ]), JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) !!}
-  </script>
+    ])->all() : null,
+  ]), JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) !!}
+    </script>
 
   <x-breadcrumb-schema :items="$breadcrumbItems" />
 
-  <nav class="mx-auto w-full max-w-wrapper px-4 flex flex-wrap items-center gap-1.5 py-4 text-[13px] text-muted" aria-label="Breadcrumb">
+  <nav class="mx-auto w-full max-w-wrapper px-4 flex flex-wrap items-center gap-1.5 py-2 text-[13px] text-muted border-b border-line" aria-label="Breadcrumb">
     <x-breadcrumb :items="$breadcrumbItems" />
   </nav>
 
   {{--
-    Gallery layout: real Estele product pages run a vertical thumbnail strip
-    beside the main image on desktop, not a grid below it (verified live via
-    browser). Reproduced with plain scoped CSS rather than new Tailwind
-    utility classes — see the note on padding above for why: this backend's
-    public/theme/app.css is a static copy of a separate project's compiled
-    CSS, so a fresh utility class written only here would render as nothing.
-    Individual thumbnail buttons keep their original Tailwind classes
-    (aspect-square/border-accent/etc.) since those are already proven
-    compiled in this exact file.
+  Gallery layout: real Estele product pages run a vertical thumbnail strip
+  beside the main image on desktop, not a grid below it (verified live via
+  browser). Reproduced with plain scoped CSS rather than new Tailwind
+  utility classes — see the note on padding above for why: this backend's
+  public/theme/app.css is a static copy of a separate project's compiled
+  CSS, so a fresh utility class written only here would render as nothing.
+  Individual thumbnail buttons keep their original Tailwind classes
+  (aspect-square/border-accent/etc.) since those are already proven
+  compiled in this exact file.
 
-    Same reasoning covers everything else new below (.pdp-image-wrap /
-    .pdp-zoom-* / .pdp-lightbox* / .pdp-title-row / .pdp-icon-*): plain scoped
-    CSS/JS, not new Tailwind classes. These reproduce three things confirmed
-    missing here vs. the real Estele PDP (checked live via browser) — a
-    hover-to-zoom lens with a magnified side panel, an expand icon that opens
-    the current image full-screen, and wishlist/share icons beside the title.
+  Same reasoning covers everything else new below (.pdp-image-wrap /
+  .pdp-zoom-* / .pdp-lightbox* / .pdp-title-row / .pdp-icon-*): plain scoped
+  CSS/JS, not new Tailwind classes. These reproduce three things confirmed
+  missing here vs. the real Estele PDP (checked live via browser) — a
+  hover-to-zoom lens with a magnified side panel, an expand icon that opens
+  the current image full-screen, and wishlist/share icons beside the title.
   --}}
   <style>
-    .pdp-gallery { display: flex; flex-direction: column; gap: 10px; }
-    .pdp-image-wrap { position: relative; }
+    .pdp-gallery {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .pdp-image-wrap {
+      position: relative;
+    }
 
     /* Swipeable slider — one image per scroll-snap slide, dots below. */
     .pdp-slider {
-      display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
-      scrollbar-width: none; -ms-overflow-style: none;
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
     }
-    .pdp-slider::-webkit-scrollbar { display: none; }
-    .pdp-slide { flex: 0 0 100%; width: 100%; scroll-snap-align: center; }
 
-    .pdp-dots { display: flex; justify-content: center; gap: 6px; padding-top: 10px; }
+    .pdp-slider::-webkit-scrollbar {
+      display: none;
+    }
+
+    .pdp-slide {
+      flex: 0 0 100%;
+      width: 100%;
+      scroll-snap-align: center;
+    }
+
+    .pdp-dots {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      padding-top: 10px;
+    }
+
     .pdp-dot {
-      height: 6px; width: 6px; padding: 0; border: 0; border-radius: 999px;
-      background: var(--color-line-strong); cursor: pointer;
+      height: 6px;
+      width: 6px;
+      padding: 0;
+      border: 0;
+      border-radius: 999px;
+      background: var(--color-line-strong);
+      cursor: pointer;
       transition: width .2s ease, background-color .2s ease;
     }
-    .pdp-dot.is-active { width: 18px; background: var(--color-accent); }
+
+    .pdp-dot.is-active {
+      width: 18px;
+      background: var(--color-accent);
+    }
 
     .pdp-icon-btn {
-      display: flex; align-items: center; justify-content: center;
-      height: 34px; width: 34px; padding: 0; border-radius: 999px;
-      border: 1px solid var(--color-line); background: transparent;
-      color: var(--color-heading); cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 34px;
+      width: 34px;
+      padding: 0;
+      border-radius: 999px;
+      border: 1px solid var(--color-line);
+      background: transparent;
+      color: var(--color-heading);
+      cursor: pointer;
       transition: color .15s ease, border-color .15s ease;
     }
-    .pdp-icon-btn:hover, .pdp-icon-btn.is-active { border-color: var(--color-accent); color: var(--color-accent); }
-    .pdp-icon-btn svg { height: 16px; width: 16px; }
+
+    .pdp-icon-btn:hover,
+    .pdp-icon-btn.is-active {
+      border-color: var(--color-accent);
+      color: var(--color-accent);
+    }
+
+    .pdp-icon-btn svg {
+      height: 16px;
+      width: 16px;
+    }
 
     .pdp-expand-btn {
-      position: absolute; top: 10px; right: 10px; z-index: 5;
-      background: var(--color-white); border: 0;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 5;
+      background: var(--color-white);
+      border: 0;
       box-shadow: 0 1px 4px rgba(0, 0, 0, .18);
     }
 
     /* Share sits in the image's top-right, stacked under the expand icon. */
     .pdp-share-float {
-      position: absolute; top: 54px; right: 10px; z-index: 5;
-      height: 30px; width: 30px;
-      background: var(--color-white); border: 0;
+      position: absolute;
+      top: 54px;
+      right: 10px;
+      z-index: 5;
+      height: 30px;
+      width: 30px;
+      background: var(--color-white);
+      border: 0;
       box-shadow: 0 1px 4px rgba(0, 0, 0, .18);
     }
-    .pdp-share-float svg { height: 14px; width: 14px; }
+
+    .pdp-share-float svg {
+      height: 14px;
+      width: 14px;
+    }
 
     /* Hover-to-zoom lens + magnified side panel, matching estele.co's PDP gallery. */
     .pdp-zoom-lens {
-      position: absolute; display: none; pointer-events: none; z-index: 4;
-      border: 1px solid rgba(20, 20, 20, .45); background: rgba(255, 255, 255, .35);
+      position: absolute;
+      display: none;
+      pointer-events: none;
+      z-index: 4;
+      border: 1px solid rgba(20, 20, 20, .45);
+      background: rgba(255, 255, 255, .35);
     }
+
     .pdp-zoom-pane {
-      position: absolute; display: none; top: 0; left: 100%; margin-left: 16px;
-      width: 100%; height: 100%; z-index: 20; border-radius: 4px;
-      background-color: var(--color-placeholder); background-repeat: no-repeat;
+      position: absolute;
+      display: none;
+      top: 0;
+      left: 100%;
+      margin-left: 16px;
+      width: 100%;
+      height: 100%;
+      z-index: 20;
+      border-radius: 4px;
+      background-color: var(--color-placeholder);
+      background-repeat: no-repeat;
       box-shadow: 0 8px 30px rgba(0, 0, 0, .16);
     }
+
     @media (min-width: 1024px) {
-      .pdp-main { cursor: zoom-in; }
+      .pdp-main {
+        cursor: zoom-in;
+      }
     }
 
     .pdp-lightbox {
-      position: fixed; inset: 0; z-index: 100; display: flex;
-      align-items: center; justify-content: center;
-      background: rgba(0, 0, 0, .85); padding: 24px;
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, .85);
+      padding: 24px;
     }
-    .pdp-lightbox img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+    .pdp-lightbox img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
     .pdp-lightbox-close {
-      position: absolute; top: 16px; right: 20px; z-index: 1;
-      background: none; border: 0; color: var(--color-white);
-      font-size: 32px; line-height: 1; cursor: pointer;
+      position: absolute;
+      top: 16px;
+      right: 20px;
+      z-index: 1;
+      background: none;
+      border: 0;
+      color: var(--color-white);
+      font-size: 32px;
+      line-height: 1;
+      cursor: pointer;
     }
 
-    .pdp-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-    .pdp-title-row h1 { margin: 0; }
-    .pdp-icon-group { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .pdp-title-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .pdp-title-row h1 {
+      margin: 0;
+    }
+
+    .pdp-icon-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
     .pdp-share-tip {
-      position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
-      white-space: nowrap; background: var(--color-heading); color: var(--color-white);
-      font-size: 11px; padding: 4px 8px; border-radius: 4px;
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      background: var(--color-heading);
+      color: var(--color-white);
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 4px;
     }
 
-    {{--
-      Sticky buy box: on mobile the qty/Add-to-Cart/Buy-It-Now group pins to
-      the bottom of the viewport while the rest of the page scrolls (standard
-      PDP pattern — otherwise the purchase actions scroll away under the
-      description/accordion content). Desktop keeps the normal in-flow
-      layout since there's room beside the gallery already. The chat bubble
-      and back-to-top button (both fixed bottom-right, see layouts/app.blade.php)
-      get pushed up on mobile only here so the new bar doesn't sit under them —
-      inline/scoped-CSS per this app's no-live-Tailwind-build constraint,
-      matching the pattern already used for back-to-top's own offset.
-    --}}
+      {
+        {
+        -- Sticky buy box: on mobile the qty/Add-to-Cart/Buy-It-Now group pins to the bottom of the viewport while the rest of the page scrolls (standard PDP pattern — otherwise the purchase actions scroll away under the description/accordion content). Desktop keeps the normal in-flow layout since there's room beside the gallery already. The chat bubble
+   and back-to-top button (both fixed bottom-right, see layouts/app.blade.php) get pushed up on mobile only here so the new bar doesn't sit under them —
+   inline/scoped-CSS per this app's no-live-Tailwind-build constraint,
+   matching the pattern already used for back-to-top's own offset.
+   --
+      }
+    }
+
     @media (max-width: 767px) {
-      .pdp-image-wrap { margin-left: -16px; margin-right: -16px; }
-      .pdp-main { padding: 0 !important; border-radius: 0; }
-      [data-chat] { bottom: 84px !important; }
-      .back-to-top-btn { bottom: 144px !important; }
+      .pdp-image-wrap {
+        margin-left: -16px;
+        margin-right: -16px;
+      }
+
+      .pdp-main {
+        padding: 0 !important;
+        border-radius: 0;
+      }
+
+      [data-chat] {
+        bottom: 84px !important;
+      }
+
+      .back-to-top-btn {
+        bottom: 144px !important;
+      }
 
       /* The page ends at the content on mobile — the full footer is hidden
-         so the product page doesn't scroll on past the purchase actions
-         into site-wide links, and the gap the sticky bar used to leave
-         above itself goes with it. */
-      .footer-mobile, footer { display: none; }
-      body:has(.buybar) { padding-bottom: 0; }
+           so the product page doesn't scroll on past the purchase actions
+           into site-wide links, and the gap the sticky bar used to leave
+           above itself goes with it. */
+      .footer-mobile,
+      footer {
+        display: none;
+      }
+
+      body:has(.buybar) {
+        padding-bottom: 0;
+      }
     }
   </style>
 
   {{--
-    Wrapped in <article> (not just a plain <div>) so the site-wide wishlist heart
-    click-handler in app.js — which walks up to the nearest article/li to find an
-    <img> for its localStorage key — resolves to this product's own image here too,
-    same as it does for product cards on listing pages.
-  --}}
-  <article class="mx-auto w-full max-w-wrapper px-4 grid grid-cols-1 gap-8 pb-10 md:grid-cols-2 md:gap-[46px] md:pb-[60px]">
+  Wrapped in <article> (not just a plain <div>) so the site-wide wishlist heart
+      click-handler in app.js — which walks up to the nearest article/li to find an
+      <img> for its localStorage key — resolves to this product's own image here too,
+      same as it does for product cards on listing pages.
+      --}}
+      <article class="mx-auto w-full max-w-wrapper px-4 grid grid-cols-1 gap-8 pb-4 md:grid-cols-2 md:gap-[46px] md:pb-8">
 
-    {{--
-      Swipeable slider instead of a thumbnail strip: each gallery image is a
-      full-width scroll-snap slide with dots underneath, and tapping the
-      current slide opens it full-screen (the lightbox below). This replaces
-      the old vertical thumbnail rail per the client's reference.
-    --}}
-    <div class="pdp-gallery">
-      <div class="pdp-image-wrap">
-        <div class="pdp-slider" id="pdp-slider">
-          @foreach($galleryImages as $index => $media)
-            <div class="pdp-slide">
-              {{-- Image area reduced ~20% via inline padding — see product-card.blade.php for why this isn't a Tailwind p-[...] class. --}}
-              <div class="pdp-main aspect-square overflow-hidden rounded bg-placeholder" style="padding: 5.3%" @if($index === 0) id="pdp-zoom-frame" @endif>
-                <img class="h-full w-full object-cover" @if($index === 0) id="pdp-main-img" @endif
-                     data-slide-full="{{ $media->getUrl('detail') }}"
-                     src="{{ $media->getUrl('detail') }}"
-                     srcset="{{ $media->getUrl('mobile') }} 768w, {{ $media->getUrl('tablet') }} 1024w, {{ $media->getUrl('detail') }} 1600w"
-                     sizes="(max-width: 768px) 100vw, 50vw"
-                     alt="{{ $product->title }} view {{ $index + 1 }}" width="1000" height="1000"
-                     @if($index === 0) fetchpriority="high" @else loading="lazy" @endif>
-                @if($index === 0)<div class="pdp-zoom-lens" id="pdp-zoom-lens"></div>@endif
+        {{--
+        Swipeable slider instead of a thumbnail strip: each gallery image is a
+        full-width scroll-snap slide with dots underneath, and tapping the
+        current slide opens it full-screen (the lightbox below). This replaces
+        the old vertical thumbnail rail per the client's reference.
+        --}}
+        <div class="pdp-gallery">
+          <div class="pdp-image-wrap">
+            <div class="pdp-slider" id="pdp-slider">
+              @foreach($galleryImages as $index => $media)
+                <div class="pdp-slide">
+                  {{-- Image area reduced ~20% via inline padding — see product-card.blade.php for why this isn't a Tailwind
+                  p-[...] class. --}}
+                  <div class="pdp-main aspect-square overflow-hidden rounded bg-placeholder" style="padding: 5.3%"
+                    @if($index === 0) id="pdp-zoom-frame" @endif>
+                    <img class="h-full w-full object-cover" data-lightbox @if($index === 0) id="pdp-main-img" @endif
+                      data-slide-full="{{ $media->getUrl('detail') }}" src="{{ $media->getUrl('detail') }}"
+                      srcset="{{ $media->getUrl('mobile') }} 768w, {{ $media->getUrl('tablet') }} 1024w, {{ $media->getUrl('detail') }} 1600w"
+                      sizes="(max-width: 768px) 100vw, 50vw" alt="{{ $product->title }} view {{ $index + 1 }}" width="1000"
+                      height="1000" @if($index === 0) fetchpriority="high" @else loading="lazy" @endif>
+                    @if($index === 0)
+                    <div class="pdp-zoom-lens" id="pdp-zoom-lens"></div>@endif
+                  </div>
+                </div>
+              @endforeach
+            </div>
+
+            @if($galleryImages->count() > 1)
+              <div class="pdp-dots" id="pdp-dots" role="tablist" aria-label="Product images">
+                @foreach($galleryImages as $index => $media)
+                  <button class="pdp-dot{{ $index === 0 ? ' is-active' : '' }}" type="button" data-pdp-dot="{{ $index }}"
+                    aria-label="Go to image {{ $index + 1 }}"></button>
+                @endforeach
+              </div>
+            @endif
+
+            @if($mainMedia)
+              {{-- Share moved here from beside the title, per the client's reference. --}}
+              <button class="pdp-icon-btn pdp-share-float" type="button" id="pdp-share-btn" aria-label="Share">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                  <circle cx="18" cy="5" r="2.4" />
+                  <circle cx="6" cy="12" r="2.4" />
+                  <circle cx="18" cy="19" r="2.4" />
+                  <path d="M8.1 10.7l7.8-4.4M8.1 13.3l7.8 4.4" />
+                </svg>
+              </button>
+              <button class="pdp-icon-btn pdp-expand-btn" type="button" id="pdp-expand-btn" aria-label="View full image">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6" />
+                </svg>
+              </button>
+              <div class="pdp-zoom-pane" id="pdp-zoom-pane"></div>
+            @endif
+          </div>
+        </div>
+
+        <div>
+          {{-- Wishlist lives only in the sticky buy bar now; the duplicate heart
+          and the share icon that sat here have moved (share to the image). --}}
+          <div class="pdp-title-row mb-1.5">
+            <h1 class="text-[20px] font-bold leading-tight text-black md:text-[30px] md:text-heading">
+              {{ $product->title }}</h1>
+          </div>
+          @if($product->sku)
+            <p class="mb-2.5 text-[12px] font-medium tracking-wider text-muted uppercase">SKU: {{ $product->sku }}</p>
+          @endif
+
+          @if($ratingCount > 0)
+            <a class="mb-3 inline-flex items-center gap-2" href="#reviews">
+              <x-review-stars :rating="$ratingAverage" :count="$ratingCount" />
+            </a>
+          @endif
+
+          <span class="block text-[10px] font-bold leading-3 text-black">MRP</span>
+          <div class="flex flex-wrap items-baseline gap-2.5">
+            <span class="text-[24px] font-bold leading-8 text-black md:text-[30px] md:text-price">₹
+              {{ number_format($product->price, 0) }}</span>
+            @if($product->compare_at_price)
+              <span class="text-[15px] font-bold text-muted line-through">₹
+                {{ number_format($product->compare_at_price, 0) }}</span>
+              <span class="text-[15px] font-bold text-accent-dark">{{ $discountPercent }}% off</span>
+            @endif
+          </div>
+          <p class="mb-3 text-[10px] font-bold leading-3 text-[#777]">(Incl. of all taxes)</p>
+          <div class="mb-5 flex flex-wrap gap-2.5">
+            @if($product->stock_quantity > 0 && $product->stock_quantity <= 5)
+              <span class="info-chip">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                  stroke-linecap="round">
+                  <circle cx="13" cy="13" r="8" />
+                  <path d="M13 9v4l2.5 2M2 9h4M1 13h4M3 17h3" />
+                </svg>
+                Hurry, Only <strong class="text-black/80">{{ $product->stock_quantity }}</strong> left
+              </span>
+            @endif
+            <span class="info-chip">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                stroke-linejoin="round">
+                <path d="M1 5h14v11H1zM15 9h4l4 4v3h-8z" />
+                <circle cx="6" cy="18" r="2" />
+                <circle cx="18" cy="18" r="2" />
+              </svg>
+              Free shipping available
+            </span>
+          </div>
+
+          {{-- Trust badge row --}}
+          <div class="mb-6 grid grid-cols-3 gap-2 rounded-xl bg-warmbeige/40 p-3.5 border border-line text-center">
+            <div>
+              <div class="mx-auto mb-1 grid h-8 w-8 place-items-center rounded-full bg-white text-accent shadow-sm">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+              </div>
+              <p class="text-[11px] font-semibold text-heading">Skin Friendly</p>
+              <p class="text-[10px] text-muted">24K Gold Plated</p>
+            </div>
+            <div>
+              <div class="mx-auto mb-1 grid h-8 w-8 place-items-center rounded-full bg-white text-accent shadow-sm">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 4v6h6" />
+                  <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                </svg>
+              </div>
+              <p class="text-[11px] font-semibold text-heading">Easy Returns</p>
+              <p class="text-[10px] text-muted">7-Day Guarantee</p>
+            </div>
+            <div>
+              <div class="mx-auto mb-1 grid h-8 w-8 place-items-center rounded-full bg-white text-accent shadow-sm">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="1" y="3" width="15" height="13" rx="2" />
+                  <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+                </svg>
+              </div>
+              <p class="text-[11px] font-semibold text-heading">Free Shipping</p>
+              <p class="text-[10px] text-muted">Orders > ₹1,499</p>
+            </div>
+          </div>
+
+          @include('partials.offers-banner')
+
+          <form class="mt-4" id="pdp-form" action="{{ route('cart.store', $product) }}" method="post" data-cart-form
+            data-checkout-url="{{ route('checkout.index') }}">
+            @csrf
+
+            @if($product->variants->isNotEmpty())
+              <div class="mb-5">
+                <span class="mb-2 block text-[13px] font-medium uppercase tracking-[0.4px]">Select Option</span>
+                <div class="flex flex-wrap gap-2.5">
+                  @foreach($product->variants as $index => $variant)
+                    <label
+                      class="cursor-pointer rounded-md border-2 border-line-strong px-4 py-2 text-[13px] font-medium transition-colors has-[:checked]:border-accent has-[:checked]:bg-accent/5 has-[:checked]:text-accent text-heading hover:border-accent {{ $variant->stock_quantity <= 0 ? 'opacity-40' : '' }}">
+                      <input class="sr-only" type="radio" name="product_variant_id" value="{{ $variant->id }}" {{ $index === 0 ? 'checked' : '' }} {{ $variant->stock_quantity <= 0 ? 'disabled' : '' }}>
+                      {{ collect($variant->attributes ?? [])->map(fn($v, $k) => "{$k}: {$v}")->implode(', ') ?: $variant->sku }}
+                    </label>
+                  @endforeach
+                </div>
+              </div>
+            @endif
+
+            <div class="mb-4 flex items-center gap-3.5">
+              <span class="text-[14px] font-bold text-heading">Quantity</span>
+              <div class="inline-flex h-10 items-center rounded-md border border-line-strong bg-white px-1" data-qty>
+                <button class="grid h-9 w-9 place-items-center rounded text-[18px] text-heading" type="button"
+                  data-qty-minus aria-label="Decrease quantity">&minus;</button>
+                <input class="w-10 border-0 text-center font-bold text-heading outline-none" type="number" name="quantity"
+                  value="1" min="1" aria-label="Quantity">
+                <button class="grid h-9 w-9 place-items-center rounded text-[18px] text-heading" type="button"
+                  data-qty-plus aria-label="Increase quantity">+</button>
               </div>
             </div>
-          @endforeach
-        </div>
+            <div class="mb-3 hidden gap-3 md:flex">
+              <button class="btn-cta-outline flex-1" type="submit" name="express" value="1"
+                formaction="{{ route('checkout.express.start', $product) }}" data-express-submit {{ $product->stock_quantity <= 0 ? 'disabled' : '' }}>Buy Now</button>
+              <button class="btn-cta flex-1" type="submit" {{ $product->stock_quantity <= 0 ? 'disabled' : '' }}>{{ $product->stock_quantity > 0 ? 'Add to Bag' : 'Out of Stock' }}</button>
+            </div>
+            <p class="hidden text-center text-[11px] text-muted md:block">Fast &amp; secure · UPI, cards, net banking, COD
+            </p>
+          </form>
 
-        @if($galleryImages->count() > 1)
-          <div class="pdp-dots" id="pdp-dots" role="tablist" aria-label="Product images">
-            @foreach($galleryImages as $index => $media)
-              <button class="pdp-dot{{ $index === 0 ? ' is-active' : '' }}" type="button" data-pdp-dot="{{ $index }}" aria-label="Go to image {{ $index + 1 }}"></button>
-            @endforeach
+          <div class="mt-7 border-t border-line">
+            @if($product->description)
+              <details class="group border-b border-line" open>
+                <summary
+                  class="flex items-center justify-between py-4 text-[13px] font-semibold uppercase tracking-[0.4px] text-heading cursor-pointer">
+                  <span>Description</span>
+                  <span class="text-[16px] text-accent transition-transform group-open:rotate-180">&minus;</span>
+                </summary>
+                <div class="pb-4 text-[13.5px] leading-[1.8] text-muted">
+                  <p>{{ $product->description }}</p>
+                </div>
+              </details>
+            @endif
+            <details class="group border-b border-line">
+              <summary
+                class="flex items-center justify-between py-4 text-[13px] font-semibold uppercase tracking-[0.4px] text-heading cursor-pointer">
+                <span>Shipping &amp; 7-Day Returns</span>
+                <span class="text-[16px] text-accent transition-transform group-open:rotate-180">+</span>
+              </summary>
+              <div class="pb-4 text-[13.5px] leading-[1.8] text-muted">
+                <p>Free shipping on all prepaid orders across India. Orders are dispatched within 24-48 hours. Returns and
+                  exchanges accepted within 7 days of delivery, provided the product is unused and in original packaging.
+                </p>
+              </div>
+            </details>
+            <details class="group border-b border-line">
+              <summary
+                class="flex items-center justify-between py-4 text-[13px] font-semibold uppercase tracking-[0.4px] text-heading cursor-pointer">
+                <span>Manufacturing Details</span>
+                <span class="text-[16px] text-accent transition-transform group-open:rotate-180">+</span>
+              </summary>
+              <div class="pb-4 text-[13.5px] leading-[1.8] text-muted">
+                <p>Adorn yourself with the allure of anti-tarnish jewelry, exuding beauty and durability.
+                  @if($product->sku) SKU: {{ $product->sku }}. @endif Every piece is quality-checked before dispatch.</p>
+              </div>
+            </details>
+            <details class="group border-b border-line">
+              <summary
+                class="flex items-center justify-between py-4 text-[13px] font-semibold uppercase tracking-[0.4px] text-heading cursor-pointer">
+                <span>Jewellery Care &amp; Maintenance</span>
+                <span class="text-[16px] text-accent transition-transform group-open:rotate-180">+</span>
+              </summary>
+              <ul class="pb-4 space-y-2 text-[13px] text-muted">
+                <li
+                  class="relative pl-5 before:absolute before:left-0 before:top-[7px] before:h-2 before:w-2 before:rounded-full before:bg-accent">
+                  Keep jewellery away from water &amp; humidity</li>
+                <li
+                  class="relative pl-5 before:absolute before:left-0 before:top-[7px] before:h-2 before:w-2 before:rounded-full before:bg-accent">
+                  Remove jewellery before sleeping or physical activities</li>
+                <li
+                  class="relative pl-5 before:absolute before:left-0 before:top-[7px] before:h-2 before:w-2 before:rounded-full before:bg-accent">
+                  Avoid direct contact with perfume, body lotions or chemicals</li>
+                <li
+                  class="relative pl-5 before:absolute before:left-0 before:top-[7px] before:h-2 before:w-2 before:rounded-full before:bg-accent">
+                  Store separately in an air-tight jewellery box</li>
+              </ul>
+            </details>
           </div>
-        @endif
+        </div>
+      </article>
 
-        @if($mainMedia)
-          {{-- Share moved here from beside the title, per the client's reference. --}}
-          <button class="pdp-icon-btn pdp-share-float" type="button" id="pdp-share-btn" aria-label="Share">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="18" cy="5" r="2.4"/><circle cx="6" cy="12" r="2.4"/><circle cx="18" cy="19" r="2.4"/><path d="M8.1 10.7l7.8-4.4M8.1 13.3l7.8 4.4"/></svg>
-          </button>
-          <button class="pdp-icon-btn pdp-expand-btn" type="button" id="pdp-expand-btn" aria-label="View full image">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6"/></svg>
-          </button>
-          <div class="pdp-zoom-pane" id="pdp-zoom-pane"></div>
-        @endif
-      </div>
-    </div>
-
-    <div>
-      {{-- Wishlist lives only in the sticky buy bar now; the duplicate heart
-           and the share icon that sat here have moved (share to the image). --}}
-      <div class="pdp-title-row mb-1.5">
-        <h1 class="text-[20px] font-bold leading-tight text-black md:text-[30px] md:text-heading">{{ $product->title }}</h1>
-      </div>
-      @if($product->sku)
-        <p class="mb-2.5 text-[12px] font-medium tracking-wider text-muted uppercase">SKU: {{ $product->sku }}</p>
+      @if($mainMedia)
+        <div class="pdp-lightbox" id="pdp-lightbox" hidden>
+          <button class="pdp-lightbox-close" type="button" data-lightbox-close aria-label="Close">&times;</button>
+          <img id="pdp-lightbox-img" src="" alt="">
+        </div>
       @endif
 
-      @if($ratingCount > 0)
-        <a class="mb-3 inline-flex items-center gap-2" href="#reviews">
-          <x-review-stars :rating="$ratingAverage" :count="$ratingCount" />
-        </a>
-      @endif
-
-      <span class="block text-[10px] font-bold leading-3 text-black">MRP</span>
-      <div class="flex flex-wrap items-baseline gap-2.5">
-        <span class="text-[24px] font-bold leading-8 text-black md:text-[30px] md:text-price">₹ {{ number_format($product->price, 0) }}</span>
-        @if($product->compare_at_price)
-          <span class="text-[15px] font-bold text-muted line-through">₹ {{ number_format($product->compare_at_price, 0) }}</span>
-          <span class="text-[15px] font-bold text-accent-dark">{{ $discountPercent }}% off</span>
-        @endif
-      </div>
-      <p class="mb-3 text-[10px] font-bold leading-3 text-[#777]">(Incl. of all taxes)</p>
-      <div class="mb-5 flex flex-wrap gap-2.5">
-        @if($product->stock_quantity > 0 && $product->stock_quantity <= 5)
-          <span class="info-chip">
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="13" cy="13" r="8"/><path d="M13 9v4l2.5 2M2 9h4M1 13h4M3 17h3"/></svg>
-            Hurry, Only <strong class="text-black/80">{{ $product->stock_quantity }}</strong> left
-          </span>
-        @endif
-        <span class="info-chip">
-          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M1 5h14v11H1zM15 9h4l4 4v3h-8z"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg>
-          Free shipping available
-        </span>
-      </div>
-
-      {{-- Trust badge row --}}
-      <div class="mb-6 grid grid-cols-3 gap-2 rounded-xl bg-warmbeige/40 p-3.5 border border-line text-center">
-        <div>
-          <div class="mx-auto mb-1 grid h-8 w-8 place-items-center rounded-full bg-white text-accent shadow-sm">
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          </div>
-          <p class="text-[11px] font-semibold text-heading">Skin Friendly</p>
-          <p class="text-[10px] text-muted">24K Gold Plated</p>
-        </div>
-        <div>
-          <div class="mx-auto mb-1 grid h-8 w-8 place-items-center rounded-full bg-white text-accent shadow-sm">
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-          </div>
-          <p class="text-[11px] font-semibold text-heading">Easy Returns</p>
-          <p class="text-[10px] text-muted">7-Day Guarantee</p>
-        </div>
-        <div>
-          <div class="mx-auto mb-1 grid h-8 w-8 place-items-center rounded-full bg-white text-accent shadow-sm">
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/></svg>
-          </div>
-          <p class="text-[11px] font-semibold text-heading">Free Shipping</p>
-          <p class="text-[10px] text-muted">Orders > ₹1,499</p>
-        </div>
-      </div>
-
-      @include('partials.offers-banner')
-
-      <form class="mt-4" id="pdp-form" action="{{ route('cart.store', $product) }}" method="post" data-cart-form data-checkout-url="{{ route('checkout.index') }}">
-        @csrf
-
-        @if($product->variants->isNotEmpty())
-          <div class="mb-5">
-            <span class="mb-2 block text-[13px] font-medium uppercase tracking-[0.4px]">Select Option</span>
-            <div class="flex flex-wrap gap-2.5">
-              @foreach($product->variants as $index => $variant)
-                <label class="cursor-pointer rounded-md border-2 border-line-strong px-4 py-2 text-[13px] font-medium transition-colors has-[:checked]:border-accent has-[:checked]:bg-accent/5 has-[:checked]:text-accent text-heading hover:border-accent {{ $variant->stock_quantity <= 0 ? 'opacity-40' : '' }}">
-                  <input class="sr-only" type="radio" name="product_variant_id" value="{{ $variant->id }}" {{ $index === 0 ? 'checked' : '' }} {{ $variant->stock_quantity <= 0 ? 'disabled' : '' }}>
-                  {{ collect($variant->attributes ?? [])->map(fn($v, $k) => "{$k}: {$v}")->implode(', ') ?: $variant->sku }}
-                </label>
+      @if($relatedProducts->isNotEmpty())
+        <section class="py-6 md:py-8 bg-warmbeige/30 border-t border-line">
+          <div class="mx-auto w-full max-w-wrapper px-4 md:px-8">
+            <x-section-header title="You May Also Like" />
+            <div
+              class="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 md:gap-5 lg:gap-6 xl:grid-cols-5 xl:gap-7 2xl:grid-cols-6">
+              @foreach($relatedProducts as $related)
+                <x-product-card :product="$related" />
               @endforeach
             </div>
           </div>
-        @endif
-
-        <div class="mb-4 flex items-center gap-3.5">
-          <span class="text-[14px] font-bold text-heading">Quantity</span>
-          <div class="inline-flex h-10 items-center rounded-md border border-line-strong bg-white px-1" data-qty>
-            <button class="grid h-9 w-9 place-items-center rounded text-[18px] text-heading" type="button" data-qty-minus aria-label="Decrease quantity">&minus;</button>
-            <input class="w-10 border-0 text-center font-bold text-heading outline-none" type="number" name="quantity" value="1" min="1" aria-label="Quantity">
-            <button class="grid h-9 w-9 place-items-center rounded text-[18px] text-heading" type="button" data-qty-plus aria-label="Increase quantity">+</button>
-          </div>
-        </div>
-        <div class="mb-3 hidden gap-3 md:flex">
-          <button class="btn-cta-outline flex-1" type="submit" name="express" value="1" formaction="{{ route('checkout.express.start', $product) }}" data-express-submit {{ $product->stock_quantity <= 0 ? 'disabled' : '' }}>Buy Now</button>
-          <button class="btn-cta flex-1" type="submit" {{ $product->stock_quantity <= 0 ? 'disabled' : '' }}>{{ $product->stock_quantity > 0 ? 'Add to Bag' : 'Out of Stock' }}</button>
-        </div>
-        <p class="hidden text-center text-[11px] text-muted md:block">Fast &amp; secure · UPI, cards, net banking, COD</p>
-      </form>
-
-      <div class="mt-7 border-t border-line">
-        @if($product->description)
-          <details class="group border-b border-line" open>
-            <summary class="flex items-center justify-between py-4 text-[13px] font-semibold uppercase tracking-[0.4px] text-heading cursor-pointer">
-              <span>Description</span>
-              <span class="text-[16px] text-accent transition-transform group-open:rotate-180">&minus;</span>
-            </summary>
-            <div class="pb-4 text-[13.5px] leading-[1.8] text-muted">
-              <p>{{ $product->description }}</p>
-            </div>
-          </details>
-        @endif
-        <details class="group border-b border-line">
-          <summary class="flex items-center justify-between py-4 text-[13px] font-semibold uppercase tracking-[0.4px] text-heading cursor-pointer">
-            <span>Shipping &amp; 7-Day Returns</span>
-            <span class="text-[16px] text-accent transition-transform group-open:rotate-180">+</span>
-          </summary>
-          <div class="pb-4 text-[13.5px] leading-[1.8] text-muted">
-            <p>Free shipping on all prepaid orders across India. Orders are dispatched within 24-48 hours. Returns and exchanges accepted within 7 days of delivery, provided the product is unused and in original packaging.</p>
-          </div>
-        </details>
-        <details class="group border-b border-line">
-          <summary class="flex items-center justify-between py-4 text-[13px] font-semibold uppercase tracking-[0.4px] text-heading cursor-pointer">
-            <span>Manufacturing Details</span>
-            <span class="text-[16px] text-accent transition-transform group-open:rotate-180">+</span>
-          </summary>
-          <div class="pb-4 text-[13.5px] leading-[1.8] text-muted">
-            <p>Adorn yourself with the allure of anti-tarnish jewelry, exuding beauty and durability. @if($product->sku) SKU: {{ $product->sku }}. @endif Every piece is quality-checked before dispatch.</p>
-          </div>
-        </details>
-        <details class="group border-b border-line">
-          <summary class="flex items-center justify-between py-4 text-[13px] font-semibold uppercase tracking-[0.4px] text-heading cursor-pointer">
-            <span>Jewellery Care &amp; Maintenance</span>
-            <span class="text-[16px] text-accent transition-transform group-open:rotate-180">+</span>
-          </summary>
-          <ul class="pb-4 space-y-2 text-[13px] text-muted">
-            <li class="relative pl-5 before:absolute before:left-0 before:top-[7px] before:h-2 before:w-2 before:rounded-full before:bg-accent">Keep jewellery away from water &amp; humidity</li>
-            <li class="relative pl-5 before:absolute before:left-0 before:top-[7px] before:h-2 before:w-2 before:rounded-full before:bg-accent">Remove jewellery before sleeping or physical activities</li>
-            <li class="relative pl-5 before:absolute before:left-0 before:top-[7px] before:h-2 before:w-2 before:rounded-full before:bg-accent">Avoid direct contact with perfume, body lotions or chemicals</li>
-            <li class="relative pl-5 before:absolute before:left-0 before:top-[7px] before:h-2 before:w-2 before:rounded-full before:bg-accent">Store separately in an air-tight jewellery box</li>
-          </ul>
-        </details>
-      </div>
-    </div>
-  </article>
-
-  @if($mainMedia)
-    <div class="pdp-lightbox" id="pdp-lightbox" hidden>
-      <button class="pdp-lightbox-close" type="button" data-lightbox-close aria-label="Close">&times;</button>
-      <img id="pdp-lightbox-img" src="" alt="">
-    </div>
-  @endif
-
-  @if($relatedProducts->isNotEmpty())
-    <section class="py-12 md:py-16 bg-warmbeige/30 border-t border-line">
-      <div class="mx-auto w-full max-w-wrapper px-4 md:px-8">
-        <x-section-header title="You May Also Like" />
-        <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 md:gap-5 lg:gap-6 xl:grid-cols-5 xl:gap-7 2xl:grid-cols-6">
-          @foreach($relatedProducts as $related)
-            <x-product-card :product="$related" />
-          @endforeach
-        </div>
-      </div>
-    </section>
-  @endif
-
-  {{--
-    "Our Promise to You" trust strip. Uses a scoped grid (not the
-    sm:grid-cols-3/md:grid-cols-5 Tailwind utilities) because in this
-    backend's static-copy theme CSS (see the pdp-gallery note above),
-    .sm\:grid-cols-3 happens to be emitted after .md\:grid-cols-5 in
-    source order — so at desktop widths the sm: rule was winning the
-    cascade and the grid never reached 5 equal columns, leaving an
-    unbalanced 3+2 layout. Plain scoped CSS sidesteps that ordering
-    landmine entirely.
-  --}}
-  <style>
-    .promise-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-    @media (min-width: 640px) { .promise-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-    @media (min-width: 768px) { .promise-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 24px; } }
-    .promise-card-icon { margin: 0 auto 10px; color: var(--color-accent); }
-  </style>
-  <section class="py-12 md:py-16 bg-ivory border-t border-line">
-    <div class="mx-auto w-full max-w-wrapper px-4 md:px-8">
-      <x-section-header title="Our Promise to You" />
-      <div class="promise-grid">
-        @foreach([
-          ['title' => '24K Gold Plated', 'subtitle' => 'Precious long-lasting shine', 'icon' => 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z'],
-          ['title' => 'Skin Friendly', 'subtitle' => 'Nickel & lead free formula', 'icon' => 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'],
-          ['title' => '35+ Years Legacy', 'subtitle' => 'Trusted by 5M+ happy women', 'icon' => 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'],
-          ['title' => '7-Day Easy Returns', 'subtitle' => '100% exchange guarantee', 'icon' => 'M1 4v6h6M3.51 15a9 9 0 1 0 2.13-9.36L1 10'],
-          ['title' => 'Free Shipping', 'subtitle' => 'Express Pan-India delivery', 'icon' => 'M1 3h15v13H1zM16 8h4l3 3v5h-7z'],
-        ] as $promise)
-          <div class="rounded-xl border border-line bg-white p-4 text-center shadow-sm">
-            <svg class="promise-card-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="{{ $promise['icon'] }}"/></svg>
-            <h3 class="font-serif text-[13px] font-semibold text-heading">{{ $promise['title'] }}</h3>
-            <p class="mt-1 text-[11px] text-muted">{{ $promise['subtitle'] }}</p>
-          </div>
-        @endforeach
-      </div>
-    </div>
-  </section>
-
-  {{-- Hidden entirely until a product has at least one review: an empty
-       star row with "be the first to write a review" reads as a negative
-       signal on a PDP, so it isn't shown at all. --}}
-  <section class="border-t border-line py-10 md:py-[60px] {{ $ratingCount > 0 ? '' : 'hidden' }}" id="reviews">
-    <div class="mx-auto w-full max-w-[760px] px-4">
-      <x-section-header
-        title="Customer Reviews"
-        :subtitle="number_format($ratingAverage, 1).' out of 5, based on '.$ratingCount.' review'.($ratingCount === 1 ? '' : 's')"
-      />
-
-      @if(session('success'))
-        <p class="mb-6 rounded-lg border border-line bg-pinksoft px-4 py-3 text-center text-[13px] text-heading">{{ session('success') }}</p>
+        </section>
       @endif
 
-      @if($reviews->isNotEmpty())
-        <ul class="mb-8 space-y-5">
-          @foreach($reviews as $review)
-            <li class="border-b border-line pb-5">
-              <div class="mb-1.5 flex flex-wrap items-center gap-2">
-                <x-review-stars :rating="$review->rating" />
-                @if($review->is_verified_purchase)
-                  <span class="text-[11px] font-medium uppercase tracking-[0.3px] text-accent">Verified Purchase</span>
-                @endif
+      {{--
+      "Our Promise to You" trust strip. Uses a scoped grid (not the
+      sm:grid-cols-3/md:grid-cols-5 Tailwind utilities) because in this
+      backend's static-copy theme CSS (see the pdp-gallery note above),
+      .sm\:grid-cols-3 happens to be emitted after .md\:grid-cols-5 in
+      source order — so at desktop widths the sm: rule was winning the
+      cascade and the grid never reached 5 equal columns, leaving an
+      unbalanced 3+2 layout. Plain scoped CSS sidesteps that ordering
+      landmine entirely.
+      --}}
+      <style>
+        .promise-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 16px;
+        }
+
+        @media (min-width: 640px) {
+          .promise-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+          }
+        }
+
+        @media (min-width: 768px) {
+          .promise-grid {
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 24px;
+          }
+        }
+
+        .promise-card-icon {
+          margin: 0 auto 10px;
+          color: var(--color-accent);
+        }
+      </style>
+      <section class="py-6 md:py-8 bg-ivory border-t border-line">
+        <div class="mx-auto w-full max-w-wrapper px-4 md:px-8">
+          <x-section-header title="Our Promise to You" />
+          <div class="promise-grid">
+            @foreach([
+                ['title' => '24K Gold Plated', 'subtitle' => 'Precious long-lasting shine', 'icon' => 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z'],
+                ['title' => 'Skin Friendly', 'subtitle' => 'Nickel & lead free formula', 'icon' => 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'],
+                ['title' => '35+ Years Legacy', 'subtitle' => 'Trusted by 5M+ happy women', 'icon' => 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'],
+                ['title' => '7-Day Easy Returns', 'subtitle' => '100% exchange guarantee', 'icon' => 'M1 4v6h6M3.51 15a9 9 0 1 0 2.13-9.36L1 10'],
+                ['title' => 'Free Shipping', 'subtitle' => 'Express Pan-India delivery', 'icon' => 'M1 3h15v13H1zM16 8h4l3 3v5h-7z'],
+              ] as $promise)
+              <div class="rounded-xl border border-line bg-white p-4 text-center shadow-sm">
+                <svg class="promise-card-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="1.6">
+                  <path d="{{ $promise['icon'] }}" />
+                </svg>
+                <h3 class="font-serif text-[13px] font-semibold text-heading">{{ $promise['title'] }}</h3>
+                <p class="mt-1 text-[11px] text-muted">{{ $promise['subtitle'] }}</p>
               </div>
-              @if($review->title)
-                <p class="mb-1 text-[14px] font-medium text-heading">{{ $review->title }}</p>
-              @endif
-              <p class="mb-2 text-[13.5px] leading-[1.7] text-muted">{{ $review->body }}</p>
-              @if($review->hasMedia('photos'))
-                <div class="mb-2 flex flex-wrap gap-2">
-                  @foreach($review->getMedia('photos') as $photo)
-                    <img class="h-16 w-16 rounded object-cover" src="{{ $photo->getUrl('thumb') }}" alt="Photo submitted with {{ $review->customer_name }}'s review" loading="lazy" width="64" height="64">
-                  @endforeach
-                </div>
-              @endif
-              <p class="text-[12px] text-muted">{{ $review->customer_name }} &middot; {{ $review->displayDate()->format('d M Y') }}</p>
-            </li>
-          @endforeach
-        </ul>
-
-        <div class="mb-8">
-          {{ $reviews->links() }}
+            @endforeach
+          </div>
         </div>
-      @endif
+      </section>
 
-      <details {{ $errors->any() ? 'open' : '' }}>
-        <summary class="mt-4 inline-flex items-center justify-center rounded-md border-2 border-accent px-6 py-3 text-[13px] font-semibold uppercase tracking-[0.6px] text-accent transition-colors hover:bg-accent hover:text-white">Write a Review</summary>
-        <form class="pb-4.5" action="{{ route('products.reviews.store', $product) }}" method="post" enctype="multipart/form-data">
-          @csrf
-          <input class="hidden" type="text" name="website" tabindex="-1" autocomplete="off">
+      {{-- Hidden entirely until a product has at least one review: an empty
+      star row with "be the first to write a review" reads as a negative
+      signal on a PDP, so it isn't shown at all. --}}
+      <section class="border-t border-line py-10 md:py-[60px] {{ $ratingCount > 0 ? '' : 'hidden' }}" id="reviews">
+        <div class="mx-auto w-full max-w-[760px] px-4">
+          <x-section-header title="Customer Reviews" :subtitle="number_format($ratingAverage, 1) . ' out of 5, based on ' . $ratingCount . ' review' . ($ratingCount === 1 ? '' : 's')" />
 
-          <div class="mb-3.5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
-              <label class="mb-1.5 block text-[13px] font-medium text-heading" for="customer_name">Name</label>
-              <input class="w-full border border-line-strong bg-white px-4 py-3 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-heading" id="customer_name" name="customer_name" type="text" value="{{ old('customer_name') }}" required>
-              @error('customer_name') <p class="mt-1 text-[12px] text-salebadge">{{ $message }}</p> @enderror
+          @if(session('success'))
+            <p class="mb-6 rounded-lg border border-line bg-pinksoft px-4 py-3 text-center text-[13px] text-heading">
+              {{ session('success') }}</p>
+          @endif
+
+          @if($reviews->isNotEmpty())
+            <ul class="mb-8 space-y-5">
+              @foreach($reviews as $review)
+                <li class="border-b border-line pb-5">
+                  <div class="mb-1.5 flex flex-wrap items-center gap-2">
+                    <x-review-stars :rating="$review->rating" />
+                    @if($review->is_verified_purchase)
+                      <span class="text-[11px] font-medium uppercase tracking-[0.3px] text-accent">Verified Purchase</span>
+                    @endif
+                  </div>
+                  @if($review->title)
+                    <p class="mb-1 text-[14px] font-medium text-heading">{{ $review->title }}</p>
+                  @endif
+                  <p class="mb-2 text-[13.5px] leading-[1.7] text-muted">{{ $review->body }}</p>
+                  @if($review->hasMedia('photos'))
+                    <div class="mb-2 flex flex-wrap gap-2">
+                      @foreach($review->getMedia('photos') as $photo)
+                        <img class="h-16 w-16 rounded object-cover" src="{{ $photo->getUrl('thumb') }}"
+                          alt="Photo submitted with {{ $review->customer_name }}'s review" loading="lazy" width="64" height="64">
+                      @endforeach
+                    </div>
+                  @endif
+                  <p class="text-[12px] text-muted">{{ $review->customer_name }} &middot;
+                    {{ $review->displayDate()->format('d M Y') }}</p>
+                </li>
+              @endforeach
+            </ul>
+
+            <div class="mb-8">
+              {{ $reviews->links() }}
             </div>
-            <div>
-              <label class="mb-1.5 block text-[13px] font-medium text-heading" for="customer_email">Email</label>
-              <input class="w-full border border-line-strong bg-white px-4 py-3 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-heading" id="customer_email" name="customer_email" type="email" value="{{ old('customer_email') }}" required>
-              @error('customer_email') <p class="mt-1 text-[12px] text-salebadge">{{ $message }}</p> @enderror
-            </div>
-          </div>
+          @endif
 
-          <div class="mb-3.5">
-            <label class="mb-1.5 block text-[13px] font-medium text-heading" for="rating">Rating</label>
-            <select class="w-full border border-line-strong bg-white px-4 py-3 text-[14px] outline-none transition-colors focus:border-heading" id="rating" name="rating" required>
-              <option value="">Select a rating</option>
-              @for($i = 5; $i >= 1; $i--)
-                <option value="{{ $i }}" {{ old('rating') == $i ? 'selected' : '' }}>{{ $i }} star{{ $i === 1 ? '' : 's' }}</option>
-              @endfor
-            </select>
-            @error('rating') <p class="mt-1 text-[12px] text-salebadge">{{ $message }}</p> @enderror
-          </div>
+          <details {{ $errors->any() ? 'open' : '' }}>
+            <summary
+              class="mt-4 inline-flex items-center justify-center rounded-md border-2 border-accent px-6 py-3 text-[13px] font-semibold uppercase tracking-[0.6px] text-accent transition-colors hover:bg-accent hover:text-white">
+              Write a Review</summary>
+            <form class="pb-4.5" action="{{ route('products.reviews.store', $product) }}" method="post"
+              enctype="multipart/form-data">
+              @csrf
+              <input class="hidden" type="text" name="website" tabindex="-1" autocomplete="off">
 
-          <div class="mb-3.5">
-            <label class="mb-1.5 block text-[13px] font-medium text-heading" for="title">Title (optional)</label>
-            <input class="w-full border border-line-strong bg-white px-4 py-3 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-heading" id="title" name="title" type="text" value="{{ old('title') }}">
-            @error('title') <p class="mt-1 text-[12px] text-salebadge">{{ $message }}</p> @enderror
-          </div>
+              <div class="mb-3.5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label class="mb-1.5 block text-[13px] font-medium text-heading" for="customer_name">Name</label>
+                  <input
+                    class="w-full border border-line-strong bg-white px-4 py-3 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-heading"
+                    id="customer_name" name="customer_name" type="text" value="{{ old('customer_name') }}" required>
+                  @error('customer_name')
+                  <p class="mt-1 text-[12px] text-salebadge">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                  <label class="mb-1.5 block text-[13px] font-medium text-heading" for="customer_email">Email</label>
+                  <input
+                    class="w-full border border-line-strong bg-white px-4 py-3 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-heading"
+                    id="customer_email" name="customer_email" type="email" value="{{ old('customer_email') }}" required>
+                  @error('customer_email')
+                  <p class="mt-1 text-[12px] text-salebadge">{{ $message }}</p> @enderror
+                </div>
+              </div>
 
-          <div class="mb-3.5">
-            <label class="mb-1.5 block text-[13px] font-medium text-heading" for="body">Review</label>
-            <textarea class="w-full border border-line-strong bg-white px-4 py-3 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-heading" id="body" name="body" rows="4" required>{{ old('body') }}</textarea>
-            @error('body') <p class="mt-1 text-[12px] text-salebadge">{{ $message }}</p> @enderror
-          </div>
+              <div class="mb-3.5">
+                <label class="mb-1.5 block text-[13px] font-medium text-heading" for="rating">Rating</label>
+                <select
+                  class="w-full border border-line-strong bg-white px-4 py-3 text-[14px] outline-none transition-colors focus:border-heading"
+                  id="rating" name="rating" required>
+                  <option value="">Select a rating</option>
+                  @for($i = 5; $i >= 1; $i--)
+                    <option value="{{ $i }}" {{ old('rating') == $i ? 'selected' : '' }}>{{ $i }}
+                      star{{ $i === 1 ? '' : 's' }}</option>
+                  @endfor
+                </select>
+                @error('rating')
+                <p class="mt-1 text-[12px] text-salebadge">{{ $message }}</p> @enderror
+              </div>
 
-          <div class="mb-5">
-            <label class="mb-1.5 block text-[13px] font-medium text-heading" for="photos">Photos (optional, up to 3)</label>
-            <input class="w-full border border-line-strong bg-white px-4 py-3 text-[13px] outline-none transition-colors focus:border-heading" id="photos" name="photos[]" type="file" accept="image/*" multiple>
-            @error('photos') <p class="mt-1 text-[12px] text-salebadge">{{ $message }}</p> @enderror
-            @error('photos.*') <p class="mt-1 text-[12px] text-salebadge">{{ $message }}</p> @enderror
-          </div>
+              <div class="mb-3.5">
+                <label class="mb-1.5 block text-[13px] font-medium text-heading" for="title">Title (optional)</label>
+                <input
+                  class="w-full border border-line-strong bg-white px-4 py-3 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-heading"
+                  id="title" name="title" type="text" value="{{ old('title') }}">
+                @error('title')
+                <p class="mt-1 text-[12px] text-salebadge">{{ $message }}</p> @enderror
+              </div>
 
-          <button class="btn-cta w-auto px-8 text-[14px]" type="submit">
-            Submit Review
-          </button>
-        </form>
-      </details>
-    </div>
-  </section>
+              <div class="mb-3.5">
+                <label class="mb-1.5 block text-[13px] font-medium text-heading" for="body">Review</label>
+                <textarea
+                  class="w-full border border-line-strong bg-white px-4 py-3 text-[14px] outline-none transition-colors placeholder:text-muted focus:border-heading"
+                  id="body" name="body" rows="4" required>{{ old('body') }}</textarea>
+                @error('body')
+                <p class="mt-1 text-[12px] text-salebadge">{{ $message }}</p> @enderror
+              </div>
+
+              <div class="mb-5">
+                <label class="mb-1.5 block text-[13px] font-medium text-heading" for="photos">Photos (optional, up to
+                  3)</label>
+                <input
+                  class="w-full border border-line-strong bg-white px-4 py-3 text-[13px] outline-none transition-colors focus:border-heading"
+                  id="photos" name="photos[]" type="file" accept="image/*" multiple>
+                @error('photos')
+                <p class="mt-1 text-[12px] text-salebadge">{{ $message }}</p> @enderror
+                @error('photos.*')
+                <p class="mt-1 text-[12px] text-salebadge">{{ $message }}</p> @enderror
+              </div>
+
+              <button class="btn-cta w-auto px-8 text-[14px]" type="submit">
+                Submit Review
+              </button>
+            </form>
+          </details>
+        </div>
+      </section>
 
 @endsection
 
-@push('scripts')
-  <script>
-    (function () {
-      // Hover-to-zoom: a lens follows the cursor over the main image, and a
-      // magnified crop renders in a side panel — same interaction as estele.co's
-      // PDP gallery. Desktop-only (min-width 1024px + hover-capable pointer);
-      // the CSS media query above is a second guard in case JS resolves this
-      // before layout settles.
-      var frame = document.getElementById('pdp-zoom-frame');
-      var mainImg = document.getElementById('pdp-main-img');
-      var lens = document.getElementById('pdp-zoom-lens');
-      var pane = document.getElementById('pdp-zoom-pane');
-      var canZoom = frame && mainImg && lens && pane;
-      var hoverCapable = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-      var ZOOM = 2.4;
+    @push('scripts')
+      <script>
+        (function () {
+          // Hover-to-zoom: a lens follows the cursor over the main image, and a
+          // magnified crop renders in a side panel — same interaction as estele.co's
+          // PDP gallery. Desktop-only (min-width 1024px + hover-capable pointer);
+          // the CSS media query above is a second guard in case JS resolves this
+          // before layout settles.
+          var frame = document.getElementById('pdp-zoom-frame');
+          var mainImg = document.getElementById('pdp-main-img');
+          var lens = document.getElementById('pdp-zoom-lens');
+          var pane = document.getElementById('pdp-zoom-pane');
+          var canZoom = frame && mainImg && lens && pane;
+          var hoverCapable = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+          var ZOOM = 2.4;
 
-      // Slider: track which slide is centred so the dots, the lightbox and
-      // the zoom pane all act on the image the shopper is actually looking
-      // at rather than always on the first one.
-      var slider = document.getElementById('pdp-slider');
-      var dots = [].slice.call(document.querySelectorAll('[data-pdp-dot]'));
-      var slides = slider ? [].slice.call(slider.querySelectorAll('.pdp-slide img')) : [];
-      var activeIndex = 0;
+          // Slider: track which slide is centred so the dots, the lightbox and
+          // the zoom pane all act on the image the shopper is actually looking
+          // at rather than always on the first one.
+          var slider = document.getElementById('pdp-slider');
+          var dots = [].slice.call(document.querySelectorAll('[data-pdp-dot]'));
+          var slides = slider ? [].slice.call(slider.querySelectorAll('.pdp-slide img')) : [];
+          var activeIndex = 0;
 
-      function currentImage() {
-        return slides[activeIndex] || mainImg;
-      }
-
-      if (slider && slides.length) {
-        slider.addEventListener('scroll', function () {
-          var index = Math.round(slider.scrollLeft / slider.clientWidth);
-          if (index === activeIndex || !slides[index]) return;
-          activeIndex = index;
-          dots.forEach(function (dot, i) { dot.classList.toggle('is-active', i === index); });
-        }, { passive: true });
-
-        dots.forEach(function (dot, i) {
-          dot.addEventListener('click', function () {
-            slider.scrollTo({ left: slider.clientWidth * i, behavior: 'smooth' });
-          });
-        });
-      }
-
-      function syncPaneImage() {
-        pane.style.backgroundImage = 'url("' + (mainImg.currentSrc || mainImg.src) + '")';
-      }
-
-      if (canZoom) {
-        syncPaneImage();
-        mainImg.addEventListener('load', syncPaneImage);
-
-        frame.addEventListener('mousemove', function (e) {
-          if (!hoverCapable || window.innerWidth < 1024) return;
-          var rect = frame.getBoundingClientRect();
-          var x = e.clientX - rect.left;
-          var y = e.clientY - rect.top;
-          if (x < 0 || y < 0 || x > rect.width || y > rect.height) return;
-
-          var lensW = rect.width / ZOOM;
-          var lensH = rect.height / ZOOM;
-          var lx = Math.min(Math.max(x - lensW / 2, 0), rect.width - lensW);
-          var ly = Math.min(Math.max(y - lensH / 2, 0), rect.height - lensH);
-
-          lens.style.width = lensW + 'px';
-          lens.style.height = lensH + 'px';
-          lens.style.left = lx + 'px';
-          lens.style.top = ly + 'px';
-          lens.style.display = 'block';
-          pane.style.display = 'block';
-
-          var bgX = rect.width - lensW > 0 ? (lx / (rect.width - lensW)) * 100 : 0;
-          var bgY = rect.height - lensH > 0 ? (ly / (rect.height - lensH)) * 100 : 0;
-          pane.style.backgroundSize = (ZOOM * 100) + '%';
-          pane.style.backgroundPosition = bgX + '% ' + bgY + '%';
-        });
-
-        frame.addEventListener('mouseleave', function () {
-          lens.style.display = 'none';
-          pane.style.display = 'none';
-        });
-      }
-
-      // Expand icon -> full-screen lightbox of the current main image.
-      var expandBtn = document.getElementById('pdp-expand-btn');
-      var lightbox = document.getElementById('pdp-lightbox');
-      var lightboxImg = document.getElementById('pdp-lightbox-img');
-      var lightboxClose = lightbox && lightbox.querySelector('[data-lightbox-close]');
-
-      if (expandBtn && lightbox && lightboxImg && mainImg) {
-        function openLightbox() {
-          lightboxImg.src = mainImg.currentSrc || mainImg.src;
-          lightboxImg.alt = mainImg.alt;
-          lightbox.hidden = false;
-          document.body.style.overflow = 'hidden';
-        }
-        function closeLightbox() {
-          lightbox.hidden = true;
-          document.body.style.overflow = '';
-        }
-        expandBtn.addEventListener('click', openLightbox);
-        if (lightboxClose) lightboxClose.addEventListener('click', closeLightbox);
-        lightbox.addEventListener('click', function (e) {
-          if (e.target === lightbox) closeLightbox();
-        });
-        document.addEventListener('keydown', function (e) {
-          if (e.key === 'Escape' && !lightbox.hidden) closeLightbox();
-        });
-      }
-
-      // Share icon -> native share sheet where available, else copy the link.
-      var shareBtn = document.getElementById('pdp-share-btn');
-      if (shareBtn) {
-        shareBtn.addEventListener('click', function () {
-          var shareData = { title: document.title, url: window.location.href };
-          if (navigator.share) {
-            navigator.share(shareData).catch(function () {});
-            return;
+          function currentImage() {
+            return slides[activeIndex] || mainImg;
           }
-          if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(shareData.url).then(function () {
-              var tip = document.createElement('span');
-              tip.textContent = 'Link copied';
-              tip.className = 'pdp-share-tip';
-              shareBtn.style.position = 'relative';
-              shareBtn.appendChild(tip);
-              setTimeout(function () { tip.remove(); }, 1600);
-            }).catch(function () {});
+
+          if (slider && slides.length) {
+            slider.addEventListener('scroll', function () {
+              var index = Math.round(slider.scrollLeft / slider.clientWidth);
+              if (index === activeIndex || !slides[index]) return;
+              activeIndex = index;
+              dots.forEach(function (dot, i) { dot.classList.toggle('is-active', i === index); });
+            }, { passive: true });
+
+            dots.forEach(function (dot, i) {
+              dot.addEventListener('click', function () {
+                slider.scrollTo({ left: slider.clientWidth * i, behavior: 'smooth' });
+              });
+            });
           }
-        });
-      }
-    })();
-  </script>
-@endpush
+
+          function syncPaneImage() {
+            pane.style.backgroundImage = 'url("' + (mainImg.currentSrc || mainImg.src) + '")';
+          }
+
+          if (canZoom) {
+            syncPaneImage();
+            mainImg.addEventListener('load', syncPaneImage);
+
+            frame.addEventListener('mousemove', function (e) {
+              if (!hoverCapable || window.innerWidth < 1024) return;
+              var rect = frame.getBoundingClientRect();
+              var x = e.clientX - rect.left;
+              var y = e.clientY - rect.top;
+              if (x < 0 || y < 0 || x > rect.width || y > rect.height) return;
+
+              var lensW = rect.width / ZOOM;
+              var lensH = rect.height / ZOOM;
+              var lx = Math.min(Math.max(x - lensW / 2, 0), rect.width - lensW);
+              var ly = Math.min(Math.max(y - lensH / 2, 0), rect.height - lensH);
+
+              lens.style.width = lensW + 'px';
+              lens.style.height = lensH + 'px';
+              lens.style.left = lx + 'px';
+              lens.style.top = ly + 'px';
+              lens.style.display = 'block';
+              pane.style.display = 'block';
+
+              var bgX = rect.width - lensW > 0 ? (lx / (rect.width - lensW)) * 100 : 0;
+              var bgY = rect.height - lensH > 0 ? (ly / (rect.height - lensH)) * 100 : 0;
+              pane.style.backgroundSize = (ZOOM * 100) + '%';
+              pane.style.backgroundPosition = bgX + '% ' + bgY + '%';
+            });
+
+            frame.addEventListener('mouseleave', function () {
+              lens.style.display = 'none';
+              pane.style.display = 'none';
+            });
+          }
+
+          // Expand icon -> full-screen lightbox of the current main image.
+          var expandBtn = document.getElementById('pdp-expand-btn');
+          var lightbox = document.getElementById('pdp-lightbox');
+          var lightboxImg = document.getElementById('pdp-lightbox-img');
+          var lightboxClose = lightbox && lightbox.querySelector('[data-lightbox-close]');
+
+          if (expandBtn && lightbox && lightboxImg && mainImg) {
+            function openLightbox() {
+              lightboxImg.src = mainImg.currentSrc || mainImg.src;
+              lightboxImg.alt = mainImg.alt;
+              lightbox.hidden = false;
+              document.body.style.overflow = 'hidden';
+            }
+            function closeLightbox() {
+              lightbox.hidden = true;
+              document.body.style.overflow = '';
+            }
+            expandBtn.addEventListener('click', openLightbox);
+            if (lightboxClose) lightboxClose.addEventListener('click', closeLightbox);
+            lightbox.addEventListener('click', function (e) {
+              if (e.target === lightbox) closeLightbox();
+            });
+            document.addEventListener('keydown', function (e) {
+              if (e.key === 'Escape' && !lightbox.hidden) closeLightbox();
+            });
+          }
+
+          // Share icon -> native share sheet where available, else copy the link.
+          var shareBtn = document.getElementById('pdp-share-btn');
+          if (shareBtn) {
+            shareBtn.addEventListener('click', function () {
+              var shareData = { title: document.title, url: window.location.href };
+              if (navigator.share) {
+                navigator.share(shareData).catch(function () { });
+                return;
+              }
+              if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(shareData.url).then(function () {
+                  var tip = document.createElement('span');
+                  tip.textContent = 'Link copied';
+                  tip.className = 'pdp-share-tip';
+                  shareBtn.style.position = 'relative';
+                  shareBtn.appendChild(tip);
+                  setTimeout(function () { tip.remove(); }, 1600);
+                }).catch(function () { });
+              }
+            });
+          }
+        })();
+      </script>
+    @endpush

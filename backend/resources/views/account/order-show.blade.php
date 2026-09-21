@@ -16,7 +16,7 @@
     $currentStep = ($found = array_search($order->status, $pipelineKeys, true)) === false ? -1 : $found;
   @endphp
 
-  <nav class="mx-auto w-full max-w-wrapper px-3 md:px-4 flex flex-wrap items-center gap-1.5 py-4 text-[13px] text-muted" aria-label="Breadcrumb">
+  <nav class="mx-auto w-full max-w-wrapper px-3 md:px-4 flex flex-wrap items-center gap-1.5 py-2 text-[13px] text-muted border-b border-line" aria-label="Breadcrumb">
     <x-breadcrumb :items="[['label' => 'My Account', 'url' => route('account.index')], ['label' => 'Order #'.$order->order_number]]" />
   </nav>
 

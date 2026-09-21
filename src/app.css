@@ -405,22 +405,18 @@
     .product-card:hover .product-card__img { transform: none; }
   }
 
-  /* ---- Card image scroller: swipe through a product's photos from the
-     grid, with dots showing position. The frame is a link, so horizontal
-     panning is handled by native scroll-snap rather than JS drag. ---- */
+  /* ---- Card image scroller: JS creates a flex track inside and slides it
+     with translateX for a true infinite loop. The scroller is just the
+     clipping viewport — overflow hidden, full size. ---- */
   .card-scroller {
-    @apply flex h-full w-full;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    @apply relative block h-full w-full;
+    overflow: hidden !important;
   }
-  .card-scroller::-webkit-scrollbar { display: none; }
   .card-scroller__img {
-    @apply h-full w-full shrink-0;
-    scroll-snap-align: center;
+    @apply h-full w-full shrink-0 object-cover;
+    /* No scroll-snap — JS handles sliding via transform track. */
   }
-  /* The zoom-on-hover would fight the snap offsets mid-scroll. */
+  /* The zoom-on-hover would fight the slide animation. */
   .product-card:hover .card-scroller__img { transform: none; }
 
   .card-dots {
@@ -661,4 +657,12 @@
   .trust-col-icon > svg { @apply h-[18px] w-[18px]; }
   .trust-col-title { @apply text-[11px] font-bold leading-tight text-heading; }
   .trust-col-note { @apply mt-0.5 text-[10px] leading-tight text-muted; }
+}
+
+/* ---- Image lightbox — zoom cursor on clickable product images ---- */
+.card-scroller__img,
+.pdp-slide img,
+.pdp-main img,
+[data-lightbox] {
+  cursor: zoom-in;
 }

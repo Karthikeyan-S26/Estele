@@ -88,6 +88,11 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasMany(SellInvitation::class, 'vendor_id')->latest();
     }
 
+    public function oldJewelleryRequests(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(OldJewelleryRequest::class)->latest();
+    }
+
     /**
      * Get the attributes that should be cast.
      *

@@ -6,7 +6,7 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   plugins: [tailwindcss()],
   build: {
-    outDir: 'dist',
+    outDir: 'backend/public/theme',
     emptyOutDir: true,
     manifest: false,
     // Lightning CSS (Vite's default minifier) collapses compound selectors

@@ -1513,21 +1513,15 @@
   }
 
   .card-scroller {
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
     width: 100%;
     height: 100%;
-    display: flex;
-    overflow-x: auto;
-  }
-
-  .card-scroller::-webkit-scrollbar {
-    display: none;
+    display: block;
+    position: relative;
+    overflow: hidden !important;
   }
 
   .card-scroller__img {
-    scroll-snap-align: center;
+    object-fit: cover;
     flex-shrink: 0;
     width: 100%;
     height: 100%;
@@ -3760,6 +3754,10 @@
     cursor: pointer;
   }
 
+  .cursor-zoom-in {
+    cursor: zoom-in;
+  }
+
   .resize {
     resize: both;
   }
@@ -3992,12 +3990,12 @@
     row-gap: calc(var(--spacing) * 2);
   }
 
-  .gap-y-5 {
-    row-gap: calc(var(--spacing) * 5);
+  .gap-y-4 {
+    row-gap: calc(var(--spacing) * 4);
   }
 
-  .gap-y-8 {
-    row-gap: calc(var(--spacing) * 8);
+  .gap-y-5 {
+    row-gap: calc(var(--spacing) * 5);
   }
 
   :where(.divide-y > :not(:last-child)) {
@@ -5196,14 +5194,6 @@
     padding-top: calc(var(--spacing) * 8);
   }
 
-  .pt-10 {
-    padding-top: calc(var(--spacing) * 10);
-  }
-
-  .pt-12 {
-    padding-top: calc(var(--spacing) * 12);
-  }
-
   .pr-1 {
     padding-right: var(--spacing);
   }
@@ -5274,14 +5264,6 @@
 
   .pb-12 {
     padding-bottom: calc(var(--spacing) * 12);
-  }
-
-  .pb-24 {
-    padding-bottom: calc(var(--spacing) * 24);
-  }
-
-  .pb-\[160px\] {
-    padding-bottom: 160px;
   }
 
   .pb-\[calc\(16px\+env\(safe-area-inset-bottom\)\)\] {
@@ -7437,12 +7419,12 @@
       padding-top: 0;
     }
 
-    .md\:pt-12 {
-      padding-top: calc(var(--spacing) * 12);
+    .md\:pt-6 {
+      padding-top: calc(var(--spacing) * 6);
     }
 
-    .md\:pt-16 {
-      padding-top: calc(var(--spacing) * 16);
+    .md\:pt-8 {
+      padding-top: calc(var(--spacing) * 8);
     }
 
     .md\:pt-\[15px\] {
@@ -7469,12 +7451,20 @@
       padding-bottom: calc(var(--spacing) * 4.5);
     }
 
-    .md\:pb-16 {
-      padding-bottom: calc(var(--spacing) * 16);
+    .md\:pb-5 {
+      padding-bottom: calc(var(--spacing) * 5);
     }
 
-    .md\:pb-20 {
-      padding-bottom: calc(var(--spacing) * 20);
+    .md\:pb-6 {
+      padding-bottom: calc(var(--spacing) * 6);
+    }
+
+    .md\:pb-8 {
+      padding-bottom: calc(var(--spacing) * 8);
+    }
+
+    .md\:pb-10 {
+      padding-bottom: calc(var(--spacing) * 10);
     }
 
     .md\:pb-\[30px\] {
@@ -7769,10 +7759,6 @@
 
     .lg\:gap-6 {
       gap: calc(var(--spacing) * 6);
-    }
-
-    .lg\:gap-8 {
-      gap: calc(var(--spacing) * 8);
     }
 
     .lg\:gap-14 {
@@ -8306,6 +8292,10 @@
     content: var(--tw-content);
     background-color: var(--color-accent);
   }
+}
+
+.card-scroller__img, .pdp-slide img, .pdp-main img, [data-lightbox] {
+  cursor: zoom-in;
 }
 
 @property --tw-translate-x {

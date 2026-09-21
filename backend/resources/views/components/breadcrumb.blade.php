@@ -1,6 +1,6 @@
 @props(['items'])
 
-<nav class="mb-4 flex flex-wrap items-center gap-1 text-[11px] uppercase tracking-[0.3px] text-muted" aria-label="Breadcrumb">
+<nav class="flex flex-wrap items-center gap-1 text-[11px] uppercase tracking-[0.3px] text-muted">
   <a class="hover:text-accent" href="{{ route('home') }}">Home</a>
   @foreach($items as $item)
     <span aria-hidden="true">/</span>

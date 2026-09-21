@@ -1449,33 +1449,112 @@ import './app.css';
   });
 
   /* ------------------------------------------------------------------------
-     PRODUCT CARD IMAGE SCROLLER — keeps the dot indicator in step with the
-     snapped image. Delegated via one listener per scroller (scroll doesn't
-     bubble, so it can't be delegated from the document).
+     PRODUCT CARD IMAGE SCROLLER — true infinite loop via CSS transform track.
+     Clones the last image before position-0 and the first image at the end.
+     Track slides with translateX. When we land on a clone we instantly
+     teleport (no transition) to the matching real slide — zero visible jump,
+     no stopping at edges. Works on touch and mouse drag.
      --------------------------------------------------------------------- */
-  $$('[data-card-scroller]').forEach(function (scroller) {
-    var dots = scroller.parentElement && $('[data-card-dots]', scroller.parentElement);
-    if (!dots) return;
-    var items = [].slice.call(dots.children);
-    var active = 0;
+  function initCardScroller(scroller) {
+    var dotsBox = scroller.parentElement && $('[data-card-dots]', scroller.parentElement);
+    if (!dotsBox) return;
 
-    scroller.addEventListener('scroll', function () {
-      var index = Math.round(scroller.scrollLeft / scroller.clientWidth);
-      if (index === active || !items[index]) return;
-      items[active].classList.remove('is-active');
-      items[index].classList.add('is-active');
-      active = index;
-    }, { passive: true });
+    var origImgs  = [].slice.call(scroller.querySelectorAll('.card-scroller__img'));
+    var realCount = origImgs.length;
+    if (realCount < 2) return;
 
-    // A horizontal swipe should page the images, not follow the card's link.
-    var startX = 0;
-    scroller.addEventListener('touchstart', function (e) {
-      startX = e.touches[0].clientX;
-    }, { passive: true });
-    scroller.addEventListener('click', function (e) {
-      if (Math.abs(e.clientX - startX) > 10) e.preventDefault();
+    /* Build a flex track inside the scroller. */
+    scroller.style.overflow = 'hidden';
+    scroller.style.position = 'relative';
+
+    var track = document.createElement('div');
+    track.style.cssText =
+      'display:flex;width:100%;height:100%;' +
+      'transition:transform .38s cubic-bezier(.25,.46,.45,.94);' +
+      'will-change:transform;';
+
+    /* Move real images into the track with full-size flex styles. */
+    function styleSlide(img) {
+      img.style.flex       = '0 0 100%';
+      img.style.width      = '100%';
+      img.style.height     = '100%';
+      img.style.objectFit  = 'cover';
+      img.style.flexShrink = '0';
+    }
+    origImgs.forEach(function (img) { styleSlide(img); track.appendChild(img); });
+
+    /* Sentinel clones: last-image clone at head, first-image clone at tail. */
+    var cloneHead = origImgs[realCount - 1].cloneNode(true);
+    var cloneTail = origImgs[0].cloneNode(true);
+    cloneHead.setAttribute('aria-hidden', 'true');
+    cloneTail.setAttribute('aria-hidden', 'true');
+    styleSlide(cloneHead); styleSlide(cloneTail);
+    track.insertBefore(cloneHead, track.firstChild);
+    track.appendChild(cloneTail);
+
+    scroller.appendChild(track);
+
+    /* current is 1-based: 0 = cloneHead, 1..realCount = real, realCount+1 = cloneTail */
+    var current  = 1;
+    var dotItems = [].slice.call(dotsBox.children);
+
+    function setPos(idx, animate) {
+      if (!animate) track.style.transition = 'none';
+      track.style.transform = 'translateX(-' + (idx * 100) + '%)';
+      if (!animate) { void track.offsetWidth; track.style.transition = 'transform .38s cubic-bezier(.25,.46,.45,.94)'; }
+    }
+
+    function syncDots(realIdx) {
+      dotItems.forEach(function (d, i) { d.classList.toggle('is-active', i === realIdx); });
+    }
+
+    setPos(current, false);
+    syncDots(0);
+
+    /* After each animated move, jump from clone to real counterpart. */
+    track.addEventListener('transitionend', function () {
+      if (current === 0) {
+        current = realCount;          // cloneHead → real last
+        setPos(current, false);
+      } else if (current === realCount + 1) {
+        current = 1;                  // cloneTail → real first
+        setPos(current, false);
+      }
+      syncDots(current - 1);
     });
-  });
+
+    function goTo(idx) { current = idx; setPos(current, true); }
+
+    /* --- Touch swipe (mobile) ------------------------------------------ */
+    var txStart = 0, tyStart = 0, txMoved = 0, isHoriz = false;
+
+    scroller.addEventListener('touchstart', function (e) {
+      txStart = e.touches[0].clientX;
+      tyStart = e.touches[0].clientY;
+      txMoved = 0; isHoriz = false;
+    }, { passive: true });
+
+    scroller.addEventListener('touchmove', function (e) {
+      var dx = Math.abs(e.touches[0].clientX - txStart);
+      var dy = Math.abs(e.touches[0].clientY - tyStart);
+      if (!isHoriz && dx > dy + 4) isHoriz = true;
+    }, { passive: true });
+
+    scroller.addEventListener('touchend', function (e) {
+      txMoved = e.changedTouches[0].clientX - txStart;
+      if (isHoriz && Math.abs(txMoved) > 28) {
+        goTo(txMoved < 0 ? current + 1 : current - 1);
+      }
+    }, { passive: true });
+
+    /* Prevent card link firing after a horizontal swipe. */
+    scroller.addEventListener('click', function (e) {
+      if (Math.abs(txMoved) > 8) e.preventDefault();
+    });
+  }
+
+  $$('[data-card-scroller]').forEach(initCardScroller);
+
 
   /* ------------------------------------------------------------------------
      WISHLIST PAGE — the server sends the whole active catalogue because saved
@@ -2056,5 +2135,166 @@ import './app.css';
       setTimeout(tick, 1000);
     })();
   });
+
+
+  /* ------------------------------------------------------------------------
+     GLOBAL IMAGE LIGHTBOX — tap / click any product image to zoom fullscreen.
+     Works on:
+       • Product card images in the grid (card-scroller images)
+       • PDP gallery slider images (.pdp-slide img, .pdp-main img)
+       • Any img tagged [data-lightbox]
+     Closes on: backdrop click, Escape key, or a quick swipe-down.
+     --------------------------------------------------------------------- */
+  (function () {
+    /* Build the overlay once and reuse it. */
+    var overlay = document.createElement('div');
+    overlay.id  = 'img-lightbox';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', 'Image zoom');
+    overlay.style.cssText = [
+      'position:fixed;inset:0;z-index:9999;',
+      'background:rgba(0,0,0,0.92);',
+      'display:flex;align-items:center;justify-content:center;',
+      'opacity:0;transition:opacity .22s ease;',
+      'cursor:zoom-out;',
+      'touch-action:none;',        /* prevent body scroll while open */
+      '-webkit-overflow-scrolling:touch;'
+    ].join('');
+
+    var lbImg = document.createElement('img');
+    lbImg.style.cssText = [
+      'max-width:96vw;max-height:92vh;',
+      'object-fit:contain;border-radius:4px;',
+      'transform:scale(0.88);transition:transform .28s cubic-bezier(.16,1,.3,1);',
+      'pointer-events:none;',       /* clicks pass through to the overlay */
+      'user-select:none;-webkit-user-select:none;'
+    ].join('');
+
+    /* Close × button */
+    var closeBtn = document.createElement('button');
+    closeBtn.innerHTML = '&times;';
+    closeBtn.setAttribute('aria-label', 'Close image');
+    closeBtn.style.cssText = [
+      'position:absolute;top:14px;right:18px;',
+      'background:none;border:none;',
+      'color:#fff;font-size:36px;line-height:1;cursor:pointer;',
+      'opacity:.7;transition:opacity .15s;'
+    ].join('');
+    closeBtn.addEventListener('mouseenter', function () { closeBtn.style.opacity = '1'; });
+    closeBtn.addEventListener('mouseleave', function () { closeBtn.style.opacity = '.7'; });
+
+    overlay.appendChild(lbImg);
+    overlay.appendChild(closeBtn);
+    document.body.appendChild(overlay);
+
+    function openLightbox(src, alt) {
+      lbImg.src = src;
+      lbImg.alt = alt || '';
+      overlay.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      /* Trigger transitions on next frame */
+      requestAnimationFrame(function () {
+        overlay.style.opacity = '1';
+        lbImg.style.transform = 'scale(1)';
+      });
+    }
+
+    function closeLightbox() {
+      overlay.style.opacity = '0';
+      lbImg.style.transform = 'scale(0.88)';
+      setTimeout(function () {
+        overlay.style.display = 'none';
+        document.body.style.overflow = '';
+        lbImg.src = '';
+      }, 240);
+    }
+
+    /* Best quality URL: prefer the largest srcset entry, else src. */
+    function bestSrc(img) {
+      var srcset = img.getAttribute('srcset') || '';
+      if (srcset) {
+        /* Pick the entry with the highest stated width descriptor. */
+        var best = srcset.split(',').reduce(function (acc, part) {
+          part = part.trim();
+          var m = part.match(/^(\S+)\s+(\d+)w$/);
+          if (m && parseInt(m[2], 10) > acc.w) {
+            return { url: m[1], w: parseInt(m[2], 10) };
+          }
+          return acc;
+        }, { url: '', w: 0 });
+        if (best.url) return best.url;
+      }
+      /* Fall back to data-slide-full (PDP uses this), then plain src. */
+      return img.getAttribute('data-slide-full') || img.src;
+    }
+
+    /* Determine if a click was a scroll/swipe (don't open lightbox then). */
+    var touchStartY = 0;
+    var touchStartX = 0;
+    document.addEventListener('touchstart', function (e) {
+      touchStartY = e.touches[0].clientY;
+      touchStartX = e.touches[0].clientX;
+    }, { passive: true });
+
+    /* The selector targets:
+         1. Images inside the card scroller
+         2. Images inside the PDP gallery
+         3. Any image tagged [data-lightbox]
+       We exclude navigation / logo / badge images by requiring the image
+       to sit inside a known product image container. */
+    var IMG_SELECTOR = [
+      '.pdp-slide img',
+      '.pdp-main img',
+      '[data-lightbox]'
+    ].join(',');
+
+    document.addEventListener('click', function (e) {
+      /* Is the click target (or a parent up to 3 levels) a product image? */
+      var img = null;
+      var node = e.target;
+      for (var i = 0; i < 4; i++) {
+        if (!node || node === document.body) break;
+        if (node.matches && node.matches(IMG_SELECTOR)) { img = node; break; }
+        node = node.parentElement;
+      }
+      if (!img) return;
+
+      /* Don't open if it was a touch-swipe (moved > 12px). */
+      if (e.type === 'click') {
+        var dx = (e.clientX || 0) - touchStartX;
+        var dy = (e.clientY || 0) - touchStartY;
+        if (Math.abs(dx) > 12 || Math.abs(dy) > 12) return;
+      }
+
+      e.preventDefault();
+      e.stopPropagation();
+      openLightbox(bestSrc(img), img.alt);
+    });
+
+    /* Close on overlay/button click */
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay || e.target === closeBtn) closeLightbox();
+    });
+
+    /* Close on Escape */
+    document.addEventListener('keydown', function (e) {
+      if ((e.key === 'Escape' || e.keyCode === 27) && overlay.style.display !== 'none') {
+        closeLightbox();
+      }
+    });
+
+    /* Close on swipe-down inside the lightbox */
+    var lbTouchY = 0;
+    overlay.addEventListener('touchstart', function (e) {
+      lbTouchY = e.touches[0].clientY;
+    }, { passive: true });
+    overlay.addEventListener('touchend', function (e) {
+      if (e.changedTouches[0].clientY - lbTouchY > 60) closeLightbox();
+    }, { passive: true });
+
+    /* Initially hidden */
+    overlay.style.display = 'none';
+  })();
 
 })();
