@@ -11,8 +11,14 @@ class PaymentController extends Controller
 {
     public function __construct(private readonly PaymentManager $payments) {}
 
-    public function show(Order $order)
+    public function show(Request $request, Order $order)
     {
+        // Same reachable-by-order_number exposure as the confirmation page
+        // (and it renders the customer's name + contact details too), so it
+        // must prove the caller owns the order before doing anything else —
+        // including before any payment-gateway work.
+        abort_unless(CheckoutController::mayViewOrder($request, $order), 404);
+
         if ($order->status === 'cancelled') {
             return redirect()->route('home')
                 ->with('error', 'This order was cancelled before payment completed.');

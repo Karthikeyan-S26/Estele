@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
@@ -91,6 +92,17 @@ class User extends Authenticatable implements FilamentUser
     public function oldJewelleryRequests(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(OldJewelleryRequest::class)->latest();
+    }
+
+    /** The bidding vendor this login belongs to, if any. */
+    public function vendor(): HasOne
+    {
+        return $this->hasOne(Vendor::class);
+    }
+
+    public function oldJewelleryWalletCredits(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(OldJewelleryWalletCredit::class);
     }
 
     /**
