@@ -7,60 +7,59 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Renumbers old jewellery requests from OJ-{year}-{6 digits} to a plain
- * zero-padded sequence (001, 002, ...).
+ * Moves the old-jewellery counter from per-year (`year`) to a single global
+ * key (`sequence_key`), matching OldJewelleryRequestService::SEQUENCE_KEY.
  *
- * Two things have to change together:
- *  - the counter stops being per-year (the number no longer carries a year,
- *    so a yearly reset would re-issue numbers that already exist), and
- *  - existing rows are renumbered, because request_number is the route key
- *    and a mixed format would be visible to customers.
- *
- * Renumbering follows created_at order, so the oldest request becomes 001.
+ * DEPLOY-SAFETY (mobile API shares the production database): existing
+ * `request_number` values are website-visible (route key) and are NEVER
+ * rewritten here. The API looks requests up by column equality
+ * (OldJewelleryRequest::getRouteKeyName), so old OJ-{year}-{nnnnnn} numbers
+ * keep working unchanged alongside newly issued 001, 002, ... numbers.
  */
 return new class extends Migration
 {
     public function up(): void
     {
-        // 'year' now holds a sequence key, not a year — varchar(4) is too
-        // narrow for it. Renamed in the same breath so the column name stops
-        // lying about its contents.
-        Schema::table('old_jewellery_number_sequences', function (Blueprint $table) {
-            $table->string('year', 32)->change();
-        });
+        // Structural part only, guarded so re-runs and already-migrated
+        // databases are no-ops. No code in this codebase reads the `year`
+        // column (verified), and MySQL renames preserve all values.
+        if (Schema::hasColumn('old_jewellery_number_sequences', 'year')
+            && ! Schema::hasColumn('old_jewellery_number_sequences', 'sequence_key')) {
+            // 'year' now holds a sequence key, not a year — varchar(4) is too
+            // narrow for it. Renamed in the same breath so the column name stops
+            // lying about its contents.
+            Schema::table('old_jewellery_number_sequences', function (Blueprint $table) {
+                $table->string('year', 32)->change();
+            });
 
-        Schema::table('old_jewellery_number_sequences', function (Blueprint $table) {
-            $table->renameColumn('year', 'sequence_key');
-        });
+            Schema::table('old_jewellery_number_sequences', function (Blueprint $table) {
+                $table->renameColumn('year', 'sequence_key');
+            });
+        }
 
         DB::transaction(function () {
-            $requests = DB::table('old_jewellery_requests')
-                ->orderBy('created_at')
-                ->orderBy('id')
-                ->get(['id']);
+            $requestCount = DB::table('old_jewellery_requests')->count();
 
-            // Two passes with a temporary prefix: request_number is UNIQUE, so
-            // assigning "001" directly can collide with a row that still holds
-            // an old number mid-loop.
-            foreach ($requests as $index => $request) {
-                DB::table('old_jewellery_requests')
-                    ->where('id', $request->id)
-                    ->update(['request_number' => 'tmp-'.($index + 1)]);
+            $existing = DB::table('old_jewellery_number_sequences')
+                ->where('sequence_key', OldJewelleryRequestService::SEQUENCE_KEY)
+                ->first();
+
+            // Never move the counter backwards: newly issued numbers must
+            // never collide with existing ones on the UNIQUE request_number.
+            $lastValue = max((int) ($existing->last_value ?? 0), $requestCount);
+
+            if ($existing) {
+                if ($lastValue > (int) $existing->last_value) {
+                    DB::table('old_jewellery_number_sequences')
+                        ->where('sequence_key', OldJewelleryRequestService::SEQUENCE_KEY)
+                        ->update(['last_value' => $lastValue]);
+                }
+            } else {
+                DB::table('old_jewellery_number_sequences')->insert([
+                    'sequence_key' => OldJewelleryRequestService::SEQUENCE_KEY,
+                    'last_value' => $lastValue,
+                ]);
             }
-
-            foreach ($requests as $index => $request) {
-                DB::table('old_jewellery_requests')
-                    ->where('id', $request->id)
-                    ->update(['request_number' => sprintf('%03d', $index + 1)]);
-            }
-
-            // Point the counter past the highest number just assigned, so the
-            // next new request continues the run instead of repeating one.
-            DB::table('old_jewellery_number_sequences')->delete();
-            DB::table('old_jewellery_number_sequences')->insert([
-                'sequence_key' => OldJewelleryRequestService::SEQUENCE_KEY,
-                'last_value' => $requests->count(),
-            ]);
         });
     }
 
