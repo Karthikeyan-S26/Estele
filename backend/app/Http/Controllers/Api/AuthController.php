@@ -167,7 +167,11 @@ class AuthController
             'phone' => ['required', 'digits_between:10,15'],
         ]);
 
-        $this->otp->issue($validated['phone']);
+        // Same canonicalisation as the website's OtpAuthController::sendCode:
+        // 919876543210 / 0987654321 / 9876543210 all address one user + OTP row.
+        $phone = OtpManager::normalisePhone($validated['phone']);
+
+        $this->otp->issue($phone);
 
         return $this->message('An OTP has been sent to your phone.');
     }
@@ -187,13 +191,17 @@ class AuthController
             'code' => ['required', 'digits:6'],
         ]);
 
-        if (! $this->otp->verify($validated['phone'], $validated['code'])) {
+        // Canonical form shared with sendMobileAuthOtp and the website login —
+        // the OTP row and the user lookup must use the identical key.
+        $phone = OtpManager::normalisePhone($validated['phone']);
+
+        if (! $this->otp->verify($phone, $validated['code'])) {
             return $this->error('That code is incorrect or has expired.', 422, [
                 'code' => ['That code is incorrect or has expired.'],
             ]);
         }
 
-        $user = User::where('phone', $validated['phone'])->first();
+        $user = User::where('phone', $phone)->first();
 
         if ($user) {
             // Existing customer — same cart hand-off as the login paths.
@@ -216,7 +224,7 @@ class AuthController
 
         // New customer — stamp a single-use registration nonce (same contract as
         // verifyRegisterOtp) so /api/register can validate the verified phone.
-        $otp = OtpCode::where('phone', $validated['phone'])
+        $otp = OtpCode::where('phone', $phone)
             ->whereNotNull('consumed_at')
             ->whereNull('verified_token')
             ->latest('id')
@@ -285,13 +293,17 @@ class AuthController
             'phone' => ['required', 'digits_between:10,15'],
         ]);
 
-        if (! User::where('phone', $validated['phone'])->exists()) {
+        // Canonical form shared with the website login — the existence check
+        // and the issued OTP must use the identical key.
+        $phone = OtpManager::normalisePhone($validated['phone']);
+
+        if (! User::where('phone', $phone)->exists()) {
             // Identical wording to the success case — must not reveal whether a
             // number is registered (enumeration guard).
             return $this->message('An OTP has been sent to your phone.');
         }
 
-        $this->otp->issue($validated['phone']);
+        $this->otp->issue($phone);
 
         return $this->message('An OTP has been sent to your phone.');
     }
@@ -306,13 +318,16 @@ class AuthController
             'code' => ['required', 'digits:6'],
         ]);
 
-        if (! $this->otp->verify($validated['phone'], $validated['code'])) {
+        // Canonical form shared with sendLoginOtp and the website login.
+        $phone = OtpManager::normalisePhone($validated['phone']);
+
+        if (! $this->otp->verify($phone, $validated['code'])) {
             return $this->error('That code is incorrect or has expired.', 422, [
                 'code' => ['That code is incorrect or has expired.'],
             ]);
         }
 
-        $user = User::where('phone', $validated['phone'])->first();
+        $user = User::where('phone', $phone)->first();
         if (! $user) {
             return $this->error('No account found for this phone number.', 422, [
                 'phone' => ['No account found for this phone number.'],
