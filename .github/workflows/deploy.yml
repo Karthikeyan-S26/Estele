@@ -182,7 +182,14 @@ jobs:
           php artisan optimize:clear
 
           echo "== Rebuilding production caches =="
-          php artisan optimize
+          # config:cache + view:cache ONLY — never `php artisan optimize` or
+          # `route:cache` here. Filament v5 registers admin panel routes
+          # dynamically at boot and they are not compatible with a cached
+          # route file; caching routes previously returned 500 on
+          # /admin/login after deploy (see backend/docker/start.sh, which
+          # deliberately skips route:cache for the same reason).
+          php artisan config:cache
+          php artisan view:cache
 
           echo "== Ensuring the public storage symlink exists =="
           # `php artisan storage:link` shells out via exec()/proc_open,
