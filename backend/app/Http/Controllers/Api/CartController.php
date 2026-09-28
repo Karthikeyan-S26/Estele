@@ -8,6 +8,7 @@ use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Coupon;
 use App\Models\Product;
+use App\Services\Shipping\ShippingManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -17,9 +18,13 @@ class CartController
 {
     use ApiResponses;
 
+    // Same shipping engine as the website cart — store shipping-config
+    // changes apply to app + web identically, never a hardcoded mirror.
+    public function __construct(private readonly ShippingManager $shipping) {}
+
     /**
      * GET /api/cart — full cart payload: items, coupon, totals (subtotal,
-     * discount, shipping, total with the free-above-₹999 rule applied).
+     * discount, shipping, total with the store's live shipping rule applied).
      */
     public function index(Request $request): JsonResponse
     {
@@ -244,16 +249,15 @@ class CartController
 
     private function shippingQuote(float $subtotal, int $quantity): array
     {
-        // Free shipping above ₹999 — hardcoded mirror of the FlatRateCalculator
-        // default so the API response stays correct without a DB config look-up
-        // per request.
-        $freeAbove = 999;
-        $isFree = $subtotal >= $freeAbove || $subtotal <= 0.0;
+        // Delegate to the shared ShippingManager (flat-rate config, with
+        // Shiprocket fallback exactly as the website cart) instead of a
+        // hardcoded fee table that would drift from store settings.
+        $quote = $this->shipping->quote($subtotal, $quantity);
 
         return [
-            'fee' => $isFree ? 0.0 : 49.0,
-            'is_free' => $isFree,
-            'free_above' => $freeAbove,
+            'fee' => (float) $quote['fee'],
+            'is_free' => (bool) ($quote['free_shipping_applied'] ?? $quote['fee'] <= 0.0),
+            'free_above' => $this->shipping->freeShippingThreshold(),
         ];
     }
 
