@@ -22,10 +22,26 @@ class AccountScreen extends StatefulWidget {
 class _AccountScreenState extends State<AccountScreen> {
   User? _profile;
   bool _loadingFailed = false;
+  late final AuthProvider _authProvider;
 
   @override
   void initState() {
     super.initState();
+    _authProvider = context.read<AuthProvider>();
+    // Re-fetch the profile whenever auth changes (e.g. the user just signed
+    // in from this tab), instead of showing the pre-login stale state.
+    _authProvider.addListener(_onAuthChanged);
+    _refresh();
+  }
+
+  @override
+  void dispose() {
+    _authProvider.removeListener(_onAuthChanged);
+    super.dispose();
+  }
+
+  void _onAuthChanged() {
+    if (!mounted) return;
     _refresh();
   }
 
@@ -59,8 +75,10 @@ class _AccountScreenState extends State<AccountScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           Text('My account', style: AppTypography.scriptAccent(size: 30)),
-          Text(isGuest ? 'Welcome' : _profile?.name ?? _displayName(auth),
-              style: AppTypography.sectionTitle(size: 20)),
+          Text(
+            isGuest ? 'Welcome' : _profile?.name ?? _displayName(auth),
+            style: AppTypography.sectionTitle(size: 20),
+          ),
           const SizedBox(height: 4),
           Text(
             isGuest
@@ -72,9 +90,9 @@ class _AccountScreenState extends State<AccountScreen> {
 
           if (isGuest) ...[
             FilledButton(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-              ),
+              onPressed: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const LoginScreen())),
               child: const Text('Sign in / Create account'),
             ),
             const SizedBox(height: 24),
@@ -90,19 +108,35 @@ class _AccountScreenState extends State<AccountScreen> {
               ),
             // Menu group
             _GroupLabel('Shop'),
-            _Tile(icon: Icons.receipt_long_outlined, title: 'My orders', onTap: () => Navigator.of(context).pushNamed('/orders')),
+            _Tile(
+              icon: Icons.receipt_long_outlined,
+              title: 'My orders',
+              onTap: () => Navigator.of(context).pushNamed('/orders'),
+            ),
             _Tile(
               icon: Icons.favorite_outline_rounded,
               title: 'Wishlist',
-              trailing: wishlist.count > 0 ? Text('${wishlist.count}', style: AppTypography.bodySmall()) : null,
+              trailing: wishlist.count > 0
+                  ? Text('${wishlist.count}', style: AppTypography.bodySmall())
+                  : null,
               onTap: () => Navigator.of(context).pushNamed('/wishlist'),
             ),
-            _Tile(icon: Icons.location_on_outlined, title: 'Address book', onTap: () => Navigator.of(context).pushNamed('/addresses')),
+            _Tile(
+              icon: Icons.location_on_outlined,
+              title: 'Address book',
+              onTap: () => Navigator.of(context).pushNamed('/addresses'),
+            ),
             _Tile(
               icon: Icons.sell_outlined,
               title: 'Sell gold',
               subtitle: 'Old jewellery buy-back',
               onTap: () => Navigator.of(context).pushNamed('/sell'),
+            ),
+            _Tile(
+              icon: Icons.store_outlined,
+              title: 'Our stores',
+              subtitle: 'Bandra flagship · upcoming outlets',
+              onTap: () => Navigator.of(context).pushNamed('/stores'),
             ),
 
             _GroupLabel('Account'),
@@ -116,18 +150,44 @@ class _AccountScreenState extends State<AccountScreen> {
                 if (mounted) _refresh();
               },
             ),
-            _Tile(icon: Icons.wallet_outlined, title: 'Wallet',
-                trailing: _profile != null
-                    ? Text('₹${_profile!.walletBalance.round()}',
-                        style: AppTypography.bodyMedium(weight: FontWeight.w600, color: AppColors.accent))
-                    : null,
-                onTap: () => Navigator.of(context).pushNamed('/wallet')),
-            _Tile(icon: Icons.help_outline_rounded, title: 'Help & FAQ', onTap: () => Navigator.of(context).pushNamed('/faq')),
+            _Tile(
+              icon: Icons.wallet_outlined,
+              title: 'Wallet',
+              trailing: _profile != null
+                  ? Text(
+                      '₹${_profile!.walletBalance.round()}',
+                      style: AppTypography.bodyMedium(
+                        weight: FontWeight.w600,
+                        color: AppColors.accent,
+                      ),
+                    )
+                  : null,
+              onTap: () => Navigator.of(context).pushNamed('/wallet'),
+            ),
+            _Tile(
+              icon: Icons.help_outline_rounded,
+              title: 'Help & FAQ',
+              onTap: () => Navigator.of(context).pushNamed('/faq'),
+            ),
 
             _GroupLabel('Legal'),
-            _Tile(icon: Icons.info_outline_rounded, title: 'About Estele', onTap: () => Navigator.of(context).pushNamed('/cms/about')),
-            _Tile(icon: Icons.privacy_tip_outlined, title: 'Privacy policy', onTap: () => Navigator.of(context).pushNamed('/cms/privacy-policy')),
-            _Tile(icon: Icons.local_shipping_outlined, title: 'Shipping & returns', onTap: () => Navigator.of(context).pushNamed('/cms/shipping')),
+            _Tile(
+              icon: Icons.info_outline_rounded,
+              title: 'About Estele',
+              onTap: () => Navigator.of(context).pushNamed('/cms/about-us'),
+            ),
+            _Tile(
+              icon: Icons.privacy_tip_outlined,
+              title: 'Privacy policy',
+              onTap: () =>
+                  Navigator.of(context).pushNamed('/cms/privacy-policy'),
+            ),
+            _Tile(
+              icon: Icons.local_shipping_outlined,
+              title: 'Shipping & returns',
+              onTap: () =>
+                  Navigator.of(context).pushNamed('/cms/shipping-policy'),
+            ),
 
             const SizedBox(height: 16),
             OutlinedButton.icon(
@@ -179,9 +239,21 @@ class _GuestNote extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 6),
             child: Row(
               children: [
-                const Icon(Icons.check_rounded, size: 16, color: AppColors.gold),
+                const Icon(
+                  Icons.check_rounded,
+                  size: 16,
+                  color: AppColors.gold,
+                ),
                 const SizedBox(width: 8),
-                Expanded(child: Text(line, style: AppTypography.body(size: 13.5, color: AppColors.muted))),
+                Expanded(
+                  child: Text(
+                    line,
+                    style: AppTypography.body(
+                      size: 13.5,
+                      color: AppColors.muted,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -199,13 +271,22 @@ class _GroupLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 18, 0, 8),
-      child: Text(text, style: AppTypography.label(color: AppColors.muted, letterSpacing: 1.4)),
+      child: Text(
+        text,
+        style: AppTypography.label(color: AppColors.muted, letterSpacing: 1.4),
+      ),
     );
   }
 }
 
 class _Tile extends StatelessWidget {
-  const _Tile({required this.icon, required this.title, this.subtitle, this.trailing, required this.onTap});
+  const _Tile({
+    required this.icon,
+    required this.title,
+    this.subtitle,
+    this.trailing,
+    required this.onTap,
+  });
 
   final IconData icon;
   final String title;
@@ -226,11 +307,16 @@ class _Tile extends StatelessWidget {
         dense: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         leading: Icon(icon, size: 21, color: AppColors.accentDark),
-        title: Text(title, style: AppTypography.bodyMedium(weight: FontWeight.w500)),
+        title: Text(
+          title,
+          style: AppTypography.bodyMedium(weight: FontWeight.w500),
+        ),
         subtitle: subtitle != null
             ? Text(subtitle!, style: AppTypography.bodySmall(size: 11.5))
             : null,
-        trailing: trailing ?? const Icon(Icons.chevron_right_rounded, color: AppColors.muted),
+        trailing:
+            trailing ??
+            const Icon(Icons.chevron_right_rounded, color: AppColors.muted),
         onTap: onTap,
       ),
     );

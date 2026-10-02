@@ -5,6 +5,7 @@ import '../../models/blog_post.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 import '../../widgets/app_image.dart';
+import '../../widgets/estele_app_bar.dart';
 import '../../widgets/load_state.dart';
 import 'blog_post_screen.dart';
 
@@ -40,40 +41,44 @@ class _BlogScreenState extends State<BlogScreen> {
         });
       }
     } catch (_) {
-      if (mounted) setState(() {
-        _failed = true;
-        _loading = false;
-      });
+      if (mounted)
+        setState(() {
+          _failed = true;
+          _loading = false;
+        });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('The Journal')),
+      // Shared pinned Estele header instead of the plain title bar.
+      appBar: pushedAppBar(context),
       body: _loading
           ? const LoadState.loading()
           : _failed && _posts == null
-              ? LoadState.error(message: 'Could not load journal.', onRetry: _load)
-              : _posts!.isEmpty
-                  ? LoadState.empty(message: 'No stories published yet.')
-                  : RefreshIndicator(
-                      onRefresh: _load,
-                      child: ListView.builder(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _posts!.length,
-                        itemBuilder: (context, i) {
-                          final post = _posts![i];
-                          return _PostCard(
-                            post: post,
-                            onTap: () => Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => BlogPostScreen(slug: post.slug)),
-                            ),
-                          );
-                        },
+          ? LoadState.error(message: 'Could not load journal.', onRetry: _load)
+          : _posts!.isEmpty
+          ? LoadState.empty(message: 'No stories published yet.')
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: ListView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                itemCount: _posts!.length,
+                itemBuilder: (context, i) {
+                  final post = _posts![i];
+                  return _PostCard(
+                    post: post,
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => BlogPostScreen(slug: post.slug),
                       ),
                     ),
+                  );
+                },
+              ),
+            ),
     );
   }
 }
@@ -109,7 +114,11 @@ class _PostCard extends StatelessWidget {
                   if (post.category != null)
                     Text(
                       post.category!.toUpperCase(),
-                      style: AppTypography.label(size: 10, color: AppColors.accent, letterSpacing: 1.4),
+                      style: AppTypography.label(
+                        size: 10,
+                        color: AppColors.accent,
+                        letterSpacing: 1.4,
+                      ),
                     ),
                   const SizedBox(height: 6),
                   Text(post.title, style: AppTypography.editorial(size: 18)),
@@ -119,7 +128,10 @@ class _PostCard extends StatelessWidget {
                       post.excerpt!,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTypography.body(size: 13, color: AppColors.muted),
+                      style: AppTypography.body(
+                        size: 13,
+                        color: AppColors.muted,
+                      ),
                     ),
                   ],
                   if (post.publishedAt != null) ...[
@@ -139,7 +151,20 @@ class _PostCard extends StatelessWidget {
   }
 
   String _month(int m) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     return months[(m - 1).clamp(0, 11)];
   }
 }

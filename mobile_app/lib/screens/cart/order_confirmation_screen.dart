@@ -20,16 +20,26 @@ class OrderConfirmationScreen extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         children: [
           const SizedBox(height: 12),
-          const Icon(Icons.check_circle_rounded, size: 64, color: AppColors.success),
+          const Icon(
+            Icons.check_circle_rounded,
+            size: 64,
+            color: AppColors.success,
+          ),
           const SizedBox(height: 14),
           Center(
-            child: Text('Thank you! Your order is confirmed', style: AppTypography.editorial(size: 22)),
+            child: Text(
+              'Thank you! Your order is confirmed',
+              style: AppTypography.editorial(size: 22),
+            ),
           ),
           const SizedBox(height: 8),
           Center(
             child: Text(
               'Order number: ${order.orderNumber}',
-              style: AppTypography.bodyMedium(weight: FontWeight.w600, color: AppColors.accentDark),
+              style: AppTypography.bodyMedium(
+                weight: FontWeight.w600,
+                color: AppColors.accentDark,
+              ),
             ),
           ),
           const SizedBox(height: 24),
@@ -44,7 +54,10 @@ class OrderConfirmationScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Order summary', style: AppTypography.sectionTitle(size: 16)),
+                Text(
+                  'Order summary',
+                  style: AppTypography.sectionTitle(size: 16),
+                ),
                 const SizedBox(height: 10),
                 for (final item in order.items)
                   Padding(
@@ -61,8 +74,16 @@ class OrderConfirmationScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(3),
                           ),
                           child: Text(
-                            item.productTitle.isNotEmpty ? item.productTitle.trim().substring(0, 1).toUpperCase() : 'J',
-                            style: AppTypography.sectionTitle(size: 18, color: AppColors.accentDark),
+                            item.productTitle.isNotEmpty
+                                ? item.productTitle
+                                      .trim()
+                                      .substring(0, 1)
+                                      .toUpperCase()
+                                : 'J',
+                            style: AppTypography.sectionTitle(
+                              size: 18,
+                              color: AppColors.accentDark,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -76,8 +97,10 @@ class OrderConfirmationScreen extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                                 style: AppTypography.body(size: 13),
                               ),
-                              Text('Qty ${item.quantity} · ${formatINR(item.subtotal)}',
-                                  style: AppTypography.bodySmall(size: 12)),
+                              Text(
+                                'Qty ${item.quantity} · ${formatINR(item.subtotal)}',
+                                style: AppTypography.bodySmall(size: 12),
+                              ),
                             ],
                           ),
                         ),
@@ -87,8 +110,12 @@ class OrderConfirmationScreen extends StatelessWidget {
                 const Divider(height: 16),
                 _Row(label: 'Subtotal', value: order.subtotal),
                 if (order.discountAmount > 0)
-                  _Row(label: 'Discount${order.couponCode != null ? ' (${order.couponCode})' : ''}',
-                      value: -order.discountAmount, sale: true),
+                  _Row(
+                    label:
+                        'Discount${order.couponCode != null ? ' (${order.couponCode})' : ''}',
+                    value: -order.discountAmount,
+                    sale: true,
+                  ),
                 _Row(label: 'Shipping', value: order.shippingFee),
                 _Row(label: 'Total', value: order.total, bold: true),
               ],
@@ -104,7 +131,10 @@ class OrderConfirmationScreen extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.local_shipping_outlined, color: AppColors.accent),
+                const Icon(
+                  Icons.local_shipping_outlined,
+                  color: AppColors.accent,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -136,7 +166,12 @@ class OrderConfirmationScreen extends StatelessWidget {
 }
 
 class _Row extends StatelessWidget {
-  const _Row({required this.label, required this.value, this.sale = false, this.bold = false});
+  const _Row({
+    required this.label,
+    required this.value,
+    this.sale = false,
+    this.bold = false,
+  });
 
   final String label;
   final double value;
@@ -150,11 +185,23 @@ class _Row extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: AppTypography.body(size: 13.5, color: sale ? AppColors.sale : AppColors.muted)),
+          Text(
+            label,
+            style: AppTypography.body(
+              size: 13.5,
+              color: sale ? AppColors.sale : AppColors.muted,
+            ),
+          ),
           Text(
             formatINR(value),
-            style: (bold ? AppTypography.price(size: 15) : AppTypography.body(size: 13.5, weight: FontWeight.w600))
-                .copyWith(color: sale ? AppColors.sale : AppColors.heading),
+            style:
+                (bold
+                        ? AppTypography.price(size: 15)
+                        : AppTypography.body(
+                            size: 13.5,
+                            weight: FontWeight.w600,
+                          ))
+                    .copyWith(color: sale ? AppColors.sale : AppColors.heading),
           ),
         ],
       ),

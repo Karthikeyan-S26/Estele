@@ -76,19 +76,29 @@ class SellRequest {
       status: json['status'] as String,
       imageUrl: json['image_url'] as String?,
       videoUrl: json['video_url'] as String?,
-      bidsStartAt: json['bids_start_at'] != null ? DateTime.tryParse(json['bids_start_at'] as String) : null,
-      bidsEndAt: json['bids_end_at'] != null ? DateTime.tryParse(json['bids_end_at'] as String) : null,
+      bidsStartAt: json['bids_start_at'] != null
+          ? DateTime.tryParse(json['bids_start_at'] as String)
+          : null,
+      bidsEndAt: json['bids_end_at'] != null
+          ? DateTime.tryParse(json['bids_end_at'] as String)
+          : null,
       biddingOpen: json['bidding_open'] as bool? ?? false,
       bidCount: (json['bid_count'] as num?)?.toInt() ?? 0,
       highestBidAmount: (json['highest_bid_amount'] as num?)?.toDouble(),
       adminValuation: (json['admin_valuation'] as num?)?.toDouble(),
       deductionAmount: (json['deduction_amount'] as num?)?.toDouble(),
       walletCredit: (json['wallet_credit'] as num?)?.toDouble(),
-      settlementAt: json['settlement_at'] != null ? DateTime.tryParse(json['settlement_at'] as String) : null,
-      resultSelectedAt: json['result_selected_at'] != null ? DateTime.tryParse(json['result_selected_at'] as String) : null,
+      settlementAt: json['settlement_at'] != null
+          ? DateTime.tryParse(json['settlement_at'] as String)
+          : null,
+      resultSelectedAt: json['result_selected_at'] != null
+          ? DateTime.tryParse(json['result_selected_at'] as String)
+          : null,
       cancelledBy: json['cancelled_by'] as String?,
       cancelReason: json['cancel_reason'] as String?,
-      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at'] as String) : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'] as String)
+          : null,
       timeline: ((json['timeline'] as List<dynamic>?) ?? const [])
           .map((e) => SellTimelineEvent.fromJson(e as Map<String, dynamic>))
           .toList(),

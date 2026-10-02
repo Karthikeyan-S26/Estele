@@ -19,11 +19,17 @@ class HomeData {
     this.collectionBanners = const [],
     this.trendingProducts = const [],
     this.trendingCta,
+    this.trendingEyebrow = 'Handpicked for you',
+    this.trendingTitle = 'Bestsellers',
     this.collections = const [],
     this.newArrivals = const [],
     this.newArrivalsCta,
+    this.newArrivalsEyebrow = 'Handpicked for you',
+    this.newArrivalsTitle = 'New Arrivals',
     this.bestsellers = const [],
     this.bestsellersCta,
+    this.bestsellersEyebrow = 'Handpicked for you',
+    this.bestsellersTitle = 'Bestsellers',
     this.priceTiers = const [],
     this.celebrities = const [],
     this.benefits = const [],
@@ -43,11 +49,17 @@ class HomeData {
   final List<CollectionBanner> collectionBanners;
   final List<Product> trendingProducts;
   final String? trendingCta;
+  final String trendingEyebrow;
+  final String trendingTitle;
   final List<Collection> collections;
   final List<Product> newArrivals;
   final String? newArrivalsCta;
+  final String newArrivalsEyebrow;
+  final String newArrivalsTitle;
   final List<Product> bestsellers;
   final String? bestsellersCta;
+  final String bestsellersEyebrow;
+  final String bestsellersTitle;
   final List<PriceTier> priceTiers;
   final List<Celebrity> celebrities;
   final List<Benefit> benefits;
@@ -61,7 +73,10 @@ class HomeData {
   final List<String> offers;
 
   factory HomeData.fromJson(Map<String, dynamic> json) {
-    List<T> parseList<T>(String key, T Function(Map<String, dynamic>) fromJson) {
+    List<T> parseList<T>(
+      String key,
+      T Function(Map<String, dynamic>) fromJson,
+    ) {
       return (json[key] as List<dynamic>? ?? [])
           .whereType<Map<String, dynamic>>()
           .map(fromJson)
@@ -69,32 +84,55 @@ class HomeData {
     }
 
     return HomeData(
-      promo: (json['promo'] as List<dynamic>? ?? []).map((e) => e.toString()).toList(),
+      promo: (json['promo'] as List<dynamic>? ?? [])
+          .map((e) => e.toString())
+          .toList(),
       heroBanners: parseList('hero_banners', HomeBanner.fromJson),
       categories: parseList('categories', Category.fromJson),
-      collectionBanners: parseList('collection_banners', CollectionBanner.fromJson),
+      collectionBanners: parseList(
+        'collection_banners',
+        CollectionBanner.fromJson,
+      ),
       trendingProducts: parseList('trending_products', Product.fromJson),
       trendingCta: json['trending_cta'] as String?,
+      trendingEyebrow:
+          json['trending_eyebrow'] as String? ?? 'Handpicked for you',
+      trendingTitle: json['trending_title'] as String? ?? 'Bestsellers',
       collections: parseList('collections', Collection.fromJson),
       newArrivals: parseList('new_arrivals', Product.fromJson),
       newArrivalsCta: json['new_arrivals_cta'] as String?,
+      newArrivalsEyebrow:
+          json['new_arrivals_eyebrow'] as String? ?? 'Handpicked for you',
+      newArrivalsTitle: json['new_arrivals_title'] as String? ?? 'New Arrivals',
       bestsellers: parseList('bestsellers', Product.fromJson),
       bestsellersCta: json['bestsellers_cta'] as String?,
+      bestsellersEyebrow:
+          json['bestsellers_eyebrow'] as String? ?? 'Handpicked for you',
+      bestsellersTitle:
+          json['bestsellers_title'] as String? ?? 'Bestsellers',
       priceTiers: parseList('price_tiers', PriceTier.fromJson),
       celebrities: parseList('celebrities', Celebrity.fromJson),
       benefits: parseList('benefits', Benefit.fromJson),
       testimonials: parseList('testimonials', Testimonial.fromJson),
-      journal: json['journal'] == null ? null : JournalSection.fromJson(json['journal'] as Map<String, dynamic>),
+      journal: json['journal'] == null
+          ? null
+          : JournalSection.fromJson(json['journal'] as Map<String, dynamic>),
       instagram: json['instagram'] == null
           ? null
-          : InstagramSection.fromJson(json['instagram'] as Map<String, dynamic>),
+          : InstagramSection.fromJson(
+              json['instagram'] as Map<String, dynamic>,
+            ),
       stats: json['stats'] == null
           ? null
           : StatsSection.fromJson(json['stats'] as Map<String, dynamic>),
       faqs: parseList('faqs', FaqItem.fromJson),
       services: parseList('services', ServiceBenefit.fromJson),
-      footer: json['footer'] == null ? null : FooterData.fromJson(json['footer'] as Map<String, dynamic>),
-      offers: (json['offers'] as List<dynamic>? ?? []).map((e) => e.toString()).toList(),
+      footer: json['footer'] == null
+          ? null
+          : FooterData.fromJson(json['footer'] as Map<String, dynamic>),
+      offers: (json['offers'] as List<dynamic>? ?? [])
+          .map((e) => e.toString())
+          .toList(),
     );
   }
 }
@@ -122,7 +160,8 @@ class HomeBanner {
     return HomeBanner(
       id: json['id'] as int? ?? 0,
       imageUrl: json['image'] as String?,
-      mobileImageUrl: json['mobile_image'] as String? ?? json['image'] as String?,
+      mobileImageUrl:
+          json['mobile_image'] as String? ?? json['image'] as String?,
       title: json['title'] as String?,
       subtitle: json['subtitle'] as String?,
       linkUrl: json['link_url'] as String? ?? json['link'] as String?,
@@ -165,19 +204,35 @@ class CollectionBanner {
 
 /// A "Under ₹499 / Premium ₹2,000+" budget tile.
 class PriceTier {
-  const PriceTier({this.id, required this.label, required this.amount, this.image});
+  const PriceTier({
+    this.id,
+    required this.label,
+    required this.amount,
+    this.image,
+    this.minPrice,
+    this.maxPrice,
+  });
 
   final int? id;
   final String label;
   final String amount;
   final String? image;
 
+  /// Price bounds parsed server-side from the tier's amount text so the tile
+  /// can drive a real filtered search (`/search?min_price=..&max_price=..`).
+  final double? minPrice;
+  final double? maxPrice;
+
   factory PriceTier.fromJson(Map<String, dynamic> json) {
+    final minRaw = json['min_price'];
+    final maxRaw = json['max_price'];
     return PriceTier(
       id: json['id'] as int?,
       label: json['label'] as String? ?? '',
       amount: json['amount'] as String? ?? '',
       image: json['image'] as String?,
+      minPrice: minRaw is num ? minRaw.toDouble() : null,
+      maxPrice: maxRaw is num ? maxRaw.toDouble() : null,
     );
   }
 }
@@ -296,7 +351,9 @@ class JournalItem {
       image: json['image'] as String?,
       author: json['author'] as String?,
       category: json['category'] as String?,
-      publishedAt: json['published_at'] != null ? DateTime.tryParse(json['published_at'] as String) : null,
+      publishedAt: json['published_at'] != null
+          ? DateTime.tryParse(json['published_at'] as String)
+          : null,
     );
   }
 }

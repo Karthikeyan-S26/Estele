@@ -35,8 +35,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final _postalCode = TextEditingController();
   final _phone = TextEditingController();
   final _note = TextEditingController();
+  final _firstName = TextEditingController();
+  final _lastName = TextEditingController();
+  final _email = TextEditingController();
 
-  bool _guest = true;
+  late final AuthProvider _auth;
+  bool _preparing = false;
+  AuthStatus _lastStatus = AuthStatus.unknown;
   bool _loading = true;
   List<Address> _saved = [];
   Address? _selectedSaved;
@@ -50,39 +55,76 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   void initState() {
     super.initState();
+    _auth = context.read<AuthProvider>();
     _postalCode.addListener(_onPincodeEdited);
-    _boot();
+    _lastStatus = _auth.status;
+    _auth.addListener(_onAuthChanged);
+    if (_auth.isAuthenticated) {
+      _prepare();
+    } else {
+      // Guests see the reactive sign-in wall immediately; the cart loads
+      // once (if ever) they authenticate.
+      _loading = false;
+    }
   }
 
   @override
   void dispose() {
     _pincodeDebounce?.cancel();
     _postalCode.removeListener(_onPincodeEdited);
-    for (final c in [_label, _line1, _line2, _city, _state, _postalCode, _phone, _note]) {
+    _auth.removeListener(_onAuthChanged);
+    for (final c in [
+      _label,
+      _line1,
+      _line2,
+      _city,
+      _state,
+      _postalCode,
+      _phone,
+      _note,
+      _firstName,
+      _lastName,
+      _email,
+    ]) {
       c.dispose();
     }
     super.dispose();
   }
 
-  Future<void> _boot() async {
-    final auth = context.read<AuthProvider>();
-    if (!auth.isAuthenticated) {
-      setState(() {
-        _guest = true;
-        _loading = false;
-      });
+  /// Re-runs the initial load whenever the auth status *changes* (login,
+  /// logout, token expiry). After sign-in the guest cart has been merged into
+  /// the user cart server-side, so it is re-fetched (along with addresses)
+  /// and the reactive gate in build() swaps the wall for the form instantly.
+  void _onAuthChanged() {
+    if (_auth.status == _lastStatus) return;
+    _lastStatus = _auth.status;
+    if (_auth.status == AuthStatus.authenticated) {
+      _prepare();
+    } else {
+      _loading = false;
+      if (mounted) setState(() {}); // unauthenticated → show the wall again
+    }
+  }
+
+  Future<void> _prepare() async {
+    if (!_auth.isAuthenticated || _preparing) {
+      if (mounted && !_auth.isAuthenticated) setState(() => _loading = false);
       return;
     }
-    setState(() {
-      _guest = false;
-      _loading = true;
-    });
+    _preparing = true;
+    if (mounted) {
+      _prefillName();
+      setState(() => _loading = true);
+    }
     // Pull the freshest profile (wallet_balance) before rendering checkout.
-    await auth.refreshProfile();
+    await _auth.refreshProfile();
     try {
+      // The merged authenticated cart powers the summary and the order.
+      await context.read<CartProvider>().load();
       final result = await AccountRepository.addresses();
-      final defaultAddress = result.items.where((a) => a.isDefault).firstOrNull
-          ?? result.items.firstOrNull;
+      final defaultAddress =
+          result.items.where((a) => a.isDefault).firstOrNull ??
+          result.items.firstOrNull;
       if (mounted) {
         setState(() {
           _saved = result.items;
@@ -90,9 +132,35 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           _loading = false;
         });
         _fillFromSelected();
+        _prefillName();
       }
     } catch (_) {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        _prefillName();
+        setState(() => _loading = false);
+      }
+    } finally {
+      _preparing = false;
+    }
+  }
+
+  /// The checkout API requires first name, last name and email (unlike the
+  /// lazy web form), so they're pre-filled from the account profile and left
+  /// editable — ship-to/bill-to differences are a real checkout case.
+  void _prefillName() {
+    final name = (_auth.user?.name ?? '').trim();
+    if (name.isNotEmpty) {
+      final parts = name.split(RegExp(r'\s+'));
+      if (_firstName.text.trim().isEmpty) {
+        _firstName.text = parts.first;
+      }
+      if (_lastName.text.trim().isEmpty && parts.length > 1) {
+        _lastName.text = parts.sublist(1).join(' ');
+      }
+    }
+    final email = _auth.user?.email;
+    if (email != null && email.isNotEmpty && _email.text.trim().isEmpty) {
+      _email.text = email;
     }
   }
 
@@ -130,16 +198,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     });
   }
 
-  CheckoutDetails _checkoutDetails(AuthProvider auth) {
-    final name = (auth.user?.name ?? '').trim();
-    final parts = name.split(RegExp(r'\s+'));
-    final firstName = parts.isNotEmpty ? parts.first : '';
-    final lastName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
-
+  CheckoutDetails _checkoutDetails() {
     return CheckoutDetails(
-      firstName: firstName,
-      lastName: lastName,
-      email: auth.user?.email ?? '',
+      firstName: _firstName.text.trim(),
+      lastName: _lastName.text.trim(),
+      email: _email.text.trim(),
       phone: _phone.text.trim(),
       line1: _line1.text.trim(),
       line2: _line2.text.trim().isEmpty ? null : _line2.text.trim(),
@@ -183,6 +246,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Future<void> _placeOrder() async {
+    if (_placing) return;
     if (!(_addressFormKey.currentState?.validate() ?? false)) {
       return;
     }
@@ -191,7 +255,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       _error = null;
     });
 
-    final details = _checkoutDetails(context.read<AuthProvider>());
+    final details = _checkoutDetails();
     final walletAmount = _walletAmount;
 
     try {
@@ -254,8 +318,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           _goToConfirmation(order);
         } catch (_) {
           if (!mounted) return;
-          _offerReservedOrder(orderNumber,
-              'Payment received but could not be verified with the server. Your order is reserved — check Order details shortly.');
+          _offerReservedOrder(
+            orderNumber,
+            'Payment received but could not be verified with the server. Your order is reserved — check Order details shortly.',
+          );
         }
         return;
       }
@@ -293,7 +359,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               Navigator.of(dialogContext).pop();
               Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(
-                    builder: (_) => OrderDetailScreen(orderNumber: orderNumber)),
+                  builder: (_) => OrderDetailScreen(orderNumber: orderNumber),
+                ),
                 (route) => route.isFirst,
               );
             },
@@ -306,7 +373,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_guest) {
+    // Reactive: swapping the gate via `watch` rebuilds this screen the moment
+    // authentication completes (while covered by the login route, auth
+    // changes still flow through the provider listener above), so returning
+    // from sign-in reveals the populated checkout form automatically.
+    final auth = context.watch<AuthProvider>();
+    if (!auth.isAuthenticated) {
       return Scaffold(
         appBar: AppBar(title: const Text('Checkout')),
         body: Center(
@@ -315,9 +387,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.lock_outline, size: 44, color: AppColors.lineStrong),
+                const Icon(
+                  Icons.lock_outline,
+                  size: 44,
+                  color: AppColors.lineStrong,
+                ),
                 const SizedBox(height: 12),
-                Text('Sign in to checkout', style: AppTypography.sectionTitle(size: 17)),
+                Text(
+                  'Sign in to checkout',
+                  style: AppTypography.sectionTitle(size: 17),
+                ),
                 const SizedBox(height: 6),
                 Text(
                   'Your bag is saved — just sign in or create an account to place your order.\nYour guest bag merges automatically.',
@@ -351,8 +430,68 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 padding: const EdgeInsets.all(16),
                 children: [
                   // Delivery
-                  Text('1 · Delivery details', style: AppTypography.sectionTitle(size: 17)),
+                  Text(
+                    '1 · Delivery details',
+                    style: AppTypography.sectionTitle(size: 17),
+                  ),
                   const SizedBox(height: 12),
+
+                  // First/last name + email are required by the checkout API
+                  // (the web form's "lazy" requirement doesn't carry to the
+                  // orders API) — pre-filled from the profile, always editable.
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _firstName,
+                          textCapitalization: TextCapitalization.words,
+                          decoration: const InputDecoration(
+                            labelText: 'First name *',
+                            isDense: true,
+                          ),
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Required'
+                              : null,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _lastName,
+                          textCapitalization: TextCapitalization.words,
+                          decoration: const InputDecoration(
+                            labelText: 'Last name *',
+                            isDense: true,
+                          ),
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Required'
+                              : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _email,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
+                    decoration: const InputDecoration(
+                      labelText: 'Email *',
+                      isDense: true,
+                      helperText: 'Order updates and e-invoice go here',
+                    ),
+                    validator: (v) {
+                      final value = (v ?? '').trim();
+                      if (value.isEmpty) return 'Email is required';
+                      if (!RegExp(
+                        r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                      ).hasMatch(value)) {
+                        return 'Enter a valid email address';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 10),
 
                   if (_saved.isNotEmpty) ...[
                     SingleChildScrollView(
@@ -366,7 +505,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               label: Text(a.label.isEmpty ? 'Home' : a.label),
                               selected: selected,
                               onSelected: (_) {
-                                setState(() => _selectedSaved = selected ? null : a);
+                                setState(
+                                  () => _selectedSaved = selected ? null : a,
+                                );
                                 if (!selected) _fillFromSelected();
                               },
                             ),
@@ -382,7 +523,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       Expanded(
                         child: TextFormField(
                           controller: _label,
-                          decoration: const InputDecoration(labelText: 'Label (Home / Office)', isDense: true),
+                          decoration: const InputDecoration(
+                            labelText: 'Label (Home / Office)',
+                            isDense: true,
+                          ),
                         ),
                       ),
                     ],
@@ -390,13 +534,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   const SizedBox(height: 10),
                   TextFormField(
                     controller: _line1,
-                    decoration: const InputDecoration(labelText: 'Address *', isDense: true),
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Address is required' : null,
+                    decoration: const InputDecoration(
+                      labelText: 'Address *',
+                      isDense: true,
+                    ),
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Address is required'
+                        : null,
                   ),
                   const SizedBox(height: 10),
                   TextFormField(
                     controller: _line2,
-                    decoration: const InputDecoration(labelText: 'Address line 2 (optional)', isDense: true),
+                    decoration: const InputDecoration(
+                      labelText: 'Address line 2 (optional)',
+                      isDense: true,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   Row(
@@ -405,8 +557,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         flex: 2,
                         child: TextFormField(
                           controller: _city,
-                          decoration: const InputDecoration(labelText: 'City *', isDense: true),
-                          validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                          decoration: const InputDecoration(
+                            labelText: 'City *',
+                            isDense: true,
+                          ),
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Required'
+                              : null,
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -414,8 +571,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         flex: 2,
                         child: TextFormField(
                           controller: _state,
-                          decoration: const InputDecoration(labelText: 'State *', isDense: true),
-                          validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                          decoration: const InputDecoration(
+                            labelText: 'State *',
+                            isDense: true,
+                          ),
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Required'
+                              : null,
                         ),
                       ),
                     ],
@@ -434,7 +596,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             counterText: '',
                             helperText: 'City & state auto-fill',
                           ),
-                          validator: (v) => (v == null || v.length != 6 || !RegExp(r'^\d{6}$').hasMatch(v))
+                          validator: (v) =>
+                              (v == null ||
+                                  v.length != 6 ||
+                                  !RegExp(r'^\d{6}$').hasMatch(v))
                               ? 'Valid 6-digit PIN required'
                               : null,
                         ),
@@ -444,8 +609,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         child: TextFormField(
                           controller: _phone,
                           keyboardType: TextInputType.phone,
-                          decoration: const InputDecoration(labelText: 'Phone *', isDense: true),
-                          validator: (v) => (v == null || v.length < 10) ? 'Valid phone required' : null,
+                          decoration: const InputDecoration(
+                            labelText: 'Phone *',
+                            isDense: true,
+                          ),
+                          validator: (v) => (v == null || v.length < 10)
+                              ? 'Valid phone required'
+                              : null,
                         ),
                       ),
                     ],
@@ -453,7 +623,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                   const Divider(height: 32),
                   // Payment
-                  Text('2 · Payment method', style: AppTypography.sectionTitle(size: 17)),
+                  Text(
+                    '2 · Payment method',
+                    style: AppTypography.sectionTitle(size: 17),
+                  ),
                   const SizedBox(height: 12),
                   RadioListTile<String>(
                     value: 'cod',
@@ -469,7 +642,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     onChanged: (v) => setState(() => _paymentMethod = v!),
                     title: const Text('Pay online (Razorpay)'),
                     subtitle: const Text('UPI, cards, netbanking and wallets.'),
-                    secondary: const Icon(Icons.account_balance_wallet_outlined),
+                    secondary: const Icon(
+                      Icons.account_balance_wallet_outlined,
+                    ),
                   ),
 
                   if (walletBalance > 0) ...[
@@ -477,7 +652,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     CheckboxListTile(
                       value: _useWallet,
                       onChanged: (v) => setState(() => _useWallet = v ?? false),
-                      title: Text('Use wallet balance (${formatINR(walletBalance)})'),
+                      title: Text(
+                        'Use wallet balance (${formatINR(walletBalance)})',
+                      ),
                       subtitle: Text(
                         _walletAmount > 0
                             ? 'Wallet credit: ${formatINR(_walletAmount)} · To pay: ${formatINR(_due)}'
@@ -485,13 +662,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         style: AppTypography.bodySmall(size: 12),
                       ),
                       controlAffinity: ListTileControlAffinity.trailing,
-                      secondary: const Icon(Icons.account_balance_wallet, color: AppColors.accent),
+                      secondary: const Icon(
+                        Icons.account_balance_wallet,
+                        color: AppColors.accent,
+                      ),
                     ),
                   ],
 
                   const Divider(height: 32),
                   // Summary
-                  Text('3 · Review', style: AppTypography.sectionTitle(size: 17)),
+                  Text(
+                    '3 · Review',
+                    style: AppTypography.sectionTitle(size: 17),
+                  ),
                   const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.all(14),
@@ -504,30 +687,82 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       children: [
                         _Row(label: 'Subtotal', value: cart.totals.subtotal),
                         if (cart.totals.discount > 0)
-                          _Row(label: 'Coupon discount', value: -cart.totals.discount, sale: true),
+                          _Row(
+                            label: 'Coupon discount',
+                            value: -cart.totals.discount,
+                            sale: true,
+                          ),
                         _Row(label: 'Shipping', value: cart.totals.shipping),
-                        if (_walletAmount > 0) _Row(label: 'Wallet credit', value: -_walletAmount, sale: true),
+                        if (_walletAmount > 0)
+                          _Row(
+                            label: 'Wallet credit',
+                            value: -_walletAmount,
+                            sale: true,
+                          ),
                         const Divider(height: 16),
-                        _Row(label: _walletAmount > 0 ? 'To pay' : 'Order total', value: _due, bold: true),
+                        _Row(
+                          label: _walletAmount > 0 ? 'To pay' : 'Order total',
+                          value: _due,
+                          bold: true,
+                        ),
                       ],
                     ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'All prices include GST.',
+                    style: AppTypography.bodySmall(size: 11.5),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _note,
-                    decoration: const InputDecoration(labelText: 'Order note (optional)', isDense: true),
+                    decoration: const InputDecoration(
+                      labelText: 'Order note (optional)',
+                      isDense: true,
+                    ),
                   ),
 
                   if (_error != null) ...[
                     const SizedBox(height: 12),
-                    Text(_error!, style: AppTypography.bodySmall(size: 13, color: AppColors.error)),
+                    Text(
+                      _error!,
+                      style: AppTypography.bodySmall(
+                        size: 13,
+                        color: AppColors.error,
+                      ),
+                    ),
                   ],
 
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.verified_user_outlined,
+                        size: 15,
+                        color: AppColors.success,
+                      ),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          'Secure payments · 15-day easy returns · 18+ years of trust',
+                          style: AppTypography.bodySmall(
+                            size: 11.5,
+                            color: AppColors.muted,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 20),
                   FilledButton(
                     onPressed: _placing ? null : _placeOrder,
                     child: _placing
-                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
                         : Text('Place order · ${formatINR(_due)}'),
                   ),
                   const SizedBox(height: 20),
@@ -539,7 +774,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 }
 
 class _Row extends StatelessWidget {
-  const _Row({required this.label, required this.value, this.sale = false, this.bold = false});
+  const _Row({
+    required this.label,
+    required this.value,
+    this.sale = false,
+    this.bold = false,
+  });
 
   final String label;
   final double value;
@@ -553,11 +793,23 @@ class _Row extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: AppTypography.body(size: 13.5, color: sale ? AppColors.sale : AppColors.muted)),
+          Text(
+            label,
+            style: AppTypography.body(
+              size: 13.5,
+              color: sale ? AppColors.sale : AppColors.muted,
+            ),
+          ),
           Text(
             formatINR(value),
-            style: (bold ? AppTypography.price(size: 15) : AppTypography.body(size: 13.5, weight: FontWeight.w600))
-                .copyWith(color: sale ? AppColors.sale : AppColors.heading),
+            style:
+                (bold
+                        ? AppTypography.price(size: 15)
+                        : AppTypography.body(
+                            size: 13.5,
+                            weight: FontWeight.w600,
+                          ))
+                    .copyWith(color: sale ? AppColors.sale : AppColors.heading),
           ),
         ],
       ),

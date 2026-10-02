@@ -31,8 +31,12 @@ class WalletTransaction {
       balanceAfter: (json['balance_after'] as num?)?.toDouble() ?? 0,
       reason: json['reason'] as String? ?? '',
       status: json['status'] as String? ?? 'active',
-      expiresAt: json['expires_at'] != null ? DateTime.tryParse(json['expires_at'] as String) : null,
-      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at'] as String) : null,
+      expiresAt: json['expires_at'] != null
+          ? DateTime.tryParse(json['expires_at'] as String)
+          : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'] as String)
+          : null,
     );
   }
 }

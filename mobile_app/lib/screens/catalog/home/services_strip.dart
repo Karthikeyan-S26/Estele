@@ -44,7 +44,11 @@ class ServicesStrip extends StatelessWidget {
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.bodySmall(size: 9.5, color: AppColors.ink, weight: FontWeight.w600),
+                  style: AppTypography.bodySmall(
+                    size: 9.5,
+                    color: AppColors.ink,
+                    weight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),

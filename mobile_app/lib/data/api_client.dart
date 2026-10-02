@@ -17,6 +17,14 @@ class ApiClient {
 
   static const int _maxRateLimitAttempts = 3;
 
+  /// Invoked when an authenticated request comes back 401 (expired/revoked
+  /// session). The app shell wires this to the auth provider so the user is
+  /// logged out locally and can re-authenticate, instead of silently showing
+  /// an error banner. Not set by default.
+  static void Function()? onUnauthorized;
+
+  static bool _handlingUnauthorized = false;
+
   /// Make a [method] request to the relative path under `/api/`.
   /// Throws [ApiException] on 4xx/5xx with the parsed `message`.
   static Future<Map<String, dynamic>> request(
@@ -57,11 +65,13 @@ class ApiClient {
     }
 
     for (var attempt = 0; ; attempt++) {
-      final response = await _client.send(request).timeout(
-            AppConfig.connectTimeout + AppConfig.receiveTimeout,
-          );
+      // The timeout must cover the whole round trip — connect, response
+      // headers, and the body stream — otherwise a server that stalls
+      // mid-body leaves the UI loading forever.
+      final (response, responseBody) = await _sendAndRead(
+        request,
+      ).timeout(AppConfig.connectTimeout + AppConfig.receiveTimeout);
 
-      final responseBody = await response.stream.bytesToString();
       final Map<String, dynamic> json;
       try {
         json = jsonDecode(responseBody) as Map<String, dynamic>;
@@ -88,7 +98,27 @@ class ApiClient {
       // Consistent error shape from the backend.
       final message = json['message'] as String? ?? 'An error occurred.';
       final errors = json['errors'] as Map<String, dynamic>?;
-      throw ApiException(statusCode: response.statusCode, message: message, errors: errors);
+
+      // Expired / revoked session on an authenticated call: clear local auth
+      // so the next screen shows the sign-in wall instead of a confusing error.
+      // Guarded against re-entrancy — the callback must be safe to surface
+      // navigation, which may itself trigger further (now-unauthenticated)
+      // calls.
+      if (response.statusCode == 401 && auth && !_handlingUnauthorized) {
+        _handlingUnauthorized = true;
+        try {
+          await Storage.clearUser();
+          onUnauthorized?.call();
+        } finally {
+          _handlingUnauthorized = false;
+        }
+      }
+
+      throw ApiException(
+        statusCode: response.statusCode,
+        message: message,
+        errors: errors,
+      );
     }
   }
 
@@ -105,8 +135,13 @@ class ApiClient {
     bool auth = false,
     bool requireCartToken = false,
     Map<String, String>? extraHeaders,
-  }) =>
-      request('GET', path, auth: auth, requireCartToken: requireCartToken, extraHeaders: extraHeaders);
+  }) => request(
+    'GET',
+    path,
+    auth: auth,
+    requireCartToken: requireCartToken,
+    extraHeaders: extraHeaders,
+  );
 
   /// POST convenience.
   static Future<Map<String, dynamic>> post(
@@ -115,8 +150,14 @@ class ApiClient {
     bool auth = false,
     bool requireCartToken = false,
     Map<String, String>? extraHeaders,
-  }) =>
-      request('POST', path, body: body, auth: auth, requireCartToken: requireCartToken, extraHeaders: extraHeaders);
+  }) => request(
+    'POST',
+    path,
+    body: body,
+    auth: auth,
+    requireCartToken: requireCartToken,
+    extraHeaders: extraHeaders,
+  );
 
   /// PATCH convenience.
   static Future<Map<String, dynamic>> patch(
@@ -125,8 +166,14 @@ class ApiClient {
     bool auth = false,
     bool requireCartToken = false,
     Map<String, String>? extraHeaders,
-  }) =>
-      request('PATCH', path, body: body, auth: auth, requireCartToken: requireCartToken, extraHeaders: extraHeaders);
+  }) => request(
+    'PATCH',
+    path,
+    body: body,
+    auth: auth,
+    requireCartToken: requireCartToken,
+    extraHeaders: extraHeaders,
+  );
 
   /// DELETE convenience.
   static Future<Map<String, dynamic>> delete(
@@ -134,19 +181,26 @@ class ApiClient {
     bool auth = false,
     bool requireCartToken = false,
     Map<String, String>? extraHeaders,
-  }) =>
-      request('DELETE', path, auth: auth, requireCartToken: requireCartToken, extraHeaders: extraHeaders);
+  }) => request(
+    'DELETE',
+    path,
+    auth: auth,
+    requireCartToken: requireCartToken,
+    extraHeaders: extraHeaders,
+  );
 
   /// Parse a paginated `data` + `meta` response. Returns the raw JSON map
   /// so callers can iterate `json['data']` themselves.
-  static Future<({List<Map<String, dynamic>> items, Map<String, dynamic> meta})> paginated(
+  static Future<({List<Map<String, dynamic>> items, Map<String, dynamic> meta})>
+  paginated(
     String path, {
     bool auth = false,
     Map<String, String>? extraHeaders,
   }) async {
     final json = await get(path, auth: auth, extraHeaders: extraHeaders);
     return (
-      items: (json['data'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>(),
+      items: (json['data'] as List<dynamic>? ?? [])
+          .cast<Map<String, dynamic>>(),
       meta: (json['meta'] as Map<String, dynamic>?) ?? {},
     );
   }
@@ -158,9 +212,7 @@ class ApiClient {
     bool auth = false,
     Map<String, String>? extraHeaders,
   }) async {
-    final headers = <String, String>{
-      'Accept': 'application/json',
-    };
+    final headers = <String, String>{'Accept': 'application/json'};
 
     if (auth) {
       final token = await Storage.getToken();
@@ -173,14 +225,15 @@ class ApiClient {
       headers.addAll(extraHeaders);
     }
 
-    final request = http.Request('GET', Uri.parse('${AppConfig.apiBaseUrl}$path'));
+    final request = http.Request(
+      'GET',
+      Uri.parse('${AppConfig.apiBaseUrl}$path'),
+    );
     request.headers.addAll(headers);
 
-    final response = await _client.send(request).timeout(
-          AppConfig.connectTimeout + AppConfig.receiveTimeout,
-        );
-
-    final bytes = await response.stream.toBytes();
+    final (response, bytes) = await _sendAndReadBytes(
+      request,
+    ).timeout(AppConfig.connectTimeout + AppConfig.receiveTimeout);
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return bytes;
@@ -190,6 +243,22 @@ class ApiClient {
       statusCode: response.statusCode,
       message: 'Download failed (${response.statusCode})',
     );
+  }
+
+  static Future<(http.StreamedResponse, String)> _sendAndRead(
+    http.Request request,
+  ) async {
+    final response = await _client.send(request);
+    final body = await response.stream.bytesToString();
+    return (response, body);
+  }
+
+  static Future<(http.StreamedResponse, Uint8List)> _sendAndReadBytes(
+    http.Request request,
+  ) async {
+    final response = await _client.send(request);
+    final bytes = await response.stream.toBytes();
+    return (response, bytes);
   }
 }
 

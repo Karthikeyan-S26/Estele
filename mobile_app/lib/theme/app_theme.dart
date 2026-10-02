@@ -6,7 +6,9 @@ import 'app_colors.dart';
 /// The Flutter Material theme for Estele — flat, warm, editorial jewellery
 /// brand feel. Sharp/low-radius corners, thin lines, no heavy shadows.
 abstract final class AppTheme {
-  static const BorderRadius _defaultRadius = BorderRadius.all(Radius.circular(2));
+  static const BorderRadius _defaultRadius = BorderRadius.all(
+    Radius.circular(2),
+  );
 
   static ThemeData get light {
     final base = ThemeData(
@@ -36,14 +38,31 @@ abstract final class AppTheme {
       ),
       textTheme: jakarta.copyWith(
         displayLarge: jakarta.displayLarge?.copyWith(color: AppColors.heading),
-        displayMedium: jakarta.displayMedium?.copyWith(color: AppColors.heading),
+        displayMedium: jakarta.displayMedium?.copyWith(
+          color: AppColors.heading,
+        ),
         displaySmall: jakarta.displaySmall?.copyWith(color: AppColors.heading),
-        headlineLarge: jakarta.headlineLarge?.copyWith(color: AppColors.heading),
-        headlineMedium: jakarta.headlineMedium?.copyWith(color: AppColors.heading),
-        headlineSmall: jakarta.headlineSmall?.copyWith(color: AppColors.heading),
-        titleLarge: jakarta.titleLarge?.copyWith(color: AppColors.heading, fontWeight: FontWeight.w600),
-        titleMedium: jakarta.titleMedium?.copyWith(color: AppColors.ink, fontWeight: FontWeight.w600),
-        titleSmall: jakarta.titleSmall?.copyWith(color: AppColors.ink, fontWeight: FontWeight.w600),
+        headlineLarge: jakarta.headlineLarge?.copyWith(
+          color: AppColors.heading,
+        ),
+        headlineMedium: jakarta.headlineMedium?.copyWith(
+          color: AppColors.heading,
+        ),
+        headlineSmall: jakarta.headlineSmall?.copyWith(
+          color: AppColors.heading,
+        ),
+        titleLarge: jakarta.titleLarge?.copyWith(
+          color: AppColors.heading,
+          fontWeight: FontWeight.w600,
+        ),
+        titleMedium: jakarta.titleMedium?.copyWith(
+          color: AppColors.ink,
+          fontWeight: FontWeight.w600,
+        ),
+        titleSmall: jakarta.titleSmall?.copyWith(
+          color: AppColors.ink,
+          fontWeight: FontWeight.w600,
+        ),
         bodyLarge: jakarta.bodyLarge?.copyWith(color: AppColors.ink),
         bodyMedium: jakarta.bodyMedium?.copyWith(color: AppColors.ink),
         bodySmall: jakarta.bodySmall?.copyWith(color: AppColors.muted),
@@ -94,19 +113,28 @@ abstract final class AppTheme {
           side: const BorderSide(color: AppColors.lineStrong),
           minimumSize: const Size(48, 48),
           shape: RoundedRectangleBorder(borderRadius: _defaultRadius),
-          textStyle: jakarta.labelLarge?.copyWith(fontWeight: FontWeight.w600, fontSize: 14),
+          textStyle: jakarta.labelLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.accentDark,
-          textStyle: jakarta.labelLarge?.copyWith(fontWeight: FontWeight.w600, fontSize: 14),
+          textStyle: jakarta.labelLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.paper,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(2),
           borderSide: const BorderSide(color: AppColors.line),
@@ -142,7 +170,9 @@ abstract final class AppTheme {
       ),
       radioTheme: RadioThemeData(
         fillColor: WidgetStateProperty.resolveWith(
-          (states) => states.contains(WidgetState.selected) ? AppColors.accent : AppColors.muted,
+          (states) => states.contains(WidgetState.selected)
+              ? AppColors.accent
+              : AppColors.muted,
         ),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
@@ -151,7 +181,10 @@ abstract final class AppTheme {
         unselectedItemColor: AppColors.muted,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
-        selectedLabelStyle: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+        selectedLabelStyle: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
         unselectedLabelStyle: TextStyle(fontSize: 11),
       ),
       chipTheme: ChipThemeData(

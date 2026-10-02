@@ -5,6 +5,7 @@ import '../../data/repositories/content_repository.dart';
 import '../../models/cms_page.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
+import '../../widgets/estele_app_bar.dart';
 import '../../widgets/load_state.dart';
 
 class CmsPageScreen extends StatefulWidget {
@@ -41,10 +42,11 @@ class _CmsPageScreenState extends State<CmsPageScreen> {
         });
       }
     } catch (_) {
-      if (mounted) setState(() {
-        _failed = true;
-        _loading = false;
-      });
+      if (mounted)
+        setState(() {
+          _failed = true;
+          _loading = false;
+        });
     }
   }
 
@@ -54,13 +56,18 @@ class _CmsPageScreenState extends State<CmsPageScreen> {
     if (_failed || _page == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: LoadState.error(message: 'Could not load this page.', onRetry: _load),
+        body: LoadState.error(
+          message: 'Could not load this page.',
+          onRetry: _load,
+        ),
       );
     }
 
     final page = _page!;
     return Scaffold(
-      appBar: AppBar(title: Text(page.title)),
+      // Shared pinned Estele header — the page title already renders
+      // in-body below, so the plain title bar is redundant.
+      appBar: pushedAppBar(context),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
@@ -74,9 +81,21 @@ class _CmsPageScreenState extends State<CmsPageScreen> {
                 color: AppColors.ink,
                 lineHeight: LineHeight(1.6),
               ),
-              'h1': Style(fontSize: FontSize(19), fontFamily: 'Cinzel', color: AppColors.heading),
-              'h2': Style(fontSize: FontSize(17), fontFamily: 'Cinzel', color: AppColors.heading),
-              'h3': Style(fontSize: FontSize(15), fontFamily: 'Cinzel', color: AppColors.heading),
+              'h1': Style(
+                fontSize: FontSize(19),
+                fontFamily: 'Cinzel',
+                color: AppColors.heading,
+              ),
+              'h2': Style(
+                fontSize: FontSize(17),
+                fontFamily: 'Cinzel',
+                color: AppColors.heading,
+              ),
+              'h3': Style(
+                fontSize: FontSize(15),
+                fontFamily: 'Cinzel',
+                color: AppColors.heading,
+              ),
               'a': Style(color: AppColors.accentDark),
             },
           ),

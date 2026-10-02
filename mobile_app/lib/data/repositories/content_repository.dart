@@ -34,4 +34,16 @@ class ContentRepository {
     final json = await ApiClient.get('/stores');
     return (json['data'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>();
   }
+
+  /// Newsletter email capture ("Get the Glow" popup) — POSTs to the same
+  /// endpoint as the website popup. Idempotent server-side (firstOrCreate),
+  /// so an already-subscribed address also returns success. Throws
+  /// [ApiException] with the server message on validation/network failure.
+  static Future<String> subscribeNewsletter(String email) async {
+    final json = await ApiClient.post(
+      '/newsletter/subscribe',
+      body: {'email': email.trim()},
+    );
+    return (json['message'] as String?) ?? 'Subscribed. Thank you!';
+  }
 }

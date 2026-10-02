@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+ (API 31) system splash: white canvas + gold Estele mark.
+         Without this the OS renders its own splash from the app icon on the
+         launch theme's background color (wine) — a flash that clashes with the
+         white + gold branding. -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowSplashScreenBackground">@color/estele_splash_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/launch_image</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@drawable/launch_background</item>
+    </style>
+</resources>

@@ -49,10 +49,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         });
       }
     } catch (_) {
-      if (mounted) setState(() {
-        _failed = true;
-        _loading = false;
-      });
+      if (mounted)
+        setState(() {
+          _failed = true;
+          _loading = false;
+        });
     }
   }
 
@@ -60,7 +61,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   Widget build(BuildContext context) {
     if (_loading) return const LoadState.loading();
     if (_failed && _categories == null) {
-      return LoadState.error(message: 'Could not load categories', onRetry: _load);
+      return LoadState.error(
+        message: 'Could not load categories',
+        onRetry: _load,
+      );
     }
 
     final categories = _categories ?? [];
@@ -71,9 +75,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
-          const SliverToBoxAdapter(
-            child: SizedBox.shrink(),
-          ),
+          const SliverToBoxAdapter(child: SizedBox.shrink()),
           // Collections rail
           if (collections.isNotEmpty)
             SliverToBoxAdapter(
@@ -82,7 +84,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 children: [
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                    child: SectionHeader(title: 'Collections', scriptWord: 'curated', onViewAll: null),
+                    child: SectionHeader(
+                      title: 'Collections',
+                      scriptWord: 'curated',
+                      onViewAll: null,
+                    ),
                   ),
                   SizedBox(
                     height: 150,
@@ -147,7 +153,12 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 }
 
 class _CategoryTile extends StatelessWidget {
-  const _CategoryTile({required this.name, required this.count, this.image, required this.onTap});
+  const _CategoryTile({
+    required this.name,
+    required this.count,
+    this.image,
+    required this.onTap,
+  });
 
   final String name;
   final int count;
@@ -162,10 +173,20 @@ class _CategoryTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(child: AppImage(url: image, borderRadius: BorderRadius.circular(4))),
+          Expanded(
+            child: AppImage(url: image, borderRadius: BorderRadius.circular(4)),
+          ),
           const SizedBox(height: 8),
-          Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTypography.body(size: 13.5)),
-          Text('$count pieces', style: AppTypography.bodySmall(size: 11, color: AppColors.muted)),
+          Text(
+            name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.body(size: 13.5),
+          ),
+          Text(
+            '$count pieces',
+            style: AppTypography.bodySmall(size: 11, color: AppColors.muted),
+          ),
         ],
       ),
     );
@@ -173,7 +194,12 @@ class _CategoryTile extends StatelessWidget {
 }
 
 class _WideCard extends StatelessWidget {
-  const _WideCard({required this.image, required this.title, required this.count, required this.onTap});
+  const _WideCard({
+    required this.image,
+    required this.title,
+    required this.count,
+    required this.onTap,
+  });
 
   final String? image;
   final String title;
@@ -211,8 +237,20 @@ class _WideCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: AppTypography.sectionTitle(size: 15, color: Colors.white)),
-                  Text('View collection  →', style: AppTypography.bodySmall(size: 11, color: Colors.white70)),
+                  Text(
+                    title,
+                    style: AppTypography.sectionTitle(
+                      size: 15,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Text(
+                    'View collection  →',
+                    style: AppTypography.bodySmall(
+                      size: 11,
+                      color: Colors.white70,
+                    ),
+                  ),
                 ],
               ),
             ),

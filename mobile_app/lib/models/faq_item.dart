@@ -25,7 +25,8 @@ class FaqCategory {
     return FaqCategory(
       id: json['id'] as int,
       name: json['name'] as String? ?? '',
-      faqs: (json['faqs'] as List<dynamic>?)
+      faqs:
+          (json['faqs'] as List<dynamic>?)
               ?.map((e) => FaqItem.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],

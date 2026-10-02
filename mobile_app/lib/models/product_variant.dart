@@ -28,7 +28,9 @@ class ProductVariant {
       sku: json['sku'] as String? ?? '',
       price: (json['price'] as num?)?.toDouble() ?? 0,
       stockQuantity: (json['stock_quantity'] as num?)?.toInt() ?? 0,
-      inStock: json['in_stock'] as bool? ?? ((json['stock_quantity'] as num?)?.toInt() ?? 0) > 0,
+      inStock:
+          json['in_stock'] as bool? ??
+          ((json['stock_quantity'] as num?)?.toInt() ?? 0) > 0,
       attributes: (json['attributes'] as Map<String, dynamic>?) ?? const {},
     );
   }

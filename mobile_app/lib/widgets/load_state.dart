@@ -18,7 +18,13 @@ class HomeShimmer extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: [
           // hero
-          Container(height: 180, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
+          Container(
+            height: 180,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
           const SizedBox(height: 24),
           _row(),
           const SizedBox(height: 16),
@@ -29,65 +35,74 @@ class HomeShimmer extends StatelessWidget {
   }
 
   Widget _row() => Row(
-        children: [
-          Container(width: 140, height: 18, decoration: const BoxDecoration(color: Colors.white)),
-          const SizedBox(width: 10),
-          Container(width: 90, height: 18, decoration: const BoxDecoration(color: Colors.white)),
-        ],
-      );
+    children: [
+      Container(
+        width: 140,
+        height: 18,
+        decoration: const BoxDecoration(color: Colors.white),
+      ),
+      const SizedBox(width: 10),
+      Container(
+        width: 90,
+        height: 18,
+        decoration: const BoxDecoration(color: Colors.white),
+      ),
+    ],
+  );
 
   Widget _gridPreview() => SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        physics: const NeverScrollableScrollPhysics(),
-        child: Row(
-          children: List.generate(3, (_) => Container(
-                margin: const EdgeInsets.only(right: 12),
-                width: 150,
-                height: 220,
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
-              )),
+    scrollDirection: Axis.horizontal,
+    physics: const NeverScrollableScrollPhysics(),
+    child: Row(
+      children: List.generate(
+        3,
+        (_) => Container(
+          margin: const EdgeInsets.only(right: 12),
+          width: 150,
+          height: 220,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(4),
+          ),
         ),
-      );
+      ),
+    ),
+  );
 }
 
 enum LoadStateType { loading, error, empty, onboarding }
 
 /// A generic loading/empty/error state for list screens.
 class LoadState extends StatelessWidget {
-  const LoadState.error({
-    super.key,
-    required this.message,
-    this.onRetry,
-  })  : type = LoadStateType.error,
-        emphasis = null,
-        icon = null,
-        action = null;
+  const LoadState.error({super.key, required this.message, this.onRetry})
+    : type = LoadStateType.error,
+      emphasis = null,
+      icon = null,
+      action = null;
 
-  const LoadState.empty({
-    super.key,
-    required this.message,
-  })  : type = LoadStateType.empty,
-        emphasis = null,
-        onRetry = null,
-        icon = null,
-        action = null;
+  const LoadState.empty({super.key, required this.message})
+    : type = LoadStateType.empty,
+      emphasis = null,
+      onRetry = null,
+      icon = null,
+      action = null;
 
   const LoadState.loading({super.key})
-      : message = '',
-        type = LoadStateType.loading,
-        emphasis = null,
-        onRetry = null,
-        icon = null,
-        action = null;
+    : message = '',
+      type = LoadStateType.loading,
+      emphasis = null,
+      onRetry = null,
+      icon = null,
+      action = null;
 
   const LoadState.onboarding({
     super.key,
     required this.message,
     required this.emphasis,
     required this.icon,
-  })  : type = LoadStateType.onboarding,
-        onRetry = null,
-        action = null;
+  }) : type = LoadStateType.onboarding,
+       onRetry = null,
+       action = null;
 
   final LoadStateType type;
   final String message;
@@ -115,7 +130,11 @@ class LoadState extends StatelessWidget {
               : null,
         );
       case LoadStateType.empty:
-        return _Block(icon: Icons.inbox_outlined, title: 'Nothing here', message: message);
+        return _Block(
+          icon: Icons.inbox_outlined,
+          title: 'Nothing here',
+          message: message,
+        );
       case LoadStateType.onboarding:
         return _Block(
           icon: icon ?? Icons.workspace_premium_outlined,
@@ -127,7 +146,12 @@ class LoadState extends StatelessWidget {
 }
 
 class _Block extends StatelessWidget {
-  const _Block({required this.icon, required this.title, required this.message, this.action});
+  const _Block({
+    required this.icon,
+    required this.title,
+    required this.message,
+    this.action,
+  });
 
   final IconData icon;
   final String title;
@@ -144,17 +168,18 @@ class _Block extends StatelessWidget {
           children: [
             Icon(icon, size: 44, color: AppColors.lineStrong),
             const SizedBox(height: 12),
-            Text(title, style: AppTypography.sectionTitle(size: 17), textAlign: TextAlign.center),
+            Text(
+              title,
+              style: AppTypography.sectionTitle(size: 17),
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 6),
             Text(
               message,
               textAlign: TextAlign.center,
               style: AppTypography.body(size: 13.5, color: AppColors.muted),
             ),
-            if (action != null) ...[
-              const SizedBox(height: 16),
-              action!,
-            ],
+            if (action != null) ...[const SizedBox(height: 16), action!],
           ],
         ),
       ),

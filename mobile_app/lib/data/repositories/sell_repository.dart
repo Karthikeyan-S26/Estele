@@ -4,7 +4,14 @@ import '../api_client.dart';
 /// Old jewellery sell requests — mirrors the backend
 /// `Api/SellRequestController` API.
 class SellRepository {
-  static const List<String> itemTypes = ['ring', 'chain', 'necklace', 'earrings', 'bracelet', 'other'];
+  static const List<String> itemTypes = [
+    'ring',
+    'chain',
+    'necklace',
+    'earrings',
+    'bracelet',
+    'other',
+  ];
 
   /// GET /api/account/sell/requests — the customer's sell requests (newest first).
   static Future<List<SellRequest>> list() async {
@@ -16,7 +23,10 @@ class SellRepository {
 
   /// GET /api/account/sell/requests/{requestNumber}.
   static Future<SellRequest> show(String requestNumber) async {
-    final json = await ApiClient.get('/account/sell/requests/$requestNumber', auth: true);
+    final json = await ApiClient.get(
+      '/account/sell/requests/$requestNumber',
+      auth: true,
+    );
     return SellRequest.fromJson(json['data'] as Map<String, dynamic>);
   }
 
@@ -37,18 +47,14 @@ class SellRepository {
       '/account/sell/requests',
       body: {
         'item_type': itemType,
-        if (description != null && description.trim().isNotEmpty) 'description': description.trim(),
+        if (description != null && description.trim().isNotEmpty)
+          'description': description.trim(),
         if (city != null && city.trim().isNotEmpty) 'city': city.trim(),
-        if (contactPhone != null && contactPhone.isNotEmpty) 'contact_phone': contactPhone.trim(),
+        if (contactPhone != null && contactPhone.isNotEmpty)
+          'contact_phone': contactPhone.trim(),
         if (imageBase64 != null)
-          'image': {
-            'mime': imageMime ?? 'image/jpeg',
-            'data': imageBase64,
-          },
-        'video': {
-          'mime': videoMime,
-          'data': videoBase64,
-        },
+          'image': {'mime': imageMime ?? 'image/jpeg', 'data': imageBase64},
+        'video': {'mime': videoMime, 'data': videoBase64},
       },
       auth: true,
     );

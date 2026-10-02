@@ -28,7 +28,8 @@ class Category {
       imageUrl: json['image'] as String?,
       productCount: (json['product_count'] as num?)?.toInt() ?? 0,
       parentId: json['parent_id'] as int?,
-      children: (json['children'] as List<dynamic>?)
+      children:
+          (json['children'] as List<dynamic>?)
               ?.map((e) => Category.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
