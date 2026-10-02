@@ -58,6 +58,13 @@ class PaymentManager
 
     public function markPaid(Order $order, string $razorpayPaymentId): void
     {
+        // A cancelled order must never be resurrected — record the captured
+        // payment as an audit trail (payment_reference + admin_notes) instead
+        // of flipping payment_status.
+        if ($this->recordCancelledCapture($order, $razorpayPaymentId)) {
+            return;
+        }
+
         if (in_array($order->payment_status, self::SETTLED_STATUSES, true)) {
             Log::info('Ignoring repeat "paid" signal for an already-settled order.', ['order_number' => $order->order_number]);
 
@@ -72,6 +79,12 @@ class PaymentManager
 
     public function markFailed(Order $order): void
     {
+        if ($order->status === 'cancelled') {
+            Log::info('Ignoring payment-failed signal for a cancelled order.', ['order_number' => $order->order_number]);
+
+            return;
+        }
+
         if (in_array($order->payment_status, self::SETTLED_STATUSES, true)) {
             Log::warning('Ignoring "failed" signal for an already-settled order — a captured event likely raced this one.', ['order_number' => $order->order_number]);
 
@@ -79,6 +92,48 @@ class PaymentManager
         }
 
         $order->update(['payment_status' => 'failed']);
+    }
+
+    /**
+     * A captured payment arriving for an already-cancelled order is logged as
+     * an audit note on the order (payment_reference + admin_notes) without
+     * resurrecting the order to `paid`. Idempotent: a duplicate capture for
+     * the same payment_id is a no-op. Returns true when the order was already
+     * cancelled and the capture was (or already had been) recorded.
+     */
+    public function recordCancelledCapture(Order $order, string $razorpayPaymentId): bool
+    {
+        if ($order->status !== 'cancelled') {
+            return false;
+        }
+
+        // Already recorded for this payment — idempotent.
+        if ($order->payment_reference === $razorpayPaymentId) {
+            return true;
+        }
+
+        $note = "Captured payment {$razorpayPaymentId} arrived after this order was cancelled — recorded for manual refund.";
+
+        // Store the first captured payment id as the canonical reference so
+        // admins can look it up on the Razorpay dashboard.
+        if ($order->payment_reference === null) {
+            $order->payment_reference = $razorpayPaymentId;
+        }
+
+        // Only append the note if it isn't already the latest one.
+        $notes = trim((string) $order->admin_notes);
+        if ($notes === '' || ! str_ends_with($notes, $note)) {
+            $order->admin_notes = $notes === '' ? $note : $notes."\n".$note;
+        }
+
+        $order->save();
+
+        Log::warning('Captured payment arrived for a cancelled order — refund pending.', [
+            'order_number' => $order->order_number,
+            'razorpay_payment_id' => $razorpayPaymentId,
+        ]);
+
+        return true;
     }
 
     private function activeProvider(): string

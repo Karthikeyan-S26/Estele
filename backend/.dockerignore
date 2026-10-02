@@ -1,6 +1,7 @@
 .env
 .env.*
 .git
+.gitignore
 node_modules
 vendor
 storage/logs
@@ -8,5 +9,11 @@ storage/framework/cache/*
 storage/framework/sessions/*
 storage/framework/views/*
 storage/media-library
+storage/app/public
+storage/app/private
 public/storage
 tests
+.gitattributes
+.github
+.idx
+.dockerignore

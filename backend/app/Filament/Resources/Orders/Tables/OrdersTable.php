@@ -91,11 +91,31 @@ class OrdersTable
                     ->tooltip(fn (Order $record) => $record->cancellation_requested_at
                         ? "Requested {$record->cancellation_requested_at->format('d M Y')}: {$record->cancellation_reason}"
                         : null),
+                TextColumn::make('shipping_city')
+                    ->label('City')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('shipping_state')
+                    ->label('State')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('shipping_postal_code')
+                    ->label('Pincode')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Filter::make('cancellation_requested')
                     ->label('Has cancellation/return request')
                     ->query(fn (Builder $query) => $query->whereNotNull('cancellation_requested_at')),
+                // Placed-but-unpaid orders older than 4h — the same window the
+                // `orders:cancel-pending` sweep uses, so an admin can eyeball
+                // what the sweep is about to cancel.
+                Filter::make('placed_unpaid')
+                    ->label('Placed & unpaid > 4h')
+                    ->query(fn (Builder $query) => $query
+                        ->where('status', 'placed')
+                        ->where('payment_status', 'pending')
+                        ->where('created_at', '<', now()->subHours(4))),
                 SelectFilter::make('status')
                     ->options([
                         'placed' => 'Placed',

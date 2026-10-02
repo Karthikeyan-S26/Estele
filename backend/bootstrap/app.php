@@ -76,6 +76,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('sell:wallet-expire')->hourly()->withoutOverlapping();
         // 3-day / 1-day / post-expiry wallet reminders, once a day.
         $schedule->command('sell:send-reminders')->dailyAt('09:00')->withoutOverlapping();
+        // Abandoned unpaid orders: cancel + restock anything placed but never
+        // paid for, hourly (the 4h window is the same one the admin Orders
+        // "Placed & unpaid > 4h" filter surfaces).
+        $schedule->command('orders:cancel-pending --hours=4')
+            ->hourly()
+            ->withoutOverlapping();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

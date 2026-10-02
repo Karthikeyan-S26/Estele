@@ -13,6 +13,11 @@ class PaymentController extends Controller
 
     public function show(Order $order)
     {
+        if ($order->status === 'cancelled') {
+            return redirect()->route('home')
+                ->with('error', 'This order was cancelled before payment completed.');
+        }
+
         if ($order->payment_status === 'paid') {
             return redirect()->route('checkout.confirmation', $order);
         }
@@ -65,6 +70,11 @@ class PaymentController extends Controller
 
             return redirect()->route('payment.show', $order)
                 ->with('error', 'We couldn\'t verify that payment. Please try again.');
+        }
+
+        if ($this->payments->recordCancelledCapture($order, $validated['razorpay_payment_id'])) {
+            return redirect()->route('home')
+                ->with('error', 'This order was cancelled before your payment completed. Your payment has been recorded; please contact support for a refund.');
         }
 
         $this->payments->markPaid($order, $validated['razorpay_payment_id']);

@@ -1,0 +1,242 @@
+A-V REPORT: Estele Mobile App - Production API 404 Diagnosis & Fix
+===================================================================
+
+STATUS: FIXED AND VERIFIED IN PRODUCTION (18-Sep-2026). main merged to
+250b9af (workflow run #17 success), real public endpoints all return 200
+with live production data. Flutter APK not rebuilt - does NOT need it.
+
+WARNING: Earlier versions of this report were WRONG on two points and have
+been corrected here:
+  (1) Section 3 previously claimed "no secrets exposed / no rotation needed".
+      That was FALSE. backend/.env contains REAL production credentials and
+      WAS committed to git (commit f6a7ad5). Rotation is MANDATORY.
+  (2) Section 4 previously blamed APP_URL for the 404. That is IMPOSSIBLE -
+      APP_URL does not control route registration. The true cause (proven):
+      main was force-reverted off the mobile-API fork (tag
+      karthikeyan-mobile-api-2026-09-17), so the deployed backend registers
+      no /api routes.
+
+===================================================================
+SECTION 1: APK PRODUCTION URL VERIFICATION
+===================================================================
+- APK base URL: https://estele.ghrihum-realestate.com/api
+- Confirmed present in all 3 ABI binaries:
+  * app-arm64-v8a-release.apk (22.6 MB)
+  * app-armeabi-v7a-release.apk (20.3 MB)
+  * app-x86_64-release.apk (24.1 MB)
+- Stale URLs ABSENT from all APKs:
+  * soviet-holding-scored-directive.trycloudflare.com
+  * trycloudflare.com
+  * api.estele.in
+  * 10.0.2.2
+  * 127.0.0.1:8000
+- APK does NOT need rebuilding - already uses correct production URL
+
+===================================================================
+SECTION 2: FLUTTER ANALYZE & TEST
+===================================================================
+- Flutter analyze: 0 errors (26 pre-existing info lints only)
+- Flutter test: 24/24 passed
+
+===================================================================
+SECTION 3: SECURITY - .env WAS COMMITTED WITH REAL SECRETS (CRITICAL)
+===================================================================
+- Was backend/.env accidentally committed to Git? YES - commit f6a7ad5,
+  which was ALSO PUSHED to the target repository sync-company-main.
+- The committed .env contains REAL production-sensitive values (67 keys),
+  including: database password, Razorpay key id/secret/webhook secret,
+  Twilio SID/auth token/verify SID, Shiprocket credentials, AWS access key
+  id + secret, mail password, Redis password, and APP_KEY.
+- These secrets now live in git HISTORY. Untracking the file does NOT
+  remove them from history - anyone with repo access can retrieve them.
+- REMEDIATION ALREADY PERFORMED:
+  * backend/.env removed from git tracking (git rm --cached) - file safe on disk
+  * root .gitignore updated with 'backend/.env' (defense-in-depth)
+- REMEDIATION STILL REQUIRED (user action):
+  1. ROTATE ALL production credentials in the Hostinger .env / providers
+     for the following categories (values intentionally NOT listed here):
+     - MySQL / database password (DB_PASSWORD, DB_USERNAME)
+     - Razorpay API keys (KEY_ID, KEY_SECRET, WEBHOOK_SECRET)
+     - Twilio account (SID, AUTH_TOKEN, VERIFY_SERVICE_SID)
+     - Shiprocket (EMAIL, PASSWORD)
+     - AWS (ACCESS_KEY_ID, SECRET_ACCESS_KEY)
+     - Mail (USERNAME, PASSWORD / MAIL_PASSWORD)
+     - Redis (HOST, PASSWORD)
+     - Laravel APP_KEY
+  2. Optional hardening: rewrite git history (git filter-repo / BFG)
+     to purge the old .env blob, then force-push. Only do this AFTER
+     rotation and only if team access to the repo warrants it.
+- Do NOT print .env values into any report, chat, or commit message.
+
+===================================================================
+SECTION 4: PRODUCTION ROUTING DIAGNOSIS (DEFINITIVE ROOT CAUSE)
+===================================================================
+Root Cause of 404 (definitive - proven via GitHub Actions run history + tag):
+- Production returns Laravel's router 404 "The route api/home could not be
+  found." (String originates in
+  backend/vendor/laravel/framework/src/Illuminate/Routing/AbstractRouteCollection.php:44)
+  -> Laravel IS running; the /api routes are simply NOT in the route table.
+- Winners of events:
+  * 16-Sep: the mobile-API/fork-sync work (4038327..dbfd440) WAS pushed to
+    tcongsinfotech/jewellery main and deployed (GitHub Actions run history
+    shows green deploys with those head commits).
+  * Then main was FORCE-REVERTED to the feat/admin-updates line
+    (fetch showed `+ dbfd440...05bbee9 main (forced update)`). The annotated
+    tag karthikeyan-mobile-api-2026-09-17 records it: "Safety checkpoint
+    before reverting main to feat/admin-updates-2026-09-17."
+  * The 18-Sep 12:57 UTC deploy (head=05bbee9 "update code") put the
+    reverted main LIVE. Current main's backend/routes/api.php = OLD Fastrr/v1
+    API only - no /home, /health, /categories, /collections, /search.
+  * Result: storefront (/) and /up work; every mobile /api/* returns 404.
+- NEVER an APP_URL problem and never a cache problem (web+api+health register
+  in ONE routing closure; a cache holding /up must hold /api/* too - the old
+  "stale cache" theory in earlier reports was impossible and is retracted).
+
+FIX (built, validated, awaiting merge):
+- Branch mobile-api-port (commit 250b9af, parent = 05bbee9 = clean FF) ports
+  ONLY the 9 public catalog endpoints the app calls, additively:
+  /api/health, /api/home, /api/categories (+/{slug}/products),
+  /api/collections (+/{slug}/products), /api/products/{slug},
+  /api/search, /api/search/suggest.
+- Adds: Api/CatalogController, Api/ApiResponses, Api/ProductResource,
+  Models/ProductView + product_views table (new, non-destructive). v1
+  Fastrr/old-jewellery routes untouched.
+- Validated: clean `composer install` of main's lockfile, route:list shows
+  both groups, all endpoints 200 on sandboxed sqlite built from main's
+  migrations.
+- PR: https://github.com/tcongsinfotech/jewellery/pull/2 (open, awaiting merge)
+- NOTE: the full fork (auth/cart/checkout/sell) from tag
+  karthikeyan-mobile-api-2026-09-17 can be layered later in the same
+  additive pattern; it is preserved on the tag and recoverable.
+
+LOCAL PROOF (also carried out today):
+- php artisan serve on the ported main (port 8023, sandboxed sqlite):
+  * GET /api/health     -> 200 {"status":"ok","service":"estele-api",...}
+  * GET /api/home       -> 200 (816 bytes)
+  * GET /api/categories -> 200
+  * GET /api/collections-> 200
+  * GET /api/search?q=Earrings -> 200
+- php artisan about -> Laravel 13.21.1, Routes NOT cached
+
+===================================================================
+SECTION 5: PRODUCTION DEPLOYED CODE VERIFICATION
+===================================================================
+- Local repository: ported main verified working (see Section 4) ✓
+- Git branch sync-company-main HEAD: 273ba4c (security fixes for .env) ✓
+- mobile-api-port branch (commit 250b9af) = the fix, backed by PR #2 ✓
+- Deployment mechanism FOUND: tcongsinfotech/jewellery has
+  `.github/workflows/deploy.yml` (sha 5bd01a593d68aecd3912d9b0a5e2229df7824c80).
+  Triggers on push to main or workflow_dispatch. Steps: run tests, rsync
+  ./backend/ over SSH (HOSTINGER_* secrets), composer install --no-dev,
+  `php artisan migrate --force`, `optimize:clear`, `optimize`, verify
+  vendor/autoload.php. Run history: many green runs; 18-Sep 12:57 UTC run
+  deployed the reverted main (05bbee9) - the source of the 404s.
+- Merging PR #2 -> main triggers this pipeline automatically. ✓
+- Hostinger production: running 05bbee9 WITHOUT /api routes ✗ (until merge)
+
+===================================================================
+SECTION 6: PRODUCTION CACHE STATUS
+===================================================================
+- Local route cache: NOT cached ✓
+- Production deploy pipeline already runs `php artisan optimize:clear`
+  followed by `php artisan optimize` on every deploy - caches are rebuilt
+  automatically when PR #2 merges. No manual cache clearing needed.
+
+===================================================================
+SECTION 7: PRODUCTION DOCUMENT ROOT
+===================================================================
+- Deployed Laravel must have Apache/nginx document root = the directory
+  containing public/index.php (Laravel front controller).
+- If domain doc root is the repo root or another folder, /api/* will not be
+  served correctly. VERIFY on Hostinger after deployment.
+
+===================================================================
+SECTION 8: REAL PUBLIC ENDPOINT VERIFICATION - VERIFIED 200
+===================================================================
+After merge of PR #2 (main -> 250b9af) + deploy (workflow run #17, success):
+- GET .../api/health     -> 200 {"status":"ok","service":"estele-api",...} ✓
+- GET .../api/home       -> 200 JSON, 64,172 bytes (all 31 data sections) ✓
+- GET .../api/categories -> 200 JSON, 2,458 bytes (10 real categories) ✓
+- GET .../api/collections-> 200 JSON, 2,396 bytes (real collections) ✓
+- GET .../api/search?q=Earrings -> 200 JSON, 3,660 bytes (real products) ✓
+- GET .../api/v1/fastrr/products -> 401 (auth-protected, route intact) ✓
+- GET .../                -> 200 (storefront) ✓
+- GET .../up              -> 200 (health) ✓
+- Media: category/product images HEAD -> 200 (served from prod storage) ✓
+- Also confirmed: commit 250b9af changed exactly 6 files (no .env,
+  no secrets); no .env tracked anywhere in the main tree; API resource
+  URLs unescaped; production DB/media untouched and serving live data.
+
+===================================================================
+SECTION 9: PRODUCTION DATA PRESERVATION
+===================================================================
+- Production MySQL data: NOT touched ✓
+- Uploaded media: NOT touched ✓
+- Storage directory: NOT touched ✓
+- Payment configuration: NOT touched ✓
+- Existing customer/order data: NOT touched ✓
+- Website functionality: NOT affected ✓
+
+===================================================================
+SECTION 10: FLUTTER APK REBUILD STATUS
+===================================================================
+- Does NOT need rebuilding ✓ CONFIRMED
+- APK already correctly configured with: https://estele.ghrihum-realestate.com/api
+- Build command originally used: flutter build apk --release --split-per-abi --dart-define=API_BASE_URL=https://estele.ghrihum-realestate.com/api
+- APK verified: no stale URLs (trycloudflare, api.estele.in, localhost, etc.)
+- The APK reaches the production domain correctly; only server-side Laravel
+  deployment is missing.
+
+===================================================================
+SECTION 11: SUMMARY & NEXT STEPS
+===================================================================
+1. Root cause: production main was force-reverted from the mobile-API fork
+   (dbfd440...05bbee9; tag karthikeyan-mobile-api-2026-09-17); deployed main
+   had only v1 Fastrr/old-jewellery routes, so mobile /api/* returned 404.
+2. Fix: additive port on branch mobile-api-port (250b9af, parent=05bbee9).
+   Validated locally, MERGED to main (fast-forward), DEPLOYED via GitHub
+   Actions deploy.yml (run #17, success, head=250b9af).
+3. .env was committed with real secrets (f6a7ad5, pushed). Untracked now
+   (273ba4c). CREDENTIAL ROTATION IS STILL MANDATORY (see Section 3). No
+   values printed anywhere.
+4. Security status: file untracked + .gitignore updated; rotation pending.
+5. Committed fixtree verified: only the 6 intended files; NO .env tracked.
+6. Document root: Laravel public/ correct (storefront + API both serve).
+7. route:list: mobile API + v1 routes all registered (validated).
+8. /api/health HTTP 200 (production) ✓  MET
+9. /api/home HTTP 200   (production) ✓  MET
+10. /api/categories HTTP 200 (production) ✓  MET
+11. /api/collections HTTP 200 (production) ✓  MET
+12. /api/search HTTP 200 (production) ✓  MET
+13. Production database/media preserved: ✓ YES (live data + image 200s)
+14. Flutter APK does NOT need rebuilding: ✓ YES
+
+REMAINING USER ACTION:
+- ROTATE production credentials per Section 3 (DB, Razorpay, Twilio,
+  Shiprocket, AWS, mail, Redis, APP_KEY). API is now live; rotate ASAP.
+===================================================================
+SECTION 12: PRODUCTION-API APK BUILD (18-Sep-2026)
+===================================================================
+- Production API verified live: /api/health, /api/home, /api/categories,
+  /api/collections all 200. No production changes made.
+- flutter pub get OK | flutter analyze 0 errors (26 info lints) |
+  flutter test 24/24 passed.
+- Signing: RELEASE (android/app/upload-keystore.jks, PKCS12; key.properties
+  present). apksigner cert = CN=Estele, OU=Mobile, O=Estele, ... IN.
+- Build: flutter build apk --release --dart-define=API_BASE_URL=https://estele.ghrihum-realestate.com/api
+- APK: build/app/outputs/flutter-apk/app-release.apk (57.6 MB)
+- applicationId com.estele.estele, version 1.0.0+1
+- Embedded API verified: lib/arm64-v8a/libapp.so contains
+  https://estele.ghrihum-realestate.com/api (byte scan).
+- No device connected (adb devices empty) -> install + on-device tests
+  NOT performed. APK ready for manual install.
+- Credential exposure (from git history blob f6a7ad5:backend/.env):
+  AFFECTED (real values leaked): DB_PASSWORD, TWILIO_* (3 keys),
+  MAIL_PASSWORD, REDIS_PASSWORD, APP_KEY.
+  NOT AFFECTED (empty/placeholder in blob): RAZORPAY_*, SHIPROCKET_*,
+  AWS_*, VAS_SMS_API_KEY, SENTRY_LARAVEL_DSN.
+  Deploy pipeline excludes /.env (server env separate); whether leaked
+  values equal the LIVE prod .env = UNKNOWN. Rotate AFFECTED categories.
+  APP_KEY rotation impact: no encrypted-at-rest columns (no Crypt casts),
+  SESSION_ENCRYPT=false, Sanctum tokens survive -> forces global re-login
+  only; safe to rotate in a maintenance window. Not changed automatically.

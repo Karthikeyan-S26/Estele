@@ -282,6 +282,7 @@ $order = Order::create([
 
         abort_unless($order->user_id === $request->user()->id, 404);
         abort_unless($order->payment_method === 'razorpay', 422);
+        abort_unless($order->status === 'placed', 422, 'This order is no longer payable.');
         abort_unless(in_array($order->payment_status, ['pending', 'failed'], true), 422);
 
         if (! $this->payments->isOnlinePaymentEnabled()) {
@@ -348,6 +349,13 @@ $order = Order::create([
 
         if (! $valid) {
             return $this->error('We couldn\'t verify that payment. Please try again.', 422);
+        }
+
+        if ($this->payments->recordCancelledCapture($order, $validated['razorpay_payment_id'])) {
+            return $this->ok([
+                'order' => OrderResource::payload($order->fresh()->load('items')),
+                'message' => 'This order was cancelled before your payment completed. Your payment has been recorded; please contact support for a refund.',
+            ]);
         }
 
         $this->payments->markPaid($order, $validated['razorpay_payment_id']);
