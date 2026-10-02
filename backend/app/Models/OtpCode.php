@@ -8,6 +8,8 @@ class OtpCode extends Model
 {
     protected $fillable = [
         'phone',
+        'email',
+        'channel',
         'code_hash',
         'expires_at',
         'attempts',
@@ -19,6 +21,7 @@ class OtpCode extends Model
     protected function casts(): array
     {
         return [
+            'channel' => 'string',
             'expires_at' => 'datetime',
             'consumed_at' => 'datetime',
             'verified_at' => 'datetime',

@@ -68,17 +68,16 @@ return [
         'driver' => env('SMS_DRIVER'),
     ],
 
-    // Alternative OTP gateway (App\Services\Otp\TwilioOtpGateway) — added
-    // alongside VAS Multimedia after VAS's real submissions kept coming back
-    // "SUCCESS" from the API but never actually reaching a phone across
-    // three separate live test sends, which pointed at the VAS account
-    // itself (likely still in trial/test mode) rather than our integration.
+    // OTP gateway (App\Services\Otp\TwilioOtpGateway) backed by the Twilio
+    // Verify API: Twilio generates the code, delivers it over its own SMS
+    // routing and checks it back via VerificationCheck — so no sender number
+    // is needed and TWILIO_PHONE_NUMBER is deliberately not a setting here.
     // SMS_DRIVER picks which configured gateway OtpManager actually uses;
     // see that class for the selection order.
     'twilio' => [
         'sid' => env('TWILIO_SID'),
         'token' => env('TWILIO_AUTH_TOKEN'),
-        'from' => env('TWILIO_PHONE_NUMBER'),
+        'verify_service_sid' => env('TWILIO_VERIFY_SERVICE_SID'),
     ],
 
     // Business WhatsApp notifications (App\Services\WhatsApp\WhatsAppManager)

@@ -8,7 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('personal_access_tokens', function (Blueprint $table) {
+        // Production already has a Sanctum-managed `personal_access_tokens`
+        // table, so the mobile API tokens live in their own table instead of
+        // colliding with it.
+        Schema::create('mobile_api_tokens', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('name', 100);
@@ -38,6 +41,6 @@ return new class extends Migration
             $table->dropColumn('user_id');
         });
 
-        Schema::dropIfExists('personal_access_tokens');
+        Schema::dropIfExists('mobile_api_tokens');
     }
 };
