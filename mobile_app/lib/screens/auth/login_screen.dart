@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -5,9 +6,10 @@ import '../../providers/auth_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 
-/// Website-equivalent of the site's /login — mobile number + OTP only. One OTP
-/// round covers both login and registration: an existing number signs in, a new
-/// number is carried to account completion.
+/// Website-parity mobile login: phone number + "SEND OTP" only. The OTP round
+/// lives on its own verification screen (`/otp`) with six auto-verifying
+/// boxes; a single code serves both login and registration — an existing
+/// number signs in, a new number is carried to account completion.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -17,17 +19,45 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _phone = TextEditingController();
-  final _otp = TextEditingController();
 
-  bool _otpSent = false;
+  // Held as a field (not re-read from `context` in dispose): looking up an
+  // inherited widget during unmount is unsafe, and the pattern is already
+  // used by the checkout / account / root screens.
+  late final AuthProvider _auth;
+
   bool _submitting = false;
   String? _error;
+  // Marketing-updates consent — a real interactive checkbox, checked by
+  // default. Informational only (the website has no consent gate): it is NOT
+  // wired into the SEND OTP validation below.
+  bool _consentGiven = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _auth = context.read<AuthProvider>();
+    _auth.addListener(_onAuthChanged);
+  }
 
   @override
   void dispose() {
+    _auth.removeListener(_onAuthChanged);
     _phone.dispose();
-    _otp.dispose();
     super.dispose();
+  }
+
+  /// The OTP (existing user) or create-account (new user) screens pushed above
+  /// this one flip the provider to authenticated the instant sign-in
+  /// completes — that is the signal to dismiss the login screen itself and
+  /// reveal whatever prompted it (Bag → checkout wall, the Account icon, …).
+  /// Scheduling the pop post-frame lets the completion screen's own
+  /// navigation (e.g. the Buy Now jump to checkout) run first.
+  void _onAuthChanged() {
+    if (!_auth.isAuthenticated) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_auth.isAuthenticated) return;
+      Navigator.of(context).pop();
+    });
   }
 
   bool _validPhone() {
@@ -48,46 +78,13 @@ class _LoginScreenState extends State<LoginScreen> {
       _phone.text.trim(),
     );
     if (!mounted) return;
-    setState(() {
-      _submitting = false;
-      if (err == null) {
-        _otpSent = true;
-      } else {
-        _error = err;
-      }
-    });
-  }
-
-  Future<void> _verifyOtp() async {
-    if (_otp.text.trim().length != 6) {
-      setState(() => _error = 'Enter the 6-digit code sent to your phone');
+    setState(() => _submitting = false);
+    if (err != null) {
+      setState(() => _error = err);
       return;
     }
-    setState(() {
-      _submitting = true;
-      _error = null;
-    });
-    final auth = context.read<AuthProvider>();
-    final err = await auth.verifyMobileOtp(
-      _phone.text.trim(),
-      _otp.text.trim(),
-    );
-    if (!mounted) return;
-    if (err == null) {
-      if (auth.isAuthenticated) {
-        Navigator.of(context).pop();
-      } else if (auth.verificationToken != null) {
-        // New customer — verified phone is carried to account completion.
-        Navigator.of(
-          context,
-        ).pushReplacementNamed('/register', arguments: _phone.text.trim());
-      }
-    } else {
-      setState(() {
-        _submitting = false;
-        _error = err;
-      });
-    }
+    // OTP issued — move to the verification screen, carrying the phone.
+    Navigator.of(context).pushNamed('/otp', arguments: _phone.text.trim());
   }
 
   @override
@@ -98,7 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
         backgroundColor: AppColors.ivory,
         foregroundColor: AppColors.heading,
         elevation: 0,
-        title: const Text(''),
+        title: const Text('Login'),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -120,7 +117,159 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
                 ),
-                child: _otpSent ? _buildVerifyCard() : _buildPhoneCard(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Login for faster checkout',
+                      textAlign: TextAlign.center,
+                      style: AppTypography.editorial(
+                        size: 24,
+                        weight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "We'll send a one-time code. No password needed.",
+                      textAlign: TextAlign.center,
+                      style: AppTypography.bodySmall(size: 13),
+                    ),
+                    const SizedBox(height: 24),
+
+                    if (_error != null) ...[
+                      _ErrorText(_error!),
+                      const SizedBox(height: 12),
+                    ],
+
+                    // Mobile Number
+                    Text('Mobile Number', style: AppTypography.bodyMedium(
+                      size: 13,
+                    )),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Container(
+                          height: 48,
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          alignment: Alignment.center,
+                          decoration: const BoxDecoration(
+                            color: AppColors.warmBeige,
+                            borderRadius: BorderRadius.horizontal(
+                              left: Radius.circular(8),
+                            ),
+                            border: Border(
+                              top: BorderSide(color: AppColors.lineStrong),
+                              bottom: BorderSide(color: AppColors.lineStrong),
+                              left: BorderSide(color: AppColors.lineStrong),
+                            ),
+                          ),
+                          child: Text(
+                            '+91',
+                            style: AppTypography.bodyMedium(
+                              size: 13,
+                              weight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: SizedBox(
+                            height: 48,
+                            child: TextField(
+                              controller: _phone,
+                              enabled: !_submitting,
+                              keyboardType: TextInputType.phone,
+                              maxLength: 10,
+                              autofocus: true,
+                              textInputAction: TextInputAction.done,
+                              onSubmitted: (_) => _sendOtp(),
+                              decoration: InputDecoration(
+                                counterText: '',
+                                hintText: '10-digit mobile number',
+                                hintStyle: AppTypography.bodySmall(size: 14),
+                                filled: true,
+                                fillColor: AppColors.paper,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: const BorderRadius.horizontal(
+                                    right: Radius.circular(8),
+                                  ),
+                                  borderSide: const BorderSide(
+                                    color: AppColors.lineStrong,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: const BorderRadius.horizontal(
+                                    right: Radius.circular(8),
+                                  ),
+                                  borderSide: const BorderSide(
+                                    color: AppColors.accent,
+                                    width: 1.4,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 20),
+                    FilledButton(
+                      onPressed: _submitting ? null : _sendOtp,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.accentDark,
+                        disabledBackgroundColor: AppColors.accentDark
+                            .withValues(alpha: 0.6),
+                        minimumSize: const Size.fromHeight(48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        elevation: 1,
+                      ),
+                      child: _submitting
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(
+                              'SEND OTP',
+                              style: AppTypography.button(
+                                size: 13,
+                                letterSpacing: 0.6,
+                              ),
+                            ),
+                    ),
+
+                    const SizedBox(height: 20),
+                    Text(
+                      "New here? You'll be guided to finish creating an account right after your number is verified.",
+                      textAlign: TextAlign.center,
+                      style: AppTypography.bodySmall(size: 12.5).copyWith(
+                        height: 1.6,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    TextButton(
+                      onPressed: () =>
+                          Navigator.of(context).pushReplacementNamed('/register'),
+                      child: Text(
+                        'Create account',
+                        style: AppTypography.bodyMedium(
+                          size: 13,
+                          color: AppColors.accentDark,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _termsLine(context),
+                  ],
+                ),
               ),
             ),
           ),
@@ -129,276 +278,56 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildPhoneCard() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+  /// Kushals-style consent row: a real interactive Checkbox (checked by
+  /// default, brand accent) beside wrapping consent text whose
+  /// "Terms & Conditions apply." span opens the existing return-policy CMS
+  /// page. Not a gate — the website has no consent checkbox, and _sendOtp
+  /// validates phone only. Lives inside the scrollable card so it stays
+  /// reachable with the keyboard open.
+  Widget _termsLine(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Welcome Back',
-          textAlign: TextAlign.center,
-          style: AppTypography.editorial(size: 24, weight: FontWeight.w600),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          "We'll text a one-time verification code to your phone.",
-          textAlign: TextAlign.center,
-          style: AppTypography.bodySmall(size: 13),
-        ),
-        const SizedBox(height: 24),
-
-        if (_error != null) ...[
-          _ErrorText(_error!),
-          const SizedBox(height: 12),
-        ],
-
-        // Mobile Number
-        Text('Mobile Number', style: AppTypography.bodyMedium(size: 13)),
-        const SizedBox(height: 6),
-        Row(
-          children: [
-            Container(
-              height: 48,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              alignment: Alignment.center,
-              decoration: const BoxDecoration(
-                color: AppColors.warmBeige,
-                borderRadius: BorderRadius.horizontal(left: Radius.circular(8)),
-                border: Border(
-                  top: BorderSide(color: AppColors.lineStrong),
-                  bottom: BorderSide(color: AppColors.lineStrong),
-                  left: BorderSide(color: AppColors.lineStrong),
-                ),
-              ),
-              child: Text(
-                '+91',
-                style: AppTypography.bodyMedium(
-                  size: 13,
-                  weight: FontWeight.w600,
-                ),
-              ),
-            ),
-            Expanded(
-              child: SizedBox(
-                height: 48,
-                child: TextField(
-                  controller: _phone,
-                  enabled: !_submitting,
-                  keyboardType: TextInputType.phone,
-                  maxLength: 10,
-                  autofocus: true,
-                  textInputAction: TextInputAction.done,
-                  onSubmitted: (_) => _sendOtp(),
-                  decoration: InputDecoration(
-                    counterText: '',
-                    hintText: '10-digit mobile number',
-                    hintStyle: AppTypography.bodySmall(size: 14),
-                    filled: true,
-                    fillColor: AppColors.paper,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: const BorderRadius.horizontal(
-                        right: Radius.circular(8),
-                      ),
-                      borderSide: const BorderSide(color: AppColors.lineStrong),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: const BorderRadius.horizontal(
-                        right: Radius.circular(8),
-                      ),
-                      borderSide: const BorderSide(
-                        color: AppColors.accent,
-                        width: 1.4,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 20),
-        FilledButton(
-          onPressed: _submitting ? null : _sendOtp,
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColors.accentDark,
-            disabledBackgroundColor: AppColors.accentDark.withValues(
-              alpha: 0.6,
-            ),
-            minimumSize: const Size.fromHeight(48),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            elevation: 1,
-          ),
-          child: _submitting
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : Text(
-                  'SEND OTP',
-                  style: AppTypography.button(size: 13, letterSpacing: 0.6),
-                ),
-        ),
-
-        const SizedBox(height: 20),
-        Text(
-          "New here? You'll be guided to finish creating an account right after your number is verified.",
-          textAlign: TextAlign.center,
-          style: AppTypography.bodySmall(size: 12.5).copyWith(height: 1.6),
-        ),
-        const SizedBox(height: 4),
-        TextButton(
-          onPressed: () =>
-              Navigator.of(context).pushReplacementNamed('/register'),
-          child: Text(
-            'Create account',
-            style: AppTypography.bodyMedium(
-              size: 13,
-              color: AppColors.accentDark,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildVerifyCard() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          'Enter Verification Code',
-          textAlign: TextAlign.center,
-          style: AppTypography.editorial(size: 24, weight: FontWeight.w600),
-        ),
-        const SizedBox(height: 4),
-        Text.rich(
-          textAlign: TextAlign.center,
-          TextSpan(
-            style: AppTypography.bodySmall(size: 13),
-            children: [
-              const TextSpan(text: "We sent a 6-digit code to "),
-              TextSpan(
-                text: '+91 ${_phone.text.trim()}',
-                style: AppTypography.bodySmall(
-                  size: 13,
-                  weight: FontWeight.w700,
-                  color: AppColors.heading,
-                ),
-              ),
-              const TextSpan(text: '.'),
-            ],
-          ),
-        ),
-        const SizedBox(height: 24),
-
-        if (_error != null) ...[
-          _ErrorText(_error!),
-          const SizedBox(height: 12),
-        ],
-
-        // One-Time Code — centered, wide tracking like the web's letter-spacing.
-        Text(
-          'One-Time Code',
-          textAlign: TextAlign.center,
-          style: AppTypography.bodyMedium(size: 13),
-        ),
-        const SizedBox(height: 6),
         SizedBox(
-          height: 52,
-          child: TextField(
-            controller: _otp,
-            enabled: !_submitting,
-            keyboardType: TextInputType.number,
-            maxLength: 6,
-            autofocus: true,
-            textAlign: TextAlign.center,
-            onSubmitted: (_) => _verifyOtp(),
-            style: AppTypography.body(
-              size: 20,
-              weight: FontWeight.w600,
-            ).copyWith(letterSpacing: 8),
-            decoration: InputDecoration(
-              counterText: '',
-              hintText: '••••••',
-              hintStyle: AppTypography.body(size: 18, color: AppColors.muted),
-              filled: true,
-              fillColor: AppColors.paper,
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: AppColors.lineStrong),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(
-                  color: AppColors.accent,
-                  width: 1.4,
-                ),
-              ),
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 20),
-        FilledButton(
-          onPressed: _submitting ? null : _verifyOtp,
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColors.accentDark,
-            disabledBackgroundColor: AppColors.accentDark.withValues(
-              alpha: 0.6,
-            ),
-            minimumSize: const Size.fromHeight(48),
+          width: 28,
+          height: 28,
+          child: Checkbox(
+            value: _consentGiven,
+            onChanged: (v) => setState(() => _consentGiven = v ?? false),
+            activeColor: AppColors.accentDark,
+            checkColor: Colors.white,
+            side: const BorderSide(color: AppColors.lineStrong, width: 1.4),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(4),
             ),
-            elevation: 1,
+            visualDensity: VisualDensity.compact,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
-          child: _submitting
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 5),
+            child: RichText(
+              text: TextSpan(
+                style: AppTypography.bodySmall(size: 12.5),
+                children: [
+                  const TextSpan(
+                    text:
+                        'I agree to receive updates and communication from Estele. ',
                   ),
-                )
-              : Text(
-                  'VERIFY & CONTINUE',
-                  style: AppTypography.button(size: 13, letterSpacing: 0.6),
-                ),
-        ),
-
-        const SizedBox(height: 14),
-        TextButton(
-          onPressed: _submitting ? null : _sendOtp,
-          child: Text(
-            "Didn't receive code? Resend",
-            style: AppTypography.bodyMedium(
-              size: 13,
-              color: AppColors.accentDark,
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextButton(
-          onPressed: _submitting
-              ? null
-              : () => setState(() {
-                  _otpSent = false;
-                  _otp.clear();
-                  _error = null;
-                }),
-          child: Text(
-            'Wrong mobile number? Start over',
-            style: AppTypography.bodyMedium(
-              size: 13,
-              color: AppColors.accentDark,
+                  TextSpan(
+                    text: 'Terms & Conditions apply.',
+                    style: AppTypography.bodySmall(size: 12.5).copyWith(
+                      color: AppColors.accentDark,
+                      decoration: TextDecoration.underline,
+                    ),
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () =>
+                          Navigator.of(context).pushNamed('/cms/return-policy'),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

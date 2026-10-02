@@ -5,6 +5,7 @@ import '../../data/repositories/content_repository.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 import '../../widgets/app_image.dart';
+import '../../widgets/estele_app_bar.dart';
 import '../../widgets/load_state.dart';
 
 /// Stores tab — flagship + boutique showrooms. Data comes from `/stores`.
@@ -57,11 +58,16 @@ class _StoresScreenState extends State<StoresScreen> {
 
     final stores = _data ?? const [];
 
-    return RefreshIndicator(
-      onRefresh: _load,
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
+    // This screen previously pushed with no Scaffold at all — wrapping it
+    // gives it the shared pinned Estele header (its own in-body heading
+    // stays as the page title).
+    return Scaffold(
+      appBar: pushedAppBar(context),
+      body: RefreshIndicator(
+        onRefresh: _load,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
         children: [
           Text('Our stores', style: AppTypography.scriptAccent(size: 30)),
           Text('Visit us', style: AppTypography.sectionTitle(size: 20)),
@@ -72,6 +78,7 @@ class _StoresScreenState extends State<StoresScreen> {
             ...stores.map((store) => _StoreCard(store: store)),
           const SizedBox(height: 8),
         ],
+        ),
       ),
     );
   }

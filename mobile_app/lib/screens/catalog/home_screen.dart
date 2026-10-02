@@ -5,6 +5,7 @@ import '../../models/home_data.dart';
 import '../../models/product.dart';
 import '../../utils/app_link.dart';
 import '../../widgets/load_state.dart';
+import '../../widgets/newsletter_popup.dart';
 import 'home/benefits_block.dart';
 import 'home/budget_tiles.dart';
 import 'home/category_strip.dart';
@@ -55,6 +56,13 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           _data = data;
           _loading = false;
+        });
+        // One-shot "Get the Glow" prompt (prefs-guarded inside).
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Future.delayed(const Duration(seconds: 2), () {
+            if (!mounted) return;
+            NewsletterPopup.maybeShow(context);
+          });
         });
       }
     } catch (e) {

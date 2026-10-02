@@ -5,6 +5,7 @@ import '../../data/repositories/content_repository.dart';
 import '../../models/cms_page.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
+import '../../widgets/estele_app_bar.dart';
 import '../../widgets/load_state.dart';
 
 class CmsPageScreen extends StatefulWidget {
@@ -64,7 +65,9 @@ class _CmsPageScreenState extends State<CmsPageScreen> {
 
     final page = _page!;
     return Scaffold(
-      appBar: AppBar(title: Text(page.title)),
+      // Shared pinned Estele header — the page title already renders
+      // in-body below, so the plain title bar is redundant.
+      appBar: pushedAppBar(context),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [

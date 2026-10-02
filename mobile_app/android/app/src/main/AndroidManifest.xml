@@ -8,6 +8,7 @@
         android:usesCleartextTraffic="false">
         <activity
             android:name=".MainActivity"
+            android:clearTaskOnLaunch="true"
             android:exported="true"
             android:launchMode="singleTop"
             android:taskAffinity=""

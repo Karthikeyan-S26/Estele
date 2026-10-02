@@ -162,14 +162,16 @@ class FooterBlock extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                if (footer.companyName != null)
-                  Text(
-                    footer.companyName!,
-                    style: AppTypography.bodySmall(
-                      size: 11,
-                      color: Colors.white70,
-                    ),
+                // Website brand block shows the "Trusted since 1989"
+                // tagline here (the legal company name lives in the
+                // Get-in-Touch block below, same as the site).
+                Text(
+                  'Trusted since 1989',
+                  style: AppTypography.bodySmall(
+                    size: 11,
+                    color: Colors.white70,
                   ),
+                ),
                 const SizedBox(height: 12),
                 if (footer.about != null) ...[
                   Text(
@@ -183,6 +185,16 @@ class FooterBlock extends StatelessWidget {
                 ],
                 const Divider(color: AppColors.gold, thickness: 1),
                 const SizedBox(height: 8),
+                if (footer.companyName != null)
+                  Text(
+                    footer.companyName!,
+                    style: AppTypography.bodySmall(
+                      size: 11.5,
+                      color: Colors.white70,
+                      weight: FontWeight.w600,
+                    ),
+                  ),
+                if (footer.companyName != null) const SizedBox(height: 8),
                 _InfoRow(
                   icon: Icons.phone_outlined,
                   text: footer.contactPhone,
@@ -205,6 +217,97 @@ class FooterBlock extends StatelessWidget {
                 _InfoRow(
                   icon: Icons.schedule_outlined,
                   text: footer.contactHours,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Quick links',
+                  style: AppTypography.label(size: 10, color: Colors.white70),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 16,
+                  runSpacing: 10,
+                  children: [
+                    // Same order as the website's Customer Care column.
+                    _FooterLink(
+                      label: 'Track Order',
+                      onTap: () => Navigator.of(context).pushNamed('/orders'),
+                    ),
+                    _FooterLink(
+                      label: 'My Wishlist',
+                      onTap: () =>
+                          Navigator.of(context).pushNamed('/wishlist'),
+                    ),
+                    _FooterLink(
+                      label: 'Shopping Bag',
+                      onTap: () => Navigator.of(context).pushNamed('/cart'),
+                    ),
+                    _FooterLink(
+                      label: 'Return & Exchange Policy',
+                      onTap: () => Navigator.of(
+                        context,
+                      ).pushNamed('/cms/return-policy'),
+                    ),
+                    _FooterLink(
+                      label: 'Shipping & Delivery',
+                      onTap: () => Navigator.of(
+                        context,
+                      ).pushNamed('/cms/shipping-policy'),
+                    ),
+                    _FooterLink(
+                      label: 'Help & FAQ',
+                      onTap: () => Navigator.of(context).pushNamed('/faq'),
+                    ),
+                    _FooterLink(
+                      label: 'Journal',
+                      onTap: () => Navigator.of(context).pushNamed('/blog'),
+                    ),
+                    _FooterLink(
+                      label: 'Privacy Policy',
+                      onTap: () => Navigator.of(
+                        context,
+                      ).pushNamed('/cms/privacy-policy'),
+                    ),
+                    _FooterLink(
+                      label: 'Terms & Conditions',
+                      onTap: () => Navigator.of(
+                        context,
+                      ).pushNamed('/cms/return-policy'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Follow us',
+                  style: AppTypography.label(size: 10, color: Colors.white70),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    // Website footer's social URLs (its $siteSettings
+                    // fallbacks — the API footer payload carries no social
+                    // keys, so these match the site defaults exactly).
+                    _SocialPill(
+                      label: 'Instagram',
+                      onTap: () => _launch(
+                        'https://www.instagram.com/estele.co/',
+                      ),
+                    ),
+                    _SocialPill(
+                      label: 'Facebook',
+                      onTap: () => _launch(
+                        'https://www.facebook.com/estelejewelery/',
+                      ),
+                    ),
+                    _SocialPill(
+                      label: 'YouTube',
+                      onTap: () => _launch(
+                        'https://www.youtube.com/@estelejewellery',
+                      ),
+                    ),
+                  ],
                 ),
                 if (footer.popularSearches.isNotEmpty) ...[
                   const SizedBox(height: 16),
@@ -321,6 +424,59 @@ class FooterBlock extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Website-footer parity link (gold-tinted text, no container).
+class _FooterLink extends StatelessWidget {
+  const _FooterLink({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Text(
+        label,
+        style: AppTypography.bodySmall(
+          size: 11.5,
+          color: AppColors.goldLight,
+        ),
+      ),
+    );
+  }
+}
+
+/// Website-footer social link as a text pill (the app ships no brand-icon
+/// font, so initials/icons are not faked — plain labeled pills).
+class _SocialPill extends StatelessWidget {
+  const _SocialPill({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: AppTypography.bodySmall(
+            size: 10.5,
+            color: Colors.white,
+            weight: FontWeight.w600,
+          ),
+        ),
       ),
     );
   }

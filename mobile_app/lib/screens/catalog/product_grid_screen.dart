@@ -6,6 +6,7 @@ import '../../providers/cart_provider.dart';
 import '../../providers/wishlist_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
+import '../../widgets/estele_app_bar.dart';
 import '../../widgets/load_state.dart';
 import '../../widgets/product_card.dart';
 import '../../widgets/product_grid_ratio.dart';
@@ -170,13 +171,33 @@ class _ProductGridScreenState extends State<ProductGridScreen> {
     final wishlist = context.watch<WishlistProvider>();
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
-      body: _initialLoading && _products.isEmpty
-          ? const LoadState.loading()
-          : _failed && _products.isEmpty
-          ? LoadState.error(message: _error ?? '', onRetry: _reload)
-          : Column(
+      // Shared pinned Estele header (replaces the plain title bar) —
+      // the grid title lives in the body content below.
+      appBar: pushedAppBar(context),
+      body: SafeArea(
+        // Pinned AppBar already accounts the top inset; only the bottom
+        // system inset (gesture bar) needs guarding so the last grid row
+        // can never slide underneath it.
+        top: false,
+        child:
+            _initialLoading && _products.isEmpty
+            ? const LoadState.loading()
+            : _failed && _products.isEmpty
+            ? LoadState.error(message: _error ?? '', onRetry: _reload)
+            : Column(
               children: [
+                // Page title moved in-body (the shared header carries no
+                // title) — mirrors the website's in-content H1.
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      widget.title,
+                      style: AppTypography.sectionTitle(size: 19),
+                    ),
+                  ),
+                ),
                 // Sort / filter bar
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
@@ -281,6 +302,7 @@ class _ProductGridScreenState extends State<ProductGridScreen> {
                 ),
               ],
             ),
+          ),
     );
   }
 }

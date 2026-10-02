@@ -35,8 +35,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final _postalCode = TextEditingController();
   final _phone = TextEditingController();
   final _note = TextEditingController();
+  final _firstName = TextEditingController();
+  final _lastName = TextEditingController();
+  final _email = TextEditingController();
 
-  bool _guest = true;
+  late final AuthProvider _auth;
+  bool _preparing = false;
+  AuthStatus _lastStatus = AuthStatus.unknown;
   bool _loading = true;
   List<Address> _saved = [];
   Address? _selectedSaved;
@@ -50,14 +55,24 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   void initState() {
     super.initState();
+    _auth = context.read<AuthProvider>();
     _postalCode.addListener(_onPincodeEdited);
-    _boot();
+    _lastStatus = _auth.status;
+    _auth.addListener(_onAuthChanged);
+    if (_auth.isAuthenticated) {
+      _prepare();
+    } else {
+      // Guests see the reactive sign-in wall immediately; the cart loads
+      // once (if ever) they authenticate.
+      _loading = false;
+    }
   }
 
   @override
   void dispose() {
     _pincodeDebounce?.cancel();
     _postalCode.removeListener(_onPincodeEdited);
+    _auth.removeListener(_onAuthChanged);
     for (final c in [
       _label,
       _line1,
@@ -67,28 +82,45 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       _postalCode,
       _phone,
       _note,
+      _firstName,
+      _lastName,
+      _email,
     ]) {
       c.dispose();
     }
     super.dispose();
   }
 
-  Future<void> _boot() async {
-    final auth = context.read<AuthProvider>();
-    if (!auth.isAuthenticated) {
-      setState(() {
-        _guest = true;
-        _loading = false;
-      });
+  /// Re-runs the initial load whenever the auth status *changes* (login,
+  /// logout, token expiry). After sign-in the guest cart has been merged into
+  /// the user cart server-side, so it is re-fetched (along with addresses)
+  /// and the reactive gate in build() swaps the wall for the form instantly.
+  void _onAuthChanged() {
+    if (_auth.status == _lastStatus) return;
+    _lastStatus = _auth.status;
+    if (_auth.status == AuthStatus.authenticated) {
+      _prepare();
+    } else {
+      _loading = false;
+      if (mounted) setState(() {}); // unauthenticated → show the wall again
+    }
+  }
+
+  Future<void> _prepare() async {
+    if (!_auth.isAuthenticated || _preparing) {
+      if (mounted && !_auth.isAuthenticated) setState(() => _loading = false);
       return;
     }
-    setState(() {
-      _guest = false;
-      _loading = true;
-    });
+    _preparing = true;
+    if (mounted) {
+      _prefillName();
+      setState(() => _loading = true);
+    }
     // Pull the freshest profile (wallet_balance) before rendering checkout.
-    await auth.refreshProfile();
+    await _auth.refreshProfile();
     try {
+      // The merged authenticated cart powers the summary and the order.
+      await context.read<CartProvider>().load();
       final result = await AccountRepository.addresses();
       final defaultAddress =
           result.items.where((a) => a.isDefault).firstOrNull ??
@@ -100,9 +132,35 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           _loading = false;
         });
         _fillFromSelected();
+        _prefillName();
       }
     } catch (_) {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        _prefillName();
+        setState(() => _loading = false);
+      }
+    } finally {
+      _preparing = false;
+    }
+  }
+
+  /// The checkout API requires first name, last name and email (unlike the
+  /// lazy web form), so they're pre-filled from the account profile and left
+  /// editable — ship-to/bill-to differences are a real checkout case.
+  void _prefillName() {
+    final name = (_auth.user?.name ?? '').trim();
+    if (name.isNotEmpty) {
+      final parts = name.split(RegExp(r'\s+'));
+      if (_firstName.text.trim().isEmpty) {
+        _firstName.text = parts.first;
+      }
+      if (_lastName.text.trim().isEmpty && parts.length > 1) {
+        _lastName.text = parts.sublist(1).join(' ');
+      }
+    }
+    final email = _auth.user?.email;
+    if (email != null && email.isNotEmpty && _email.text.trim().isEmpty) {
+      _email.text = email;
     }
   }
 
@@ -140,16 +198,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     });
   }
 
-  CheckoutDetails _checkoutDetails(AuthProvider auth) {
-    final name = (auth.user?.name ?? '').trim();
-    final parts = name.split(RegExp(r'\s+'));
-    final firstName = parts.isNotEmpty ? parts.first : '';
-    final lastName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
-
+  CheckoutDetails _checkoutDetails() {
     return CheckoutDetails(
-      firstName: firstName,
-      lastName: lastName,
-      email: auth.user?.email ?? '',
+      firstName: _firstName.text.trim(),
+      lastName: _lastName.text.trim(),
+      email: _email.text.trim(),
       phone: _phone.text.trim(),
       line1: _line1.text.trim(),
       line2: _line2.text.trim().isEmpty ? null : _line2.text.trim(),
@@ -202,7 +255,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       _error = null;
     });
 
-    final details = _checkoutDetails(context.read<AuthProvider>());
+    final details = _checkoutDetails();
     final walletAmount = _walletAmount;
 
     try {
@@ -320,7 +373,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_guest) {
+    // Reactive: swapping the gate via `watch` rebuilds this screen the moment
+    // authentication completes (while covered by the login route, auth
+    // changes still flow through the provider listener above), so returning
+    // from sign-in reveals the populated checkout form automatically.
+    final auth = context.watch<AuthProvider>();
+    if (!auth.isAuthenticated) {
       return Scaffold(
         appBar: AppBar(title: const Text('Checkout')),
         body: Center(
@@ -360,8 +418,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
 
     final cart = context.watch<CartProvider>().cart;
-    final walletBalance =
-        context.watch<AuthProvider>().user?.walletBalance ?? 0;
+    final walletBalance = context.watch<AuthProvider>().user?.walletBalance ?? 0;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Checkout')),
@@ -378,6 +435,63 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     style: AppTypography.sectionTitle(size: 17),
                   ),
                   const SizedBox(height: 12),
+
+                  // First/last name + email are required by the checkout API
+                  // (the web form's "lazy" requirement doesn't carry to the
+                  // orders API) — pre-filled from the profile, always editable.
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _firstName,
+                          textCapitalization: TextCapitalization.words,
+                          decoration: const InputDecoration(
+                            labelText: 'First name *',
+                            isDense: true,
+                          ),
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Required'
+                              : null,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _lastName,
+                          textCapitalization: TextCapitalization.words,
+                          decoration: const InputDecoration(
+                            labelText: 'Last name *',
+                            isDense: true,
+                          ),
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Required'
+                              : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _email,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
+                    decoration: const InputDecoration(
+                      labelText: 'Email *',
+                      isDense: true,
+                      helperText: 'Order updates and e-invoice go here',
+                    ),
+                    validator: (v) {
+                      final value = (v ?? '').trim();
+                      if (value.isEmpty) return 'Email is required';
+                      if (!RegExp(
+                        r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                      ).hasMatch(value)) {
+                        return 'Enter a valid email address';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 10),
 
                   if (_saved.isNotEmpty) ...[
                     SingleChildScrollView(
@@ -594,6 +708,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'All prices include GST.',
+                    style: AppTypography.bodySmall(size: 11.5),
+                  ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _note,
@@ -614,6 +733,27 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ),
                   ],
 
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.verified_user_outlined,
+                        size: 15,
+                        color: AppColors.success,
+                      ),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          'Secure payments · 15-day easy returns · 18+ years of trust',
+                          style: AppTypography.bodySmall(
+                            size: 11.5,
+                            color: AppColors.muted,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 20),
                   FilledButton(
                     onPressed: _placing ? null : _placeOrder,

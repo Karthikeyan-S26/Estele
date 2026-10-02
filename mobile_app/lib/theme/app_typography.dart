@@ -174,7 +174,7 @@ abstract final class AppTypography {
 
   static TextStyle button({
     double size = 14,
-    Color color = Colors.white,
+    Color? color = Colors.white,
     FontWeight weight = FontWeight.w600,
     double letterSpacing = 0.5,
   }) {

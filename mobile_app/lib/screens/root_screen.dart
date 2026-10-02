@@ -6,9 +6,9 @@ import '../providers/auth_provider.dart';
 import '../providers/cart_provider.dart';
 import '../providers/wishlist_provider.dart';
 import '../theme/app_colors.dart';
-import '../theme/app_typography.dart';
 import '../widgets/brand_icons.dart';
 import '../widgets/chat_widget.dart';
+import '../widgets/estele_app_bar.dart';
 import '../widgets/mobile_drawer.dart';
 import 'account/account_screen.dart';
 import 'catalog/categories_screen.dart';
@@ -35,6 +35,7 @@ class _RootScreenState extends State<RootScreen> {
   int _index = 0;
   AuthStatus _lastAuthStatus = AuthStatus.unknown;
   late final AuthProvider _authProvider;
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   final List<Widget?> _tabBodies = List<Widget?>.filled(4, null);
 
@@ -129,129 +130,18 @@ class _RootScreenState extends State<RootScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cartCount = context.select<CartProvider, int>(
-      (c) => c.cart.cartCount,
-    );
-    final wishlistCount = context.select<WishlistProvider, int>((w) => w.count);
-
     return Scaffold(
+      key: _scaffoldKey,
       drawer: EsteleDrawer(onOpenAccount: () => setState(() => _index = 3)),
-      // .header-gradient — ivory AppBar with a 1px border-line bottom border
-      // applied under the whole header (wordmark row AND search pill).
-      appBar: AppBar(
-        toolbarHeight: 56,
-          // Hamburger — 20px icon in a 38px touch target (web mobile header).
-          leading: IconButton(
-            icon: const BrandIcon(
-              icon: BrandIconName.menu,
-              size: 20,
-              strokeWidth: 1.6,
-              color: AppColors.heading,
-            ),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-            // Web header uses an aria-label, not a hover tooltip bubble — and
-            // a Tooltip here leaks tickers when the shell is tapped repeatedly.
-            iconSize: 20,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints.tightFor(width: 38, height: 38),
-          ),
-          title: GestureDetector(
-            onTap: () => setState(() => _index = 0),
-            child: AppTypography.logo(fontSize: 21),
-          ),
-          // Search · Wishlist · Cart · Account (same order as the website).
-          actions: [
-            _HeaderIcon(
-              onTap: _openSearch,
-              child: const BrandIcon(
-                icon: BrandIconName.search,
-                size: 20,
-                strokeWidth: 1.6,
-                color: AppColors.heading,
-              ),
-            ),
-            _HeaderIcon(
-              onTap: () => setState(() => _index = 2),
-              child: _BadgedIcon(
-                count: wishlistCount,
-                icon: const BrandIcon(
-                  icon: BrandIconName.heart,
-                  size: 20,
-                  strokeWidth: 1.6,
-                  color: AppColors.heading,
-                ),
-              ),
-            ),
-            _HeaderIcon(
-              onTap: () => Navigator.of(context).pushNamed('/cart'),
-              child: _BadgedIcon(
-                count: cartCount,
-                icon: const BrandIcon(
-                  icon: BrandIconName.bag,
-                  size: 20,
-                  strokeWidth: 1.6,
-                  color: AppColors.heading,
-                ),
-              ),
-            ),
-            _HeaderIcon(
-              onTap: _openAccount,
-              child: const BrandIcon(
-                icon: BrandIconName.user,
-                size: 20,
-                strokeWidth: 1.6,
-                color: AppColors.heading,
-              ),
-            ),
-            const SizedBox(width: 8),
-          ],
-          // Always-visible mobile search pill (web `md:hidden` search form),
-          // with the header-gradient 1px border-line at the header's bottom.
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(52),
-            child: Container(
-              decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: AppColors.line)),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-                child: GestureDetector(
-                onTap: _openSearch,
-                child: Container(
-                  height: 42,
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.lineStrong),
-                  ),
-                  child: const Row(
-                    children: [
-                      BrandIcon(
-                        icon: BrandIconName.search,
-                        size: 18,
-                        strokeWidth: 1.6,
-                        color: AppColors.muted,
-                      ),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'Search for products',
-                          style: TextStyle(
-                            color: AppColors.muted,
-                            fontSize: 14,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
+      // The single shared header (see widgets/estele_app_bar.dart) — same
+      // tree as before, now owned by one widget so pushed screens render the
+      // identical bar. Scaffold pins it: content scrolls underneath.
+      appBar: EsteleAppBar(
+        onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+        onLogoTap: () => setState(() => _index = 0),
+        onSearchTap: _openSearch,
+        onWishlistTap: () => setState(() => _index = 2),
+        onAccountTap: _openAccount,
       ),
       // IndexedStack keeps each built tab alive between switches; the support
       // chat bubble floats above the content, clear of the bottom bar.
@@ -292,68 +182,8 @@ class _TabSpec {
   final BrandIconName icon;
 }
 
-/// Website-style header icon button — 20px glyph inside a 38px square.
-class _HeaderIcon extends StatelessWidget {
-  const _HeaderIcon({required this.onTap, required this.child});
-
-  final VoidCallback onTap;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 38,
-      height: 38,
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: Center(child: child),
-      ),
-    );
-  }
-}
-
-/// Small rounded-rect count badge (`rounded-lg bg-accent`) that hides at 0.
-class _BadgedIcon extends StatelessWidget {
-  const _BadgedIcon({required this.count, required this.icon});
-
-  final int count;
-  final Widget icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        icon,
-        if (count > 0)
-          Positioned(
-            right: -6,
-            top: -5,
-            child: Container(
-              height: 16,
-              constraints: const BoxConstraints(minWidth: 16),
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: AppColors.accent,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                count > 99 ? '99+' : '$count',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  height: 1,
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
+/// Header icon + badge widgets now live with the shared header
+/// (see widgets/estele_app_bar.dart) — this file keeps only shell chrome.
 
 /// The website's mobile bottom navigation replicant: four equal items, white
 /// bar with a soft top border, 10px uppercase labels with wide tracking. The

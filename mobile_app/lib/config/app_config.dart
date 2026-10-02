@@ -9,7 +9,7 @@ import 'package:flutter/foundation.dart';
 /// `127.0.0.1`. Pin a specific host with a build-time override:
 ///
 ///   `--dart-define=API_BASE_URL=http://192.168.1.20:8000/api` (physical device)
-///   `--dart-define=API_BASE_URL=https://api.estele.in/api` (production)
+///   `--dart-define=API_BASE_URL=https://estele.ghrihum-realestate.com/api` (production)
 class AppConfig {
   AppConfig._();
 

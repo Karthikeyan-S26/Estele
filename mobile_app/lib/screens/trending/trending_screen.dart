@@ -6,6 +6,7 @@ import '../../models/product.dart';
 import '../../providers/wishlist_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
+import '../../widgets/estele_app_bar.dart';
 import '../../widgets/load_state.dart';
 import '../../widgets/product_card.dart';
 import '../../widgets/product_grid_ratio.dart';
@@ -69,7 +70,8 @@ class _TrendingScreenState extends State<TrendingScreen> {
     final wishlist = context.watch<WishlistProvider>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Trending')),
+      // Shared pinned Estele header instead of the plain title bar.
+      appBar: pushedAppBar(context),
       body: RefreshIndicator(
         onRefresh: _load,
         child: CustomScrollView(

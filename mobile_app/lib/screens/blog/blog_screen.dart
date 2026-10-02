@@ -5,6 +5,7 @@ import '../../models/blog_post.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 import '../../widgets/app_image.dart';
+import '../../widgets/estele_app_bar.dart';
 import '../../widgets/load_state.dart';
 import 'blog_post_screen.dart';
 
@@ -51,7 +52,8 @@ class _BlogScreenState extends State<BlogScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('The Journal')),
+      // Shared pinned Estele header instead of the plain title bar.
+      appBar: pushedAppBar(context),
       body: _loading
           ? const LoadState.loading()
           : _failed && _posts == null

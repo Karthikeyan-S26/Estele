@@ -1,20 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../models/product.dart';
+import '../providers/auth_provider.dart';
+import '../providers/cart_provider.dart';
+import '../providers/checkout_intent.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 import 'app_image.dart';
 import 'price_text.dart';
 
-/// Product card matching the live website's card:
+/// Product card matching the live website's shared `x-product-card`
+/// (used by home strips AND listing grids alike):
 ///  - white card, soft border, rounded-xl, column layout;
 ///  - square image inside an 8px inset frame (radius-lg, paper placeholder);
 ///  - "X% off" sale badge top-left, round wishlist circle top-right;
-///  - serif product name (line-clamp-2), price row (sale + strike-through MRP);
-///  - full-width dark "Add to cart" CTA (shown when [onAddToBag] is provided).
+///  - serif product name (line-clamp-2), price row (sale + strike-through
+///    MRP), then the bottom-docked Buy Now (outline) + Add to Bag (filled)
+///    CTA row — quantity 1, base product, exactly like the site's card form.
 ///
-/// [compact] is the slim variant for horizontal strips and the wishlist grid:
-/// image 4:5, no card border, no CTA — it leaves room for a two-line name.
+/// [compact] is the slim variant for horizontal strips and the wishlist grid
+/// (image 4:5, no card border) with the same CTA row.
 class ProductCard extends StatelessWidget {
   const ProductCard({
     super.key,
@@ -24,6 +30,7 @@ class ProductCard extends StatelessWidget {
     this.isWishlisted,
     this.compact = false,
     this.onAddToBag,
+    this.onBuyNow,
   });
 
   final Product product;
@@ -32,9 +39,49 @@ class ProductCard extends StatelessWidget {
   final bool? isWishlisted;
   final bool compact;
 
-  /// When set, renders the full-width "Add to cart" button (web card style).
-  /// Should be wired to [CartProvider.addItem] by the caller.
+  /// Explicit add-to-bag handler (wins over the built-in one below).
   final VoidCallback? onAddToBag;
+
+  /// Explicit buy-now handler (wins over the built-in one below).
+  final VoidCallback? onBuyNow;
+
+  /// Website card-form equivalent: quantity 1 of the base product through
+  /// the shared CartProvider, with the same success/error snackbar.
+  Future<void> _defaultAdd(BuildContext context) async {
+    final err = await context.read<CartProvider>().addItem(
+          productId: product.id,
+          productSlug: product.slug,
+          quantity: 1,
+        );
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(err ?? 'Added to your bag')),
+    );
+  }
+
+  /// Website express equivalent: same add, then straight to checkout. Guests
+  /// fold through the login → OTP round first; the pending purchase (already
+  /// sitting in the guest cart, merged server-side at sign-in) is carried back
+  /// into checkout by [CheckoutIntent].
+  Future<void> _defaultBuyNow(BuildContext context) async {
+    final err = await context.read<CartProvider>().addItem(
+          productId: product.id,
+          productSlug: product.slug,
+          quantity: 1,
+        );
+    if (!context.mounted) return;
+    if (err != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+      return;
+    }
+    final authed = context.read<AuthProvider>().isAuthenticated;
+    if (authed) {
+      Navigator.of(context).pushNamed('/checkout');
+    } else {
+      CheckoutIntent.arm();
+      Navigator.of(context).pushNamed('/login');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -99,6 +146,12 @@ class ProductCard extends StatelessWidget {
                           foreground: Colors.white,
                         ),
                       ),
+                    // Rating pill — website's star+rating badge over the
+                    // image bottom edge (shown only when reviews exist).
+                    _RatingPill(
+                      product: product,
+                      soldOut: product.inStock == false,
+                    ),
                     // Wishlist — round white circle top-right
                     Positioned(
                       top: 8,
@@ -133,71 +186,39 @@ class ProductCard extends StatelessWidget {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(12, 2, 12, 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        product.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.editorial(
-                          size: 13,
-                          weight: FontWeight.w500,
-                          height: 1.3,
-                        ),
-                      ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 2-line cap bounds the title; the price follows it
+                  // directly and the CTA row docks at the bottom (website
+                  // `mt-auto` form), so grid heights stay consistent with
+                  // no squeeze and no blank gap.
+                  Text(
+                    product.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.editorial(
+                      size: 13,
+                      weight: FontWeight.w500,
+                      height: 1.3,
                     ),
-                    const SizedBox(height: 6),
-                    PriceText(
-                      price: product.price,
-                      compareAtPrice: product.compareAtPrice,
-                      discountPercent: salePercent > 0 ? salePercent : null,
-                      size: 14,
-                      small: true,
-                      showDiscountBadge: false,
-                    ),
-                    const Spacer(),
-                    if (onAddToBag != null) ...[
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        width: double.infinity,
-                        child: InkWell(
-                          onTap: product.inStock ? onAddToBag : null,
-                          borderRadius: BorderRadius.circular(6),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            decoration: BoxDecoration(
-                              color: product.inStock
-                                  ? AppColors.heading
-                                  : AppColors.greySoft,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.shopping_bag_outlined,
-                                  size: 14,
-                                  color: Colors.white,
-                                ),
-                                SizedBox(width: 6),
-                                Text(
-                                  'ADD TO CART',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: 0.6,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
+                  ),
+                  const SizedBox(height: 6),
+                  PriceText(
+                    price: product.price,
+                    compareAtPrice: product.compareAtPrice,
+                    discountPercent: salePercent > 0 ? salePercent : null,
+                    size: 14,
+                    small: true,
+                    showDiscountBadge: false,
+                  ),
+                  const Spacer(),
+                  const SizedBox(height: 8),
+                  _CtaRow(
+                    onBuyNow: onBuyNow ?? () => _defaultBuyNow(context),
+                    onAddToBag: onAddToBag ?? () => _defaultAdd(context),
+                  ),
+                ],
                 ),
               ),
             ),
@@ -257,6 +278,10 @@ class ProductCard extends StatelessWidget {
                       foreground: Colors.white,
                     ),
                   ),
+                _RatingPill(
+                  product: product,
+                  soldOut: product.inStock == false,
+                ),
                 Positioned(
                   top: 8,
                   right: 8,
@@ -290,16 +315,14 @@ class ProductCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Flexible(
-                  child: Text(
-                    product.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.editorial(
-                      size: 12,
-                      weight: FontWeight.w500,
-                      height: 1.3,
-                    ),
+                Text(
+                  product.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.editorial(
+                    size: 12,
+                    weight: FontWeight.w500,
+                    height: 1.3,
                   ),
                 ),
                 const SizedBox(height: 3),
@@ -311,10 +334,127 @@ class ProductCard extends StatelessWidget {
                   small: true,
                   showDiscountBadge: false,
                 ),
+                const Spacer(),
+                const SizedBox(height: 6),
+                _CtaRow(
+                  onBuyNow: onBuyNow ?? () => _defaultBuyNow(context),
+                  onAddToBag: onAddToBag ?? () => _defaultAdd(context),
+                ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Website card CTA row (`form.mt-auto.flex.gap-1.5`): outline Buy Now +
+/// filled Add to Bag, both flex-1, 36px tall, 12px labels.
+class _CtaRow extends StatelessWidget {
+  const _CtaRow({required this.onBuyNow, required this.onAddToBag});
+
+  final VoidCallback onBuyNow;
+  final VoidCallback onAddToBag;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton(
+            onPressed: onBuyNow,
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(36),
+              side: const BorderSide(color: AppColors.accent, width: 1.5),
+              foregroundColor: AppColors.accent,
+              padding: EdgeInsets.zero,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
+            ),
+            child: Text(
+              'Buy Now',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.button(
+                size: 12,
+                color: null,
+                letterSpacing: 0.3,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: FilledButton(
+            onPressed: onAddToBag,
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.accentDark,
+              minimumSize: const Size.fromHeight(36),
+              padding: EdgeInsets.zero,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
+              elevation: 0,
+            ),
+            child: Text(
+              'Add to Bag',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.button(size: 12, letterSpacing: 0.3),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Website parity rating pill (`product-card` star badge): white/90 rounded
+/// pill with a gold star + one-decimal rating, over the image's bottom
+/// edge. Rendered only when the product actually has reviews — never an
+/// empty pill. Sits bottom-left, or bottom-right when SOLD OUT occupies
+/// the left corner.
+class _RatingPill extends StatelessWidget {
+  const _RatingPill({required this.product, required this.soldOut});
+
+  final Product product;
+  final bool soldOut;
+
+  @override
+  Widget build(BuildContext context) {
+    final rating = product.rating;
+    if (product.reviewCount <= 0 || rating == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Positioned(
+      left: soldOut ? null : 8,
+      right: soldOut ? 8 : null,
+      bottom: 8,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.9),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.star_rounded, size: 12, color: AppColors.gold),
+            const SizedBox(width: 3),
+            Text(
+              rating.toStringAsFixed(1),
+              style: const TextStyle(
+                color: AppColors.heading,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                height: 1,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -6,6 +6,7 @@ import '../../models/blog_post.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 import '../../widgets/app_image.dart';
+import '../../widgets/estele_app_bar.dart';
 import '../../widgets/load_state.dart';
 
 class BlogPostScreen extends StatefulWidget {
@@ -67,7 +68,8 @@ class _BlogPostScreenState extends State<BlogPostScreen> {
     final detailImage = post.detailImageUrl ?? post.imageUrl;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Journal')),
+      // Shared pinned Estele header instead of the plain title bar.
+      appBar: pushedAppBar(context),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

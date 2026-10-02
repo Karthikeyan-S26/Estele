@@ -1,7 +1,9 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
+import '../../providers/checkout_intent.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 
@@ -103,8 +105,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (err == null) {
       if (auth.isAuthenticated) {
         // Existing customer discovered mid-registration — the website behaves
-        // the same way (verified number goes straight to the account).
-        Navigator.of(context).popUntil((r) => r.isFirst);
+        // the same way (verified number goes straight to the account). If a
+        // Buy Now order is mid-flight, drop back into checkout.
+        _finish();
       } else if (auth.verificationToken != null) {
         setState(() => _verified = true);
       }
@@ -138,9 +141,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!mounted) return;
     setState(() => _submitting = false);
     if (err == null) {
-      Navigator.of(context).popUntil((r) => r.isFirst);
+      _finish();
     } else {
       setState(() => _error = err);
+    }
+  }
+
+  /// After a successful create-account (or a mid-registration find of an
+  /// existing customer) the web app returns the user to wherever they came
+  /// from. For a Buy Now express order the whole guest-auth stack is replaced
+  /// by checkout (the verified + merged cart is already server-side);
+  /// otherwise go back a step — the login screen dismisses itself once it
+  /// observes the authenticated session.
+  void _finish() {
+    if (CheckoutIntent.isArmed) {
+      CheckoutIntent.disarm();
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        '/checkout',
+        (route) => route.isFirst,
+      );
+    } else {
+      Navigator.of(context).pop();
     }
   }
 
@@ -247,6 +268,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
 
               const SizedBox(height: 20),
+              // Same source as the website footer ("Terms & Conditions" →
+              // the return-policy CMS page). Informational link only — the
+              // website's /register has no acceptance checkbox, so account
+              // creation is never gated on it here either.
+              Center(
+                child: RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    style: AppTypography.bodySmall(),
+                    children: [
+                      const TextSpan(
+                        text: 'By creating an account you agree to our ',
+                      ),
+                      TextSpan(
+                        text: 'Terms & Conditions',
+                        style: AppTypography.bodySmall().copyWith(
+                          color: AppColors.accentDark,
+                          decoration: TextDecoration.underline,
+                        ),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () => Navigator.of(
+                            context,
+                          ).pushNamed('/cms/return-policy'),
+                      ),
+                      const TextSpan(text: '.'),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

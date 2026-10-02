@@ -6,13 +6,14 @@ import '../../../models/home_data.dart';
 import '../../../utils/app_link.dart';
 import '../../../widgets/app_image.dart';
 
-/// Hero carousel reproduces `home/index.blade.php` (the `data-fade` banner):
-///  - full-width card inset `mx-3 mt-3` with `rounded-xl` (12px);
-///  - mobile aspect ratio `768 / 320` (desktop overrides to 1800/420);
-///  - image is `object-cover`, full-bleed — the copy is baked into the
-///    artwork, so banner titles never overlay the image;
-///  - chevron arrows left/right (white/85 40px circles, visible on every
-///    breakpoint per the blade comment);
+/// Hero carousel reproduces `home/index.blade.php` (the `data-fade` banner)
+/// MOBILE presentation: full-bleed (no mx inset, square corners — the
+/// `md:mx-4 md:rounded-2xl` card treatment is desktop-only), `h-[50vh]`
+/// viewport box, `mobile_image` (or desktop→mobile conversion) with
+/// `object-cover` — the copy is baked into the artwork, so banner titles
+/// never overlay the image;
+///  - chevron arrows left/right (mobile `h-6 w-6` 24px white/85 circles at
+///    left-3/right-3, 10px chevron — the 40px circles are desktop `md:`);
 ///  - dots over the slide's lower edge (`bottom-4`): active is a 24px white
 ///    pill, inactive 6px white/55, gap-2;
 ///  - autoplay `data-autoplay="5000"` with a 700 ms crossfade.
@@ -56,18 +57,13 @@ class _HeroCarouselState extends State<HeroCarousel> {
     final banner = widget.banners[_index];
     final image = banner.mobileImageUrl ?? banner.imageUrl;
 
-    return Padding(
-      // mx-3 mt-3, md:mx-4 md:mt-4
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-      child: AspectRatio(
-        // style="aspect-ratio: 768 / 320"
-        aspectRatio: 768 / 320,
-        child: ClipRRect(
-          // rounded-xl = 12px
-          borderRadius: BorderRadius.circular(12),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
+    // Mobile blade: full-bleed `h-[50vh]` box, no inset, no rounding.
+    return SizedBox(
+      height: MediaQuery.sizeOf(context).height * 0.5,
+      width: double.infinity,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
               // Fade between slides (hero-fade, duration-700).
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 700),
@@ -131,15 +127,13 @@ class _HeroCarouselState extends State<HeroCarousel> {
                 ),
               ),
             ],
-          ),
-        ),
       ),
     );
   }
 }
 
-/// Round white/85 arrow button — `h-10 w-10 rounded-full bg-white/85`,
-/// chevron icon `h-4 w-4 stroke-width 2`.
+/// Round white/85 arrow button — mobile `h-6 w-6 rounded-full bg-white/85`
+/// (the 40px circle is desktop `md:`), chevron 10px (`h-2.5 w-2.5`).
 class _AccentedButton extends StatelessWidget {
   const _AccentedButton({required this.icon, required this.onTap});
 
@@ -155,11 +149,11 @@ class _AccentedButton extends StatelessWidget {
         customBorder: const CircleBorder(),
         onTap: onTap,
         child: SizedBox(
-          width: 40,
-          height: 40,
-child: Center(
-        child: Icon(icon, size: 16, color: const Color(0xFF1F1D1D)),
-      ),
+          width: 24,
+          height: 24,
+          child: Center(
+            child: Icon(icon, size: 10, color: const Color(0xFF1F1D1D)),
+          ),
         ),
       ),
     );

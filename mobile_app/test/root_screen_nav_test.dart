@@ -93,6 +93,25 @@ void main() {
     },
   );
 
+  testWidgets('hamburger opens the mobile drawer', (tester) async {
+    await _pumpRoot(tester);
+
+    expect(find.text('Menu'), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('menu-button')));
+    await tester.pumpAndSettle();
+
+    // Drawer header and the auth CTA render unconditionally; the category and
+    // collection groups are data-driven (the categories API is unreachable in
+    // tests, so they collapse away — which matches the web's empty state).
+    expect(find.text('Menu'), findsOneWidget);
+    expect(find.text('LOGIN / REGISTER'), findsOneWidget);
+
+    // Close the drawer and confirm it goes away.
+    await tester.tap(find.byIcon(Icons.close_rounded));
+    await tester.pumpAndSettle();
+    expect(find.text('Menu'), findsNothing);
+  });
+
   // Dispose the tree so any pending timers (HeroCarousel, PromoBar if data
   // somehow loaded) are cancelled and don't leak across tests.
   tearDown(() async {});

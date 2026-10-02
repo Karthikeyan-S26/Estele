@@ -53,6 +53,40 @@ class _CartScreenState extends State<CartScreen> {
     ).showSnackBar(SnackBar(content: Text(err ?? 'Coupon applied')));
   }
 
+  /// There is no coupon-list API on the backend — active coupon codes are
+  /// announced on the website/announcement strip. Surface that honestly
+  /// instead of inventing a coupon feed.
+  void _showCouponInfo() {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Coupon offers',
+                style: AppTypography.editorial(size: 20, weight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Active coupon codes are announced on the Estele website and in the app announcement strip (e.g. “FESTIVE10”). Enter an announced code above and tap Apply — the discount reflects instantly in your bag.',
+                style: AppTypography.body(size: 13.5, color: AppColors.muted),
+              ),
+              const SizedBox(height: 16),
+              FilledButton(
+                onPressed: () => Navigator.of(sheetContext).pop(),
+                child: const Text('Got it'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<CartProvider>();
@@ -156,6 +190,18 @@ class _CartScreenState extends State<CartScreen> {
                   ],
                 ),
               ),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: _showCouponInfo,
+                  icon: const Icon(
+                    Icons.confirmation_number_outlined,
+                    size: 16,
+                  ),
+                  label: const Text('View all coupons'),
+                ),
+              ),
 
               // Order summary
               const SizedBox(height: 16),
@@ -168,7 +214,7 @@ class _CartScreenState extends State<CartScreen> {
                 ),
                 child: Column(
                   children: [
-                    _SummaryRow(label: 'Subtotal', value: cart.totals.subtotal),
+                    _SummaryRow(label: 'Item Total', value: cart.totals.subtotal),
                     if (cart.totals.discount > 0)
                       _SummaryRow(
                         label: 'Discount',
@@ -181,14 +227,60 @@ class _CartScreenState extends State<CartScreen> {
                           ? cart.totals.shipping
                           : 0,
                     ),
+                    // Price shown includes GST — the cart API carries no GST
+                    // line, so it is rendered as included, never estimated.
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'GST',
+                            style: AppTypography.body(
+                              size: 13.5,
+                              color: AppColors.muted,
+                            ),
+                          ),
+                          Text(
+                            'Included',
+                            style: AppTypography.body(
+                              size: 13.5,
+                              weight: FontWeight.w600,
+                              color: AppColors.heading,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                     const Divider(height: 20),
                     _SummaryRow(
-                      label: 'Total',
+                      label: 'Total Payable',
                       value: cart.totals.total,
                       bold: true,
                     ),
                   ],
                 ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.verified_user_outlined,
+                    size: 15,
+                    color: AppColors.success,
+                  ),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      'Secure payments · 15-day easy returns · 18+ years of trust',
+                      style: AppTypography.bodySmall(
+                        size: 11.5,
+                        color: AppColors.muted,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -209,7 +301,7 @@ class _CartScreenState extends State<CartScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('Total', style: AppTypography.bodySmall()),
+                      Text('Total Payable', style: AppTypography.bodySmall()),
                       Text(
                         formatINR(cart.totals.total),
                         style: AppTypography.price(

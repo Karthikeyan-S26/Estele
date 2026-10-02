@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
@@ -8,6 +9,7 @@ import 'providers/cart_provider.dart';
 import 'providers/wishlist_provider.dart';
 import 'screens/addresses/address_book_screen.dart';
 import 'screens/auth/login_screen.dart';
+import 'screens/auth/otp_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/blog/blog_post_screen.dart';
 import 'screens/blog/blog_screen.dart';
@@ -20,6 +22,7 @@ import 'screens/orders/orders_screen.dart';
 import 'screens/product/product_detail_screen.dart';
 import 'screens/root_screen.dart';
 import 'screens/search/search_screen.dart';
+import 'screens/splash_screen.dart';
 import 'screens/sell/sell_create_screen.dart';
 import 'screens/sell/sell_screen.dart';
 import 'screens/stores/stores_screen.dart';
@@ -28,11 +31,35 @@ import 'screens/wallet/wallet_screen.dart';
 import 'screens/wishlist/wishlist_screen.dart';
 import 'theme/app_theme.dart';
 
+/// Root navigator key so a launcher relaunch (handled natively in
+/// `MainActivity.onNewIntent`) can reset the whole stack to the splash.
+final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
+
+/// Platform channel used by `MainActivity` to report a re-launch from the
+/// device launcher icon. Estele is a single-Activity Flutter app, so a product
+/// page lives in the Navigator, not its own Activity — this handler forces a
+/// fresh splash -> Home instead of resuming the last viewed screen.
+const MethodChannel _launcherChannel = MethodChannel('estele/launcher');
+
+/// Registers the launcher-relaunch handler. Called from [main]; exposed so it
+/// can be exercised in tests.
+void registerLauncherResetHandler() {
+  _launcherChannel.setMethodCallHandler((call) async {
+    if (call.method == 'resetToHome') {
+      appNavigatorKey.currentState?.pushNamedAndRemoveUntil(
+        '/',
+        (route) => false,
+      );
+    }
+  });
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Fonts are bundled in assets/fonts — never fetch from the network at runtime.
   GoogleFonts.config.allowRuntimeFetching = false;
   await Storage.init();
+  registerLauncherResetHandler();
   runApp(const EsteleApp());
 }
 
@@ -51,6 +78,7 @@ class EsteleApp extends StatelessWidget {
         title: 'Estele',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
+        navigatorKey: appNavigatorKey,
         initialRoute: '/',
         onGenerateRoute: _generateRoute,
       ),
@@ -65,6 +93,8 @@ class EsteleApp extends StatelessWidget {
     Widget? screen;
     switch (name) {
       case '/':
+        screen = const SplashScreen();
+      case '/home':
         screen = const RootScreen();
       case '/search':
         screen = const SearchScreen();
@@ -76,6 +106,8 @@ class EsteleApp extends StatelessWidget {
         screen = const CheckoutScreen();
       case '/login':
         screen = const LoginScreen();
+      case '/otp':
+        screen = OtpScreen(phone: settings.arguments as String);
       case '/register':
         screen = RegisterScreen(prefillPhone: settings.arguments as String?);
       case '/orders':

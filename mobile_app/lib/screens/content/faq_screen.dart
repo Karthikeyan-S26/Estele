@@ -4,6 +4,7 @@ import '../../data/repositories/content_repository.dart';
 import '../../models/faq_item.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
+import '../../widgets/estele_app_bar.dart';
 import '../../widgets/load_state.dart';
 
 class FaqScreen extends StatefulWidget {
@@ -49,7 +50,8 @@ class _FaqScreenState extends State<FaqScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Help & FAQ')),
+      // Shared pinned Estele header instead of the plain title bar.
+      appBar: pushedAppBar(context),
       body: _loading
           ? const LoadState.loading()
           : _failed && _categories == null
