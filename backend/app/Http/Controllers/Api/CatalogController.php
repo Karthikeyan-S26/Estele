@@ -66,7 +66,7 @@ class CatalogController
             'cta' => null,
         ])->values();
 
-        $collectionBannerBlock = $byType->get('collection_banner')->first() ?? null;
+        $collectionBannerBlock = $byType->get('collection_banner')?->first() ?? null;
 
         if ($collectionBannerBlock) {
             $cbTitle = $collectionBannerBlock->title;
@@ -99,20 +99,20 @@ class CatalogController
         }
 
         $trending = $byType->get('product_carousel')
-            ->filter(fn ($b) => (int) $b->sort_order === 15)
+            ?->filter(fn ($b) => (int) $b->sort_order === 15)
             ->first();
 
         $newArrivals = $byType->get('product_carousel')
-            ->filter(fn ($b) => $b->title === 'New Arrivals')
+            ?->filter(fn ($b) => $b->title === 'New Arrivals')
             ->first();
 
         $bestsellers = $byType->get('product_carousel')
-            ->filter(fn ($b) => $b->title === 'Bestsellers')
+            ?->filter(fn ($b) => $b->title === 'Bestsellers')
             ->first();
 
         $collections = Collection::active()->ordered()->with('media')->withCount('products')->get();
 
-        $priceTiers = ($byType->get('price_tiers')->first() ?? null)
+        $priceTiers = ($byType->get('price_tiers')?->first() ?? null)
             ? $byType->get('price_tiers')->first()->items->map(function ($item) {
                 $row = [
                     'id' => $item->id,
@@ -128,7 +128,7 @@ class CatalogController
             })->values()
             : collect();
 
-        $celebrities = ($byType->get('celebrities')->first() ?? null)
+        $celebrities = ($byType->get('celebrities')?->first() ?? null)
             ? $byType->get('celebrities')->first()->items->map(fn ($item) => [
                 'id' => $item->id,
                 'title' => $item->title,
@@ -136,7 +136,7 @@ class CatalogController
             ])->values()
             : collect();
 
-        $benefits = ($byType->get('usp')->first() ?? null)
+        $benefits = ($byType->get('usp')?->first() ?? null)
             ? $byType->get('usp')->first()->items->map(fn ($item) => [
                 'id' => $item->id,
                 'title' => $item->title,
@@ -144,7 +144,7 @@ class CatalogController
             ])->values()
             : collect();
 
-        $testimonials = ($byType->get('testimonials')->first() ?? null)
+        $testimonials = ($byType->get('testimonials')?->first() ?? null)
             ? $byType->get('testimonials')->first()->items->map(fn ($item) => [
                 'id' => $item->id,
                 'title' => $item->title,
@@ -153,7 +153,7 @@ class CatalogController
             ])->values()
             : collect();
 
-        $journalBlock = $byType->get('journal')->first() ?? null;
+        $journalBlock = $byType->get('journal')?->first() ?? null;
 
         $journal = $journalBlock ? [
             'title' => $journalBlock->title,
@@ -187,7 +187,7 @@ class CatalogController
             })->values(),
         ] : null;
 
-        $instagramBlock = $byType->get('shop_the_look')->first() ?? null;
+        $instagramBlock = $byType->get('shop_the_look')?->first() ?? null;
 
         $instagram = $instagramBlock ? [
             'title' => $instagramBlock->title,
@@ -195,7 +195,7 @@ class CatalogController
             'items' => $this->productCards($instagramBlock->items),
         ] : null;
 
-        $statsBlock = $byType->get('brand_story')->first() ?? null;
+        $statsBlock = $byType->get('brand_story')?->first() ?? null;
 
         $stats = $statsBlock ? [
             'title' => $statsBlock->title,
@@ -209,7 +209,7 @@ class CatalogController
             ])->values(),
         ] : null;
 
-        $faqBlock = $byType->get('faq')->first() ?? null;
+        $faqBlock = $byType->get('faq')?->first() ?? null;
 
         $faqs = $faqBlock ? $faqBlock->items->map(function ($item) {
             $faq = $item->itemable;

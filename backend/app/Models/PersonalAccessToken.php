@@ -16,6 +16,8 @@ use Illuminate\Support\Str;
  */
 class PersonalAccessToken extends Model
 {
+    protected $table = 'mobile_api_tokens';
+
     protected $fillable = [
         'user_id',
         'name',
