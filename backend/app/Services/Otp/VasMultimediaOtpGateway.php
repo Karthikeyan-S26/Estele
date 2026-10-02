@@ -36,9 +36,9 @@ class VasMultimediaOtpGateway implements OtpGateway
             && filled(config('services.vas_sms.template_id'));
     }
 
-    public function send(string $phone, string $code): void
+    public function send(string $contact, string $code): void
     {
-        $cleanPhone = substr(preg_replace('/\D/', '', $phone), -10);
+        $cleanPhone = substr(preg_replace('/\D/', '', $contact), -10);
         $request = Http::timeout(15);
 
         $caBundle = config('services.vas_sms.ca_bundle');

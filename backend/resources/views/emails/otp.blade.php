@@ -1,0 +1,1 @@
+Your Estele OTP is {{ $code }}. Valid for 5 minutes. Do not share this code.
