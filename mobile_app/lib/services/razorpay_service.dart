@@ -8,8 +8,8 @@ class RazorpayOutcome {
     required this.paymentId,
     required this.orderId,
     required this.signature,
-  })  : success = true,
-        message = null;
+  }) : success = true,
+       message = null;
 
   const RazorpayOutcome.failure(
     this.message, {
@@ -45,11 +45,13 @@ class RazorpayService {
 
     void onSuccess(PaymentSuccessResponse response) {
       if (completer.isCompleted) return;
-      completer.complete(RazorpayOutcome.success(
-        paymentId: response.paymentId,
-        orderId: response.orderId,
-        signature: response.signature,
-      ));
+      completer.complete(
+        RazorpayOutcome.success(
+          paymentId: response.paymentId,
+          orderId: response.orderId,
+          signature: response.signature,
+        ),
+      );
     }
 
     void onError(PaymentFailureResponse failure) {
@@ -71,18 +73,16 @@ class RazorpayService {
         'name': 'Estele',
         'currency': 'INR',
         'description': 'Order $orderNumber',
-        'prefill': {
-          'contact': contact,
-          'email': email,
-        },
-        'theme': {
-          'color': '#AD3D5F',
-        },
+        'prefill': {'contact': contact, 'email': email},
+        'theme': {'color': '#AD3D5F'},
       });
     } catch (_) {
       if (!completer.isCompleted) {
-        completer.complete(const RazorpayOutcome.failure(
-            'Could not start the payment page. Please try again.'));
+        completer.complete(
+          const RazorpayOutcome.failure(
+            'Could not start the payment page. Please try again.',
+          ),
+        );
       }
     }
 

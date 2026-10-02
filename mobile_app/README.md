@@ -19,12 +19,15 @@ flutter run --dart-define=API_BASE_URL=http://192.168.1.20:8000/api
 
 # iOS simulator / macOS
 flutter run --dart-define=API_BASE_URL=http://localhost:8000/api
+
+# Production (Hostinger)
+flutter build apk --release --dart-define=API_BASE_URL=https://estele.ghrihum-realestate.com/api
 ```
 
 For Android, make sure the emulator has cleartext HTTP to the host allowed
 (`android:usesCleartextTraffic="true"` is already set under the debug builds in
-`android/app/`). Release builds talk to the HTTPS domain the backend is served
-from — change `AppConfig.apiBaseUrl` in `lib/config/app_config.dart`.
+`android/app/`). Release builds talk to the HTTPS production domain via the
+`--dart-define` override above.
 
 ## Backend
 

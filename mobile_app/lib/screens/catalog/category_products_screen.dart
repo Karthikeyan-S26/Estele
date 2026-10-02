@@ -22,22 +22,29 @@ class CategoryProductsScreen extends StatelessWidget {
     return ProductGridScreen(
       title: title,
       loader:
-          ({required String sort, String? minPrice, String? maxPrice, required bool inStock, required int page, required int perPage}) {
-        if (isCollection) {
-          return CatalogRepository.collectionProducts(
-            categorySlug,
-            sort: sort,
-            page: page,
-            perPage: perPage,
-          );
-        }
-        return CatalogRepository.categoryProducts(
-          categorySlug,
-          sort: sort,
-          page: page,
-          perPage: perPage,
-        );
-      },
+          ({
+            required String sort,
+            String? minPrice,
+            String? maxPrice,
+            required bool inStock,
+            required int page,
+            required int perPage,
+          }) {
+            if (isCollection) {
+              return CatalogRepository.collectionProducts(
+                categorySlug,
+                sort: sort,
+                page: page,
+                perPage: perPage,
+              );
+            }
+            return CatalogRepository.categoryProducts(
+              categorySlug,
+              sort: sort,
+              page: page,
+              perPage: perPage,
+            );
+          },
     );
   }
 }

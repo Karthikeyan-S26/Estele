@@ -51,9 +51,9 @@ class _SellScreenState extends State<SellScreen> {
   }
 
   Future<void> _openCreate() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const SellCreateScreen()),
-    );
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const SellCreateScreen()));
     _load();
   }
 
@@ -64,36 +64,48 @@ class _SellScreenState extends State<SellScreen> {
       body: _loading
           ? const LoadState.loading()
           : _failed && _requests == null
-              ? LoadState.error(message: 'Could not load your sell requests.', onRetry: _load)
-              : RefreshIndicator(
-                  onRefresh: _load,
-                  child: ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(16),
+          ? LoadState.error(
+              message: 'Could not load your sell requests.',
+              onRetry: _load,
+            )
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                children: [
+                  _IntroCard(onStart: _openCreate),
+                  const SizedBox(height: 16),
+                  Row(
                     children: [
-                      _IntroCard(onStart: _openCreate),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(child: Text('My requests', style: AppTypography.sectionTitle(size: 16))),
-                          TextButton.icon(
-                            onPressed: _openCreate,
-                            icon: const Icon(Icons.add_rounded, size: 18),
-                            label: const Text('New request'),
-                          ),
-                        ],
+                      Expanded(
+                        child: Text(
+                          'My requests',
+                          style: AppTypography.sectionTitle(size: 16),
+                        ),
                       ),
-                      const SizedBox(height: 4),
-                      if (_requests == null || _requests!.isEmpty)
-                        const Padding(
-                          padding: EdgeInsets.only(top: 20),
-                          child: LoadState.empty(message: 'No sell requests yet. Start one and get cash offers from our trusted buyers.'),
-                        )
-                      else
-                        for (final request in _requests!) _SellCard(request: request, onVisit: _load),
+                      TextButton.icon(
+                        onPressed: _openCreate,
+                        icon: const Icon(Icons.add_rounded, size: 18),
+                        label: const Text('New request'),
+                      ),
                     ],
                   ),
-                ),
+                  const SizedBox(height: 4),
+                  if (_requests == null || _requests!.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 20),
+                      child: LoadState.empty(
+                        message:
+                            'No sell requests yet. Start one and get cash offers from our trusted buyers.',
+                      ),
+                    )
+                  else
+                    for (final request in _requests!)
+                      _SellCard(request: request, onVisit: _load),
+                ],
+              ),
+            ),
     );
   }
 }
@@ -114,11 +126,22 @@ class _IntroCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('YOUR OLD GOLD, NEW PEACE OF MIND', style: AppTypography.label(size: 10, color: AppColors.goldLight, letterSpacing: 1.4)),
+          Text(
+            'YOUR OLD GOLD, NEW PEACE OF MIND',
+            style: AppTypography.label(
+              size: 10,
+              color: AppColors.goldLight,
+              letterSpacing: 1.4,
+            ),
+          ),
           const SizedBox(height: 8),
           Text(
             'Send us a photo and a short video of your old jewellery. Trusted buyers bid on it within hours — you choose to accept the best offer.',
-            style: AppTypography.body(size: 13, color: Colors.white70, height: 1.45),
+            style: AppTypography.body(
+              size: 13,
+              color: Colors.white70,
+              height: 1.45,
+            ),
           ),
           const SizedBox(height: 14),
           FilledButton(
@@ -154,7 +177,10 @@ class _SellCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(4),
         onTap: () async {
           await Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => SellDetailScreen(requestNumber: request.requestNumber)),
+            MaterialPageRoute(
+              builder: (_) =>
+                  SellDetailScreen(requestNumber: request.requestNumber),
+            ),
           );
           if (context.mounted) onVisit();
         },
@@ -166,7 +192,10 @@ class _SellCard extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: Text(request.requestNumber, style: AppTypography.bodyMedium(weight: FontWeight.w700)),
+                    child: Text(
+                      request.requestNumber,
+                      style: AppTypography.bodyMedium(weight: FontWeight.w700),
+                    ),
                   ),
                   _StatusChip(status: request.status),
                 ],
@@ -186,7 +215,10 @@ class _SellCard extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 '${request.createdAt?.toLocal().day}/${request.createdAt?.toLocal().month}/${request.createdAt?.toLocal().year ?? ''}',
-                style: AppTypography.bodySmall(size: 11.5, color: AppColors.muted),
+                style: AppTypography.bodySmall(
+                  size: 11.5,
+                  color: AppColors.muted,
+                ),
               ),
             ],
           ),
@@ -245,7 +277,11 @@ class _StatusChip extends StatelessWidget {
       ),
       child: Text(
         labels[status] ?? status.toUpperCase(),
-        style: AppTypography.bodySmall(size: 10.5, color: color, weight: FontWeight.w700),
+        style: AppTypography.bodySmall(
+          size: 10.5,
+          color: color,
+          weight: FontWeight.w700,
+        ),
       ),
     );
   }

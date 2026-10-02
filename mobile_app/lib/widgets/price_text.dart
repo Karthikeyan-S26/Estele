@@ -27,13 +27,22 @@ class PriceText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasSale = compareAtPrice != null && compareAtPrice! > price;
-    final discount = discountPercent ?? (hasSale ? ((compareAtPrice! - price) / compareAtPrice! * 100).round() : 0);
+    final discount =
+        discountPercent ??
+        (hasSale
+            ? ((compareAtPrice! - price) / compareAtPrice! * 100).round()
+            : 0);
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(formatINR(price), style: (hasSale ? AppTypography.salePrice : AppTypography.price)(size: size)),
+        Text(
+          formatINR(price),
+          style: (hasSale ? AppTypography.salePrice : AppTypography.price)(
+            size: size,
+          ),
+        ),
         if (hasSale) ...[
           const SizedBox(width: 6),
           Text(

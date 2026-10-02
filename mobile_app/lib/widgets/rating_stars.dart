@@ -32,8 +32,8 @@ class RatingStars extends StatelessWidget {
             i <= value.round()
                 ? Icons.star_rounded
                 : (i - value <= 0.5 && i - value > 0
-                    ? Icons.star_half
-                    : Icons.star_border_rounded),
+                      ? Icons.star_half
+                      : Icons.star_border_rounded),
             size: size,
             color: color,
           ),

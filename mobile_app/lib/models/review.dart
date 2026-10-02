@@ -29,7 +29,9 @@ class Review {
       customerName: json['customer_name'] as String?,
       isVerifiedPurchase: json['is_verified_purchase'] as bool? ?? false,
       date: (json['review_date'] ?? json['created_at']) != null
-          ? DateTime.tryParse((json['review_date'] ?? json['created_at']) as String)
+          ? DateTime.tryParse(
+              (json['review_date'] ?? json['created_at']) as String,
+            )
           : null,
       photos: ((json['photos'] as List<dynamic>?) ?? const [])
           .map((e) => e as String)

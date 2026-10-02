@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../screens/catalog/categories_screen.dart';
 import '../screens/catalog/category_products_screen.dart';
+import '../screens/stores/stores_screen.dart';
 import '../screens/trending/trending_screen.dart';
 
 /// Resolves a backend href (e.g. `/collections/rings`, `/product/slug`,
@@ -17,7 +18,10 @@ void resolveAppLink(BuildContext context, String? href) {
   final uri = Uri.tryParse(href);
   if (uri == null) return;
 
-  final segments = uri.pathSegments.map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+  final segments = uri.pathSegments
+      .map((s) => s.trim())
+      .where((s) => s.isNotEmpty)
+      .toList();
   if (segments.isEmpty) return;
 
   final navigator = Navigator.of(context);
@@ -32,29 +36,37 @@ void resolveAppLink(BuildContext context, String? href) {
     case 'category':
     case 'categories':
       if (slug != null) {
-        navigator.push(MaterialPageRoute(
-          builder: (_) => CategoryProductsScreen(
-            title: _titleFromSlug(slug),
-            categorySlug: slug,
-            isCollection: false,
+        navigator.push(
+          MaterialPageRoute(
+            builder: (_) => CategoryProductsScreen(
+              title: _titleFromSlug(slug),
+              categorySlug: slug,
+              isCollection: false,
+            ),
           ),
-        ));
+        );
       } else {
-        navigator.push(MaterialPageRoute(builder: (_) => const CategoriesScreen()));
+        navigator.push(
+          MaterialPageRoute(builder: (_) => const CategoriesScreen()),
+        );
       }
       break;
     case 'collection':
     case 'collections':
       if (slug != null) {
-        navigator.push(MaterialPageRoute(
-          builder: (_) => CategoryProductsScreen(
-            title: _titleFromSlug(slug),
-            categorySlug: slug,
-            isCollection: true,
+        navigator.push(
+          MaterialPageRoute(
+            builder: (_) => CategoryProductsScreen(
+              title: _titleFromSlug(slug),
+              categorySlug: slug,
+              isCollection: true,
+            ),
           ),
-        ));
+        );
       } else {
-        navigator.push(MaterialPageRoute(builder: (_) => const CategoriesScreen()));
+        navigator.push(
+          MaterialPageRoute(builder: (_) => const CategoriesScreen()),
+        );
       }
       break;
     case 'blog':
@@ -80,8 +92,7 @@ void resolveAppLink(BuildContext context, String? href) {
       navigator.push(MaterialPageRoute(builder: (_) => const TrendingScreen()));
       break;
     case 'stores':
-      // Stores is a tab on the root shell — switch back to it.
-      navigator.popUntil((r) => r.isFirst);
+      navigator.push(MaterialPageRoute(builder: (_) => const StoresScreen()));
       break;
     default:
       navigator.pushNamed('/cms/$type');
@@ -92,4 +103,5 @@ String _titleFromSlug(String slug) {
   return slug.split('-').map(_capitalize).join(' ');
 }
 
-String _capitalize(String w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1);
+String _capitalize(String w) =>
+    w.isEmpty ? w : w[0].toUpperCase() + w.substring(1);

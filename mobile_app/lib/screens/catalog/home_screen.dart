@@ -5,6 +5,7 @@ import '../../models/home_data.dart';
 import '../../models/product.dart';
 import '../../utils/app_link.dart';
 import '../../widgets/load_state.dart';
+import '../../widgets/newsletter_popup.dart';
 import 'home/benefits_block.dart';
 import 'home/budget_tiles.dart';
 import 'home/category_strip.dart';
@@ -18,7 +19,6 @@ import 'home/instagram_block.dart';
 import 'home/journal_block.dart';
 import 'home/promo_bar.dart';
 import 'home/product_strip.dart';
-import 'home/services_strip.dart';
 import 'home/stats_block.dart';
 import 'home/testimonials_block.dart';
 
@@ -45,6 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _load() async {
+    CatalogRepository.clearCaches();
     setState(() {
       _loading = true;
       _error = null;
@@ -55,6 +56,13 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           _data = data;
           _loading = false;
+        });
+        // One-shot "Get the Glow" prompt (prefs-guarded inside).
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Future.delayed(const Duration(seconds: 2), () {
+            if (!mounted) return;
+            NewsletterPopup.maybeShow(context);
+          });
         });
       }
     } catch (e) {
@@ -89,29 +97,35 @@ class _HomeScreenState extends State<HomeScreen> {
 
           if (data.collectionBanners.isNotEmpty)
             SliverToBoxAdapter(
-              child: CollectionBannerBlock(banner: data.collectionBanners.first),
+              child: CollectionBannerBlock(
+                banner: data.collectionBanners.first,
+              ),
             ),
 
           SliverToBoxAdapter(
             child: ProductStrip(
-              scriptWord: 'Customer Favourites',
-              title: 'Trending Now',
+              scriptWord: data.trendingEyebrow,
+              title: data.trendingTitle,
               products: data.trendingProducts,
-              onViewAll: data.trendingCta == null ? null : () => resolveAppLink(context, data.trendingCta),
+              onViewAll: () => Navigator.of(context).pushNamed('/trending'),
               viewAllLabel: 'View all',
             ),
           ),
 
-          SliverToBoxAdapter(child: CollectionsGrid(collections: data.collections)),
+          SliverToBoxAdapter(
+            child: CollectionsGrid(collections: data.collections),
+          ),
 
           SliverToBoxAdapter(child: BudgetTiles(tiers: data.priceTiers)),
 
           SliverToBoxAdapter(
             child: ProductStrip(
-              scriptWord: 'Fresh in Store',
-              title: 'New Arrivals',
+              scriptWord: data.newArrivalsEyebrow,
+              title: data.newArrivalsTitle,
               products: data.newArrivals,
-              onViewAll: data.newArrivalsCta == null ? null : () => resolveAppLink(context, data.newArrivalsCta),
+              onViewAll: data.newArrivalsCta == null
+                  ? null
+                  : () => resolveAppLink(context, data.newArrivalsCta),
               viewAllLabel: 'View all',
             ),
           ),
@@ -121,19 +135,25 @@ class _HomeScreenState extends State<HomeScreen> {
           if (_distinctFrom(data.bestsellers, data.trendingProducts))
             SliverToBoxAdapter(
               child: ProductStrip(
-                scriptWord: 'Most Loved',
-                title: 'Bestsellers',
+                scriptWord: data.bestsellersEyebrow,
+                title: data.bestsellersTitle,
                 products: data.bestsellers,
-                onViewAll: data.bestsellersCta == null ? null : () => resolveAppLink(context, data.bestsellersCta),
+                onViewAll: data.bestsellersCta == null
+                    ? null
+                    : () => resolveAppLink(context, data.bestsellersCta),
                 viewAllLabel: 'View all',
               ),
             ),
 
-          SliverToBoxAdapter(child: CelebrityStrip(celebrities: data.celebrities)),
+          SliverToBoxAdapter(
+            child: CelebrityStrip(celebrities: data.celebrities),
+          ),
 
           SliverToBoxAdapter(child: BenefitsBlock(benefits: data.benefits)),
 
-          SliverToBoxAdapter(child: TestimonialsBlock(testimonials: data.testimonials)),
+          SliverToBoxAdapter(
+            child: TestimonialsBlock(testimonials: data.testimonials),
+          ),
 
           if (data.journal != null)
             SliverToBoxAdapter(child: JournalBlock(journal: data.journal!)),
@@ -146,10 +166,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
           SliverToBoxAdapter(child: FaqBlock(faqs: data.faqs)),
 
-          SliverToBoxAdapter(child: ServicesStrip(services: data.services)),
-
           if (data.footer != null)
-            SliverToBoxAdapter(child: FooterBlock(footer: data.footer!)),
+            SliverToBoxAdapter(
+              child: FooterBlock(footer: data.footer!, services: data.services),
+            ),
         ],
       ),
     );

@@ -38,7 +38,9 @@ class BlogPost {
       author: json['author'] as String?,
       category: json['category'] as String?,
       categorySlug: json['category_slug'] as String?,
-      publishedAt: json['published_at'] != null ? DateTime.tryParse(json['published_at'] as String) : null,
+      publishedAt: json['published_at'] != null
+          ? DateTime.tryParse(json['published_at'] as String)
+          : null,
       isFeatured: json['is_featured'] as bool? ?? false,
       imageUrl: json['image'] as String?,
       detailImageUrl: json['detail_image'] as String?,

@@ -65,7 +65,10 @@ class _SellCreateScreenState extends State<SellCreateScreen> {
       final bytes = await file.readAsBytes();
       if (bytes.length > _maxImageBytes) {
         if (!mounted) return;
-        setState(() => _error = 'Photo must be under 3 MB. Please pick a smaller image.');
+        setState(
+          () =>
+              _error = 'Photo must be under 3 MB. Please pick a smaller image.',
+        );
         return;
       }
       setState(() {
@@ -73,7 +76,8 @@ class _SellCreateScreenState extends State<SellCreateScreen> {
         _photoMime = _mimeFor(file.name, isVideo: false);
       });
     } catch (_) {
-      if (mounted) setState(() => _error = 'Could not read the selected photo.');
+      if (mounted)
+        setState(() => _error = 'Could not read the selected photo.');
     }
   }
 
@@ -89,7 +93,10 @@ class _SellCreateScreenState extends State<SellCreateScreen> {
       final bytes = await file.readAsBytes();
       if (bytes.length > _maxVideoBytes) {
         if (!mounted) return;
-        setState(() => _error = 'Video must be under 20 MB. Please pick a shorter clip.');
+        setState(
+          () =>
+              _error = 'Video must be under 20 MB. Please pick a shorter clip.',
+        );
         return;
       }
       setState(() {
@@ -97,7 +104,8 @@ class _SellCreateScreenState extends State<SellCreateScreen> {
         _videoMime = _mimeFor(file.name, isVideo: true);
       });
     } catch (_) {
-      if (mounted) setState(() => _error = 'Could not read the selected video.');
+      if (mounted)
+        setState(() => _error = 'Could not read the selected video.');
     }
   }
 
@@ -144,14 +152,14 @@ class _SellCreateScreenState extends State<SellCreateScreen> {
   }
 
   void _clearPhoto() => setState(() {
-        _photoBytes = null;
-        _photoMime = null;
-      });
+    _photoBytes = null;
+    _photoMime = null;
+  });
 
   void _clearVideo() => setState(() {
-        _videoBytes = null;
-        _videoMime = null;
-      });
+    _videoBytes = null;
+    _videoMime = null;
+  });
 
   Future<void> _submit() async {
     final itemType = _itemType;
@@ -188,7 +196,11 @@ class _SellCreateScreenState extends State<SellCreateScreen> {
       if (!mounted) return;
       setState(() {
         _submitting = false;
-        _error = e.toString().replaceFirst('ApiException', '').replaceAll(RegExp(r'\(\d+\):?'), '').trim();
+        _error = e
+            .toString()
+            .replaceFirst('ApiException', '')
+            .replaceAll(RegExp(r'\(\d+\):?'), '')
+            .trim();
       });
     }
   }
@@ -203,7 +215,10 @@ class _SellCreateScreenState extends State<SellCreateScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Tell us about the piece', style: AppTypography.sectionTitle(size: 18)),
+              Text(
+                'Tell us about the piece',
+                style: AppTypography.sectionTitle(size: 18),
+              ),
               const SizedBox(height: 4),
               Text(
                 'Buyers will review your item and place cash offers. The settlement is credited to your Estele wallet on acceptance.',
@@ -218,9 +233,17 @@ class _SellCreateScreenState extends State<SellCreateScreen> {
                   decoration: BoxDecoration(
                     color: AppColors.pinkSoft,
                     borderRadius: BorderRadius.circular(3),
-                    border: Border.all(color: AppColors.accent.withValues(alpha: 0.4)),
+                    border: Border.all(
+                      color: AppColors.accent.withValues(alpha: 0.4),
+                    ),
                   ),
-                  child: Text(_error!, style: AppTypography.bodySmall(size: 12.5, color: AppColors.error)),
+                  child: Text(
+                    _error!,
+                    style: AppTypography.bodySmall(
+                      size: 12.5,
+                      color: AppColors.error,
+                    ),
+                  ),
                 ),
 
               Text('Item type', style: AppTypography.label(letterSpacing: 1)),
@@ -235,7 +258,9 @@ class _SellCreateScreenState extends State<SellCreateScreen> {
                       selected: _itemType == type,
                       onSelected: _submitting
                           ? null
-                          : (selected) => setState(() => _itemType = selected ? type : null),
+                          : (selected) => setState(
+                              () => _itemType = selected ? type : null,
+                            ),
                     ),
                 ],
               ),
@@ -248,7 +273,8 @@ class _SellCreateScreenState extends State<SellCreateScreen> {
                 maxLength: 2000,
                 decoration: const InputDecoration(
                   labelText: 'Description (optional)',
-                  hintText: 'Weight, purity, brand, how long you have owned it…',
+                  hintText:
+                      'Weight, purity, brand, how long you have owned it…',
                   border: OutlineInputBorder(),
                   counterText: '',
                 ),
@@ -280,7 +306,10 @@ class _SellCreateScreenState extends State<SellCreateScreen> {
               ),
               const SizedBox(height: 22),
 
-              Text('Photos & video', style: AppTypography.label(letterSpacing: 1)),
+              Text(
+                'Photos & video',
+                style: AppTypography.label(letterSpacing: 1),
+              ),
               const SizedBox(height: 8),
               _MediaCard(
                 icon: _hasPhoto ? Icons.check_circle : Icons.image_outlined,
@@ -288,9 +317,14 @@ class _SellCreateScreenState extends State<SellCreateScreen> {
                 subtitle: _hasPhoto
                     ? '${_photoBytes!.length ~/ 1024} KB · ${_photoMime?.split('/').last.toUpperCase() ?? 'IMG'}'
                     : 'JPEG/PNG/WebP, up to 3 MB',
-                preview: _hasPhoto ? Image.memory(_photoBytes!, fit: BoxFit.cover) : null,
+                preview: _hasPhoto
+                    ? Image.memory(_photoBytes!, fit: BoxFit.cover)
+                    : null,
                 trailing: _hasPhoto
-                    ? TextButton(onPressed: _submitting ? null : _clearPhoto, child: const Text('Remove'))
+                    ? TextButton(
+                        onPressed: _submitting ? null : _clearPhoto,
+                        child: const Text('Remove'),
+                      )
                     : FilledButton.tonal(
                         onPressed: _submitting ? null : _pickPhoto,
                         child: const Text('Add photo'),
@@ -304,7 +338,10 @@ class _SellCreateScreenState extends State<SellCreateScreen> {
                     ? '${_videoBytes!.length ~/ 1024} KB · ${_videoMime?.split('/').last.toUpperCase() ?? 'VID'}'
                     : 'MP4/WebM, up to 20 MB',
                 trailing: _hasVideo
-                    ? TextButton(onPressed: _submitting ? null : _clearVideo, child: const Text('Remove'))
+                    ? TextButton(
+                        onPressed: _submitting ? null : _clearVideo,
+                        child: const Text('Remove'),
+                      )
                     : FilledButton.tonal(
                         onPressed: _submitting ? null : _pickVideo,
                         child: const Text('Add video'),
@@ -319,7 +356,14 @@ class _SellCreateScreenState extends State<SellCreateScreen> {
                   backgroundColor: AppColors.deepWine,
                 ),
                 child: _submitting
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
                     : const Text('Submit for valuation'),
               ),
               const SizedBox(height: 20),
@@ -381,7 +425,13 @@ class _MediaCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: AppTypography.bodyMedium(size: 13, weight: FontWeight.w600)),
+                Text(
+                  title,
+                  style: AppTypography.bodyMedium(
+                    size: 13,
+                    weight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: 2),
                 Text(subtitle, style: AppTypography.bodySmall(size: 11.5)),
               ],

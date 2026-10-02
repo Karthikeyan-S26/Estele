@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Estele brand wine - adaptive icon background -->
+    <color name="ic_launcher_background">#4A0E1C</color>
+    <!-- Estele splash canvas - clean white (gold mark sits on top) -->
+    <color name="estele_splash_background">#FFFFFF</color>
+    <!-- Estele pale blush - adaptive icon background -->
+    <color name="estele_icon_background">#FBF1F4</color>
+    <color name="estele_window_background">#FBF7F0</color>
+</resources>

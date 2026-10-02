@@ -1,6 +1,11 @@
 /// A CMS page (About, Privacy, Shipping, etc.).
 class CmsPage {
-  CmsPage({required this.id, required this.title, required this.slug, required this.content});
+  CmsPage({
+    required this.id,
+    required this.title,
+    required this.slug,
+    required this.content,
+  });
 
   final int id;
   final String title;

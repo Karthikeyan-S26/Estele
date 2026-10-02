@@ -77,7 +77,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Your details', style: AppTypography.sectionTitle(size: 18)),
+                Text(
+                  'Your details',
+                  style: AppTypography.sectionTitle(size: 18),
+                ),
                 const SizedBox(height: 18),
                 if (_error != null)
                   Container(
@@ -86,9 +89,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     decoration: BoxDecoration(
                       color: AppColors.pinkSoft,
                       borderRadius: BorderRadius.circular(3),
-                      border: Border.all(color: AppColors.accent.withValues(alpha: 0.4)),
+                      border: Border.all(
+                        color: AppColors.accent.withValues(alpha: 0.4),
+                      ),
                     ),
-                    child: Text(_error!, style: AppTypography.bodySmall(size: 12.5, color: AppColors.error)),
+                    child: Text(
+                      _error!,
+                      style: AppTypography.bodySmall(
+                        size: 12.5,
+                        color: AppColors.error,
+                      ),
+                    ),
                   ),
                 TextFormField(
                   controller: _name,
@@ -98,7 +109,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     labelText: 'Full name',
                     border: OutlineInputBorder(),
                   ),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Please enter your name.' : null,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Please enter your name.'
+                      : null,
                 ),
                 const SizedBox(height: 14),
                 TextFormField(
@@ -112,7 +125,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   validator: (v) {
                     final value = v?.trim() ?? '';
                     if (value.isEmpty) return 'Please enter your email.';
-                    if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value)) {
+                    if (!RegExp(
+                      r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                    ).hasMatch(value)) {
                       return 'Please enter a valid email.';
                     }
                     return null;
@@ -121,7 +136,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 const SizedBox(height: 14),
                 Text(
                   'Your phone number is used for orders and cannot be changed here.',
-                  style: AppTypography.bodySmall(size: 11.5, color: AppColors.muted),
+                  style: AppTypography.bodySmall(
+                    size: 11.5,
+                    color: AppColors.muted,
+                  ),
                 ),
                 const SizedBox(height: 24),
                 FilledButton(
@@ -131,7 +149,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     backgroundColor: AppColors.deepWine,
                   ),
                   child: _saving
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
                       : const Text('Save changes'),
                 ),
               ],

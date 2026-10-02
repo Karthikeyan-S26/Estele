@@ -24,7 +24,9 @@ class User {
       email: json['email'] as String?,
       phone: json['phone'] as String?,
       walletBalance: (json['wallet_balance'] as num?)?.toDouble() ?? 0,
-      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at'] as String) : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'] as String)
+          : null,
     );
   }
 }

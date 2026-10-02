@@ -50,28 +50,36 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         });
       }
     } catch (_) {
-      if (mounted) setState(() {
-        _failed = true;
-        _loading = false;
-      });
+      if (mounted)
+        setState(() {
+          _failed = true;
+          _loading = false;
+        });
     }
   }
 
   void _snack(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   bool _canPayNow(Order order) {
     if (order.status == 'cancelled' || order.status == 'returned') return false;
     if (order.paymentMethod.toUpperCase() != 'RAZORPAY') return false;
-    return const {'pending', 'failed'}.contains(order.paymentStatus.toLowerCase());
+    return const {
+      'pending',
+      'failed',
+    }.contains(order.paymentStatus.toLowerCase());
   }
 
   Future<void> _payNow(Order order) async {
     setState(() => _paying = true);
     try {
-      final handoff = await CheckoutRepository.retryPayment(orderNumber: order.orderNumber);
+      final handoff = await CheckoutRepository.retryPayment(
+        orderNumber: order.orderNumber,
+      );
       if (!mounted) return;
       final keyId = handoff.keyId;
       if (keyId == null || keyId.isEmpty || handoff.razorpayOrderId.isEmpty) {
@@ -141,7 +149,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Cancel order'),
-        content: const Text('Your order will be cancelled and your refund (if paid) processed back to source.'),
+        content: const Text(
+          'Your order will be cancelled and your refund (if paid) processed back to source.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -149,7 +159,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop('cancel'),
-            child: const Text('Cancel order', style: TextStyle(color: AppColors.error)),
+            child: const Text(
+              'Cancel order',
+              style: TextStyle(color: AppColors.error),
+            ),
           ),
         ],
       ),
@@ -158,7 +171,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
     setState(() => _cancelling = true);
     try {
-      final message = await AccountRepository.requestOrderCancellation(widget.orderNumber);
+      final message = await AccountRepository.requestOrderCancellation(
+        widget.orderNumber,
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message ?? 'Cancellation requested')),
@@ -167,9 +182,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.toString())));
         setState(() => _cancelling = false);
       }
     }
@@ -182,13 +197,17 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       body: _loading
           ? const LoadState.loading()
           : _failed || _order == null
-              ? LoadState.error(message: 'Could not load this order.', onRetry: _load)
-              : _buildBody(_order!),
+          ? LoadState.error(
+              message: 'Could not load this order.',
+              onRetry: _load,
+            )
+          : _buildBody(_order!),
     );
   }
 
   Widget _buildBody(Order order) {
-    final isCancelled = order.status == 'cancelled' || order.status == 'returned';
+    final isCancelled =
+        order.status == 'cancelled' || order.status == 'returned';
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -209,14 +228,22 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(order.orderNumber, style: AppTypography.bodyMedium(weight: FontWeight.w700)),
-                    Text('Status: ${order.statusLabel}', style: AppTypography.bodySmall(size: 12.5)),
+                    Text(
+                      order.orderNumber,
+                      style: AppTypography.bodyMedium(weight: FontWeight.w700),
+                    ),
+                    Text(
+                      'Status: ${order.statusLabel}',
+                      style: AppTypography.bodySmall(size: 12.5),
+                    ),
                     const SizedBox(height: 2),
                     Text(
                       'Payment: ${_paymentStatusLabel(order)}',
                       style: AppTypography.bodySmall(
                         size: 12,
-                        color: _isPaymentPending(order) ? AppColors.info : AppColors.success,
+                        color: _isPaymentPending(order)
+                            ? AppColors.info
+                            : AppColors.success,
                       ),
                     ),
                   ],
@@ -238,7 +265,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               order.cancellationReason?.isNotEmpty == true
                   ? 'Reason: ${order.cancellationReason}'
                   : 'This order is cancelled.',
-              style: AppTypography.bodySmall(size: 12.5, color: AppColors.soldOut),
+              style: AppTypography.bodySmall(
+                size: 12.5,
+                color: AppColors.soldOut,
+              ),
             ),
           ),
         ],
@@ -274,9 +304,15 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                         ),
                         child: Text(
                           item.productTitle.isNotEmpty
-                              ? item.productTitle.trim().substring(0, 1).toUpperCase()
+                              ? item.productTitle
+                                    .trim()
+                                    .substring(0, 1)
+                                    .toUpperCase()
                               : 'J',
-                          style: AppTypography.sectionTitle(size: 16, color: AppColors.accentDark),
+                          style: AppTypography.sectionTitle(
+                            size: 16,
+                            color: AppColors.accentDark,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -284,15 +320,26 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(item.productTitle, style: AppTypography.body(size: 13.5)),
+                            Text(
+                              item.productTitle,
+                              style: AppTypography.body(size: 13.5),
+                            ),
                             Text(
                               'SKU ${item.sku} · Qty ${item.quantity}',
-                              style: AppTypography.bodySmall(size: 11.5, color: AppColors.muted),
+                              style: AppTypography.bodySmall(
+                                size: 11.5,
+                                color: AppColors.muted,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      Text(formatINR(item.subtotal), style: AppTypography.bodyMedium(weight: FontWeight.w600)),
+                      Text(
+                        formatINR(item.subtotal),
+                        style: AppTypography.bodyMedium(
+                          weight: FontWeight.w600,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -315,12 +362,18 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               _Row(label: 'Subtotal', value: order.subtotal),
               if (order.discountAmount > 0)
                 _Row(
-                  label: 'Discount${order.couponCode != null ? ' (${order.couponCode})' : ''}',
+                  label:
+                      'Discount${order.couponCode != null ? ' (${order.couponCode})' : ''}',
                   value: -order.discountAmount,
                   sale: true,
                 ),
               _Row(label: 'Shipping', value: order.shippingFee),
-              if (order.walletAmountUsed > 0) _Row(label: 'Wallet used', value: -order.walletAmountUsed, sale: true),
+              if (order.walletAmountUsed > 0)
+                _Row(
+                  label: 'Wallet used',
+                  value: -order.walletAmountUsed,
+                  sale: true,
+                ),
               const Divider(height: 16),
               _Row(label: 'Total', value: order.total, bold: true),
             ],
@@ -346,7 +399,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     children: [
                       Text(
                         'Deliver to ${order.customerName}',
-                        style: AppTypography.bodyMedium(weight: FontWeight.w600),
+                        style: AppTypography.bodyMedium(
+                          weight: FontWeight.w600,
+                        ),
                       ),
                       Text(
                         order.shippingAddress!.singleLine,
@@ -469,7 +524,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       steps[i].$2,
                       style: AppTypography.body(
                         size: 13.5,
-                        weight: i == currentIndex && !cancelled ? FontWeight.w700 : FontWeight.w500,
+                        weight: i == currentIndex && !cancelled
+                            ? FontWeight.w700
+                            : FontWeight.w500,
                         color: !cancelled && currentIndex >= i
                             ? AppColors.heading
                             : AppColors.muted,
@@ -480,7 +537,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               ],
             ),
           ],
-          if (order.carrier != null && order.trackingNumber != null && !cancelled) ...[
+          if (order.carrier != null &&
+              order.trackingNumber != null &&
+              !cancelled) ...[
             const SizedBox(height: 12),
             Container(
               width: double.infinity,
@@ -536,7 +595,12 @@ class _StepDot extends StatelessWidget {
 }
 
 class _Row extends StatelessWidget {
-  const _Row({required this.label, required this.value, this.sale = false, this.bold = false});
+  const _Row({
+    required this.label,
+    required this.value,
+    this.sale = false,
+    this.bold = false,
+  });
 
   final String label;
   final double value;
@@ -550,11 +614,23 @@ class _Row extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: AppTypography.body(size: 13.5, color: sale ? AppColors.sale : AppColors.muted)),
+          Text(
+            label,
+            style: AppTypography.body(
+              size: 13.5,
+              color: sale ? AppColors.sale : AppColors.muted,
+            ),
+          ),
           Text(
             formatINR(value),
-            style: (bold ? AppTypography.price(size: 15) : AppTypography.body(size: 13.5, weight: FontWeight.w600))
-                .copyWith(color: sale ? AppColors.sale : AppColors.heading),
+            style:
+                (bold
+                        ? AppTypography.price(size: 15)
+                        : AppTypography.body(
+                            size: 13.5,
+                            weight: FontWeight.w600,
+                          ))
+                    .copyWith(color: sale ? AppColors.sale : AppColors.heading),
           ),
         ],
       ),
